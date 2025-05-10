@@ -1,4 +1,4 @@
-// import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -15,7 +15,7 @@ interface KoreanNameData {
   poetic_interpretation: string;
 }
 
-// const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
 const API_KEY = process.env.GEMINI_API_KEY || "";
 
 // API 키가 없을 경우 로드 시점에 오류 발생 또는 경고
@@ -26,77 +26,77 @@ if (!API_KEY) {
   // 프로덕션 환경에서는 여기서 애플리케이션을 중단하거나, 기능을 비활성화할 수 있습니다.
 }
 
-// const genAI = new GoogleGenAI({ apiKey: API_KEY });
+const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
 // gemini_api.txt 스타일에 맞춘 systemInstruction
-// const systemInstructionText = `You are an AI that transforms foreign names into Korean-style full names (family name + given name) in a poetic and culturally resonant way. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a natural-sounding Korean name (2–3 syllables) with Chinese characters (Hanja).
+const systemInstructionText = `You are an AI that transforms foreign names into Korean-style full names (family name + given name) in a poetic and culturally resonant way. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a natural-sounding Korean name (2–3 syllables) with Chinese characters (Hanja).
 
-// ✅ Input Handling Rules:
-// - If the user provides a **full name** (e.g., Isabella Rossellini), analyze both the **given name** and the **family name** separately.
-//   - The **given name** must inspire the **Korean given name**.
-//   - The **family name** must influence the choice of **Korean surname**. Do not ignore it.
-// - If only a **given name** is provided, choose a Korean surname that matches the tone and concept of the generated name.
+✅ Input Handling Rules:
+- If the user provides a **full name** (e.g., Isabella Rossellini), analyze both the **given name** and the **family name** separately.
+  - The **given name** must inspire the **Korean given name**.
+  - The **family name** must influence the choice of **Korean surname**. Do not ignore it.
+- If only a **given name** is provided, choose a Korean surname that matches the tone and concept of the generated name.
 
-// ✅ Output Format (JSON structured):
+✅ Output Format (JSON structured):
 
-// {
-//   "original_name": "[Original Foreign Name]",
-//   "korean_name": "[Hangul Name] ([Hanja Name], Romanized)",
-//   "connection_explanation": "[Explain how the foreign given name inspired the Korean given name, and how the foreign family name influenced the Korean surname. Clarify both connections clearly.]",
-//   "hanja_breakdown": [
-//     {
-//       "character": "[Hanja Character]",
-//       "meaning": "[Symbolic meaning of the character and its relevance to the name.]"
-//     },
-//     ...
-//   ],
-//   "poetic_interpretation": "[A short, poetic summary of the Korean name, capturing the essence and symbolism of the original name.]"
-// }
+{
+  "original_name": "[Original Foreign Name]",
+  "korean_name": "[Hangul Name] ([Hanja Name], Romanized)",
+  "connection_explanation": "[Explain how the foreign given name inspired the Korean given name, and how the foreign family name influenced the Korean surname. Clarify both connections clearly.]",
+  "hanja_breakdown": [
+    {
+      "character": "[Hanja Character]",
+      "meaning": "[Symbolic meaning of the character and its relevance to the name.]"
+    },
+    ...
+  ],
+  "poetic_interpretation": "[A short, poetic summary of the Korean name, capturing the essence and symbolism of the original name.]"
+}
 
-// ✅ Style Guidelines:
-// - Do not phonetically transliterate.
-// - Always generate **natural Korean names** that real people could have (e.g., 김하린, 이서윤, 박도현).
-// - Select meaningful Hanja that poetically reflect the original name's imagery and values.
-// - Be respectful, elegant, and thoughtful in tone — names are deeply personal.
+✅ Style Guidelines:
+- Do not phonetically transliterate.
+- Always generate **natural Korean names** that real people could have (e.g., 김하린, 이서윤, 박도현).
+- Select meaningful Hanja that poetically reflect the original name's imagery and values.
+- Be respectful, elegant, and thoughtful in tone — names are deeply personal.
 
-// ✅ Example:
+✅ Example:
 
-// {
-//   "original_name": "Sophia Loren",
-//   "korean_name": "이예지 (李藝智, Lee Ye-ji)",
-//   "connection_explanation": "The name 'Sophia' means 'wisdom' in Greek, signifying deep understanding and insight, which inspired the Korean given name 'Ye-ji' (예지), meaning 'artistic wisdom' or 'cultivated intelligence.' The surname 'Loren' is associated with a timeless elegance and classic beauty, much like the common and historically significant Korean surname 'Lee' (이, 李 - originally meaning 'plum tree'), which conveys a sense of graceful tradition and resilience.",
-//   "hanja_breakdown": [
-//     {
-//       "character": "李",
-//       "meaning": "A widespread and traditional Korean surname, symbolizing steadfastness and classic elegance, referencing the plum tree."
-//     },
-//     {
-//       "character": "藝",
-//       "meaning": "Art, skill, talent, cultivation — reflecting Sophia Loren's masterful artistry and refined presence."
-//     },
-//     {
-//       "character": "智",
-//       "meaning": "Wisdom, intelligence — directly corresponding to the meaning of the original name 'Sophia'."
-//     }
-//   ],
-//   "poetic_interpretation": "'Lee Ye-ji' embodies the image of a wise and cultivated spirit, possessing both deep insight and artistic grace. It captures the essence of classic beauty combined with profound inner strength, much like a plum tree blooming with quiet, intelligent beauty."
-// }
-// `;
+{
+  "original_name": "Sophia Loren",
+  "korean_name": "이예지 (李藝智, Lee Ye-ji)",
+  "connection_explanation": "The name 'Sophia' means 'wisdom' in Greek, signifying deep understanding and insight, which inspired the Korean given name 'Ye-ji' (예지), meaning 'artistic wisdom' or 'cultivated intelligence.' The surname 'Loren' is associated with a timeless elegance and classic beauty, much like the common and historically significant Korean surname 'Lee' (이, 李 - originally meaning 'plum tree'), which conveys a sense of graceful tradition and resilience.",
+  "hanja_breakdown": [
+    {
+      "character": "李",
+      "meaning": "A widespread and traditional Korean surname, symbolizing steadfastness and classic elegance, referencing the plum tree."
+    },
+    {
+      "character": "藝",
+      "meaning": "Art, skill, talent, cultivation — reflecting Sophia Loren's masterful artistry and refined presence."
+    },
+    {
+      "character": "智",
+      "meaning": "Wisdom, intelligence — directly corresponding to the meaning of the original name 'Sophia'."
+    }
+  ],
+  "poetic_interpretation": "'Lee Ye-ji' embodies the image of a wise and cultivated spirit, possessing both deep insight and artistic grace. It captures the essence of classic beauty combined with profound inner strength, much like a plum tree blooming with quiet, intelligent beauty."
+}
+`;
 
 // gemini_api.txt 스타일에 맞춘 config 객체
-// const apiConfig = {
-//   responseMimeType: "application/json",
-//   systemInstruction: [{ text: systemInstructionText }], // 배열 안에 text 객체 형태
-//   // temperature, topK, topP, maxOutputTokens는 여기에 포함되지 않음 (gemini_api.txt 기준)
-// };
+const apiConfig = {
+  responseMimeType: "application/json",
+  systemInstruction: [{ text: systemInstructionText }], // 배열 안에 text 객체 형태
+  // temperature, topK, topP, maxOutputTokens는 여기에 포함되지 않음 (gemini_api.txt 기준)
+};
 
-// // Generation parameters (temperature, topK 등) - API 호출 시 직접 전달 시도
-// const generationParams = {
-//   temperature: 0.8,
-//   topK: 32,
-//   topP: 1,
-//   maxOutputTokens: 8192,
-// };
+// Generation parameters (temperature, topK 등) - API 호출 시 직접 전달 시도
+const generationParams = {
+  temperature: 0.8,
+  topK: 32,
+  topP: 1,
+  maxOutputTokens: 8192,
+};
 
 // SafetySettings는 @google/genai에서의 정확한 사용법 확인 필요. 현재는 생략.
 // const safetySettings = [ ... ];
@@ -126,8 +126,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- 테스트를 위해 GoogleGenAI 호출 로직 주석 처리 ---
-    /*
     const userMessageParts = [{ text: foreignName }];
 
     // gemini_api.txt의 ai.models.generateContentStream 호출 구조를 최대한 따름
@@ -186,32 +184,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(jsonData);
-    */
-
-    // --- 고정된 목업 데이터 반환 ---
-    const mockData: KoreanNameData = {
-      original_name: foreignName,
-      korean_name: "김테스트 (金測試, Kim Test)",
-      connection_explanation:
-        "이것은 테스트 데이터입니다. 외국 이름의 의미와 한국 성씨 선택 배경에 대한 설명입니다.",
-      hanja_breakdown: [
-        { character: "金", meaning: "쇠 금, 테스트 성씨" },
-        { character: "測", meaning: "잴 측, 테스트 이름자1" },
-        { character: "試", meaning: "시험 시, 테스트 이름자2" },
-      ],
-      poetic_interpretation:
-        "이것은 테스트용 시적 해석입니다. 생성된 한국 이름의 아름다움을 짧게 요약합니다.",
-    };
-    return NextResponse.json(mockData);
-    // --- 여기까지 목업 데이터 반환 ---
   } catch (error) {
     // error 타입을 Error 또는 unknown으로 변경
     let errorMessage =
       "An unexpected error occurred while processing your request.";
     const errorDetails = error instanceof Error ? error.message : String(error);
-    const statusCode = 500; // 기본 상태 코드를 500으로 초기화
+    const statusCode = 500;
 
-    console.error("Error in API Route (mock active):", errorDetails, error); // 로그 메시지 수정
+    console.error("Error calling Gemini API:", errorDetails, error);
 
     if (error instanceof Error) {
       if (error.message?.includes("API_RESPONSE_EMPTY")) {
