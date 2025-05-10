@@ -5,19 +5,25 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "postbuild": "npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "^0.13.0",
+    "@radix-ui/react-label": "^2.1.6",
+    "@radix-ui/react-slot": "^1.2.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.509.0",
+    "mime": "^4.0.7",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.12",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

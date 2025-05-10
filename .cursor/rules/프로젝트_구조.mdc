@@ -3,3 +3,16 @@ description:
 globs:
 alwaysApply: false
 ---
+# 프로젝트 구조 안내
+
+이 프로젝트는 Next.js 13+ App Router를 사용합니다.
+
+- 주요 애플리케이션 코드는 `app/` 디렉토리에 있습니다. 각 하위 디렉토리는 URL 경로에 해당하며, `page.tsx` 또는 `layout.tsx` 같은 파일을 포함합니다.
+- 공용 라이브러리 또는 유틸리티 함수는 `lib/` 디렉토리에 있습니다.
+- 정적 파일 (이미지, 폰트 등)은 `public/` 디렉토리에 저장됩니다.
+- UI 컴포넌트 관련 설정은 [components.json](mdc:components.json) 파일에서 관리될 수 있습니다.
+- 프로젝트의 주요 설정 파일은 다음과 같습니다:
+    - Next.js 설정: [next.config.ts](mdc:next.config.ts)
+    - TypeScript 설정: [tsconfig.json](mdc:tsconfig.json)
+    - 패키지 및 스크립트: [package.json](mdc:package.json)
+- 주요 진입점은 `app/layout.tsx` 또는 `app/page.tsx`가 될 가능성이 높습니다.

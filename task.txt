@@ -2,34 +2,34 @@
 
 #### 1단계: 기본 프로젝트 설정 (Foundation)
 
-- [ ] Next.js 프로젝트 생성
-- [ ] ESLint, Prettier 등 개발 환경 설정
-- [ ] Shadcn UI 라이브러리 설치 및 설정
-- [ ] Tailwind CSS 설치 및 설정
-- [ ] 기본 페이지 레이아웃 구성 (헤더, 푸터 - 간단한 형태)
-- [ ] 프로젝트 버전 관리 시스템 초기화 (예: Git)
+- [x] Next.js 프로젝트 생성
+- [x] ESLint, Prettier 등 개발 환경 설정
+- [x] Shadcn UI 라이브러리 설치 및 설정
+- [x] Tailwind CSS 설치 및 설정
+- [x] 기본 페이지 레이아웃 구성 (헤더, 푸터 - 간단한 형태)
+- [x] 프로젝트 버전 관리 시스템 초기화 (예: Git)
 
 #### 2단계: 핵심 UI 요소 구현 (Visible Frontend)
 
-- [ ] 이름 입력 UI 컴포넌트 구현
-    - [ ] 외국 이름 입력 텍스트 필드
-    - [ ] "한국 이름 생성" 버튼
-- [ ] 결과 출력 UI 컴포넌트 기본 구조 구현
-    - [ ] `original_name` 표시 영역
-    - [ ] `korean_name` (한글, 한자, 로마자) 표시 영역
-    - [ ] `connection_explanation` 표시 영역
-    - [ ] `hanja_breakdown` (각 한자와 의미) 표시 영역
-    - [ ] `poetic_interpretation` 표시 영역
-- [ ] 로딩 상태 표시 UI 요소 (예: 스피너)
-- [ ] 오류 메시지 표시 UI 요소
+- [x] 이름 입력 UI 컴포넌트 구현
+    - [x] 외국 이름 입력 텍스트 필드
+    - [x] "한국 이름 생성" 버튼
+- [x] 결과 출력 UI 컴포넌트 기본 구조 구현
+    - [x] `original_name` 표시 영역
+    - [x] `korean_name` (한글, 한자, 로마자) 표시 영역
+    - [x] `connection_explanation` 표시 영역
+    - [x] `hanja_breakdown` (각 한자와 의미) 표시 영역
+    - [x] `poetic_interpretation` 표시 영역
+- [x] 로딩 상태 표시 UI 요소 (예: 스피너) // 기본 텍스트 로딩 구현
+- [x] 오류 메시지 표시 UI 요소 // 기본 텍스트 오류 메시지 구현
 
 #### 3단계: AI 연동 또는 목업 데이터 준비 (Core Logic)
 
 - **옵션 A: Gemini API 직접 연동 (권장)**
-    - [ ] Next.js API Route 또는 Server Action을 이용한 Gemini API 호출 로직 구현
-    - [ ] API 요청 시 사용자 입력 이름과 시스템 프롬프트 조합 로직 구현
-    - [ ] 환경 변수를 사용한 API 키 보안 관리 (.env 파일 등)
-    - [ ] API 응답 (JSON) 파싱 및 검증 로직 구현
+    - [x] Next.js API Route 또는 Server Action을 이용한 Gemini API 호출 로직 구현
+    - [x] API 요청 시 사용자 입력 이름과 시스템 프롬프트 조합 로직 구현
+    - [x] 환경 변수를 사용한 API 키 보안 관리 (.env 파일 등)
+    - [x] API 응답 (JSON) 파싱 및 검증 로직 구현
 - **옵션 B: 목업 데이터 사용 (API 연동이 MVP에서 어려울 경우)**
     - [ ] PRD에 명시된 JSON 구조 기반의 목업 데이터 정의
     - [ ] 여러 테스트 케이스를 위한 다양한 목업 샘플 데이터 생성 (최소 3개 이상)
@@ -37,14 +37,14 @@
 
 #### 4단계: 데이터 바인딩 및 결과 표시 (Connecting Frontend to Logic)
 
-- [ ] API 응답 또는 목업 데이터를 결과 출력 UI 컴포넌트에 바인딩
-    - [ ] `original_name` 데이터 연결
-    - [ ] `korean_name` (한글, 한자, 로마자) 데이터 연결
-    - [ ] `connection_explanation` 데이터 연결
-    - [ ] `hanja_breakdown` 각 항목(문자, 의미)을 반복 렌더링하여 연결
-    - [ ] `poetic_interpretation` 데이터 연결
-- [ ] 이름 생성 요청 시 로딩 상태 UI 표시 로직 구현
-- [ ] 모든 정보가 정확히 표시되는지 확인
+- [x] API 응답 또는 목업 데이터를 결과 출력 UI 컴포넌트에 바인딩
+    - [x] `original_name` 데이터 연결
+    - [x] `korean_name` (한글, 한자, 로마자) 데이터 연결
+    - [x] `connection_explanation` 데이터 연결
+    - [x] `hanja_breakdown` 각 항목(문자, 의미)을 반복 렌더링하여 연결
+    - [x] `poetic_interpretation` 데이터 연결
+- [x] 이름 생성 요청 시 로딩 상태 UI 표시 로직 구현
+- [x] 모든 정보가 정확히 표시되는지 확인
 
 #### 5단계: 스타일링 및 반응형 디자인 (Refinement)
 
