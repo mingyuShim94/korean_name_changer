@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 // 타입 정의 (프론트엔드와 공유 가능)
 interface KoreanNameData {
   original_name: string;
