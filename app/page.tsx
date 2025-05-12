@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { NameInputForm } from "@/components/name-input-form";
-import { NameResultDisplay } from "@/components/name-result-display";
 import {
   Card,
   CardContent,
@@ -10,61 +10,50 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
+import { generateKoreanNameAction } from "./actions";
 
-// KoreanNameData 인터페이스 (API Route와 동일한 구조 유지)
-interface KoreanNameData {
-  original_name: string;
-  korean_name: string;
-  connection_explanation: string;
-  hanja_breakdown: Array<{
-    character: string;
-    meaning: string;
-  }>;
-  poetic_interpretation: string;
-}
+// 성별 느낌 옵션 정의 수정
+type GenderOption = "masculine" | "feminine";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [resultData, setResultData] = React.useState<KoreanNameData | null>(
-    null
-  );
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
+  // selectedGender 초기값 변경
+  const [selectedGender, setSelectedGender] =
+    React.useState<GenderOption>("masculine");
 
-  const handleNameSubmit = async (name: string) => {
-    setIsLoading(true);
-    setResultData(null);
+  const handleNameSubmit = (name: string, gender: GenderOption) => {
     setError(null);
+    startTransition(async () => {
+      console.log(
+        "Submitting with Server Action: Name:",
+        name,
+        "Gender:",
+        gender
+      );
+      const result = await generateKoreanNameAction({ name, gender });
 
-    try {
-      const response = await fetch("/api/generate-name", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name }),
-      });
-
-      if (!response.ok) {
-        // 서버에서 오류 응답을 보냈을 경우 (e.g., 4xx, 5xx)
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `API request failed with status ${response.status}`
+      if (result.error) {
+        setError(result.error);
+        console.error("Server Action Error:", result.error);
+      } else if (result.data) {
+        router.push(
+          `/result?data=${encodeURIComponent(JSON.stringify(result.data))}`
         );
-      }
-
-      const data: KoreanNameData = await response.json();
-      setResultData(data);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
       } else {
-        setError("An unknown error occurred during name conversion.");
+        // 예상치 못한 경우 (데이터도 없고 에러도 없는 경우)
+        setError("An unexpected issue occurred. No data or error returned.");
       }
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
+
+  if (isPending) {
+    return (
+      <FullScreenLoader message="AI is creating a Korean name. Please wait a moment..." />
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
@@ -74,11 +63,19 @@ export default function Home() {
             Convert Your Name to a Korean Name!
           </CardTitle>
           <CardDescription className="text-lg sm:text-xl text-muted-foreground pt-2">
-            Enter a your name and discover a beautiful Korean name.
+            Enter a your name and discover a beautiful Korean name. Choose the
+            nuance for your Korean name.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <NameInputForm onSubmit={handleNameSubmit} isLoading={isLoading} />
+          <NameInputForm
+            onSubmit={(name) => handleNameSubmit(name, selectedGender)}
+            isLoading={isPending}
+            selectedGender={selectedGender}
+            onGenderChange={(newGender: GenderOption) =>
+              setSelectedGender(newGender)
+            }
+          />
 
           {error && (
             <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
@@ -86,8 +83,6 @@ export default function Home() {
               <p>{error}</p>
             </div>
           )}
-
-          <NameResultDisplay loading={isLoading} data={resultData} />
         </CardContent>
       </Card>
     </main>

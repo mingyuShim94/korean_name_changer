@@ -15,6 +15,9 @@ interface KoreanNameData {
   poetic_interpretation: string;
 }
 
+// 프론트엔드에서 전달받을 성별 타입
+type GenderOption = "masculine" | "feminine" | "neutral";
+
 const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
 const API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -28,11 +31,11 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
-// gemini_api.txt 스타일에 맞춘 systemInstruction
-const systemInstructionText = `You are an AI that transforms foreign names into Korean-style full names (family name + given name) in a poetic and culturally resonant way. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a natural-sounding Korean name (2–3 syllables) with Chinese characters (Hanja).
+// 기본 시스템 명령어 템플릿
+const baseSystemInstructionText = `You are an AI that transforms foreign names into Korean-style full names (family name + given name) in a poetic and culturally resonant way. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a natural-sounding Korean name (2–3 syllables) with Chinese characters (Hanja).
 
 ✅ Input Handling Rules:
-- If the user provides a **full name** (e.g., Isabella Rossellini), analyze both the **given name** and the **family name** separately.
+- If the user provides a **full name** (e.g., Sophia Loren), analyze both the **given name** and the **family name** separately.
   - The **given name** must inspire the **Korean given name**.
   - The **family name** must influence the choice of **Korean surname**. Do not ignore it.
 - If only a **given name** is provided, choose a Korean surname that matches the tone and concept of the generated name.
@@ -55,10 +58,10 @@ const systemInstructionText = `You are an AI that transforms foreign names into 
 
 ✅ Style Guidelines:
 - Do not phonetically transliterate.
-- Always generate **natural Korean names** that real people could have (e.g., 김하린, 이서윤, 박도현).
-- Select meaningful Hanja that poetically reflect the original name's imagery and values.
+- Always generate **natural Korean names** that real people could have.
+- Select meaningful Hanja that poetically reflect the original name\'s imagery and values.
 - Be respectful, elegant, and thoughtful in tone — names are deeply personal.
-
+{GENDER_SPECIFIC_INSTRUCTION}
 ✅ Example:
 
 {
@@ -83,14 +86,27 @@ const systemInstructionText = `You are an AI that transforms foreign names into 
 }
 `;
 
-// gemini_api.txt 스타일에 맞춘 config 객체
-const apiConfig = {
-  responseMimeType: "application/json",
-  systemInstruction: [{ text: systemInstructionText }], // 배열 안에 text 객체 형태
-  // temperature, topK, topP, maxOutputTokens는 여기에 포함되지 않음 (gemini_api.txt 기준)
-};
+// 성별에 따른 시스템 명령어 생성 함수
+function getSystemInstruction(gender: GenderOption): string {
+  let genderInstruction = "";
+  if (gender === "masculine") {
+    genderInstruction =
+      "\n- Generate a name that has a **masculine** nuance, suitable for a boy. Consider Hanja and sounds that evoke strength, wisdom, or a pioneering spirit.";
+  } else if (gender === "feminine") {
+    genderInstruction =
+      "\n- Generate a name that has a **feminine** nuance, suitable for a girl. Consider Hanja and sounds that evoke beauty, grace, or a gentle nature.";
+  } else {
+    // neutral or unspecified
+    genderInstruction =
+      "\n- Generate a name that has a **neutral** nuance, suitable for any gender. Focus on balance and universal appeal in Hanja and sound.";
+  }
+  return baseSystemInstructionText.replace(
+    "{GENDER_SPECIFIC_INSTRUCTION}",
+    genderInstruction
+  );
+}
 
-// Generation parameters (temperature, topK 등) - API 호출 시 직접 전달 시도
+// Generation parameters (temperature, topK 등)
 const generationParams = {
   temperature: 0.8,
   topK: 32,
@@ -111,9 +127,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let foreignName: string | undefined;
+  let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
+
   try {
     const reqBody = await request.json();
-    const foreignName = reqBody.name as string;
+    foreignName = reqBody.name as string;
+    // gender 값 유효성 검사 및 할당
+    if (
+      reqBody.gender &&
+      ["masculine", "feminine", "neutral"].includes(reqBody.gender)
+    ) {
+      gender = reqBody.gender as GenderOption;
+    }
 
     if (
       !foreignName ||
@@ -127,23 +153,21 @@ export async function POST(request: NextRequest) {
     }
 
     const userMessageParts = [{ text: foreignName }];
+    const dynamicSystemInstruction = getSystemInstruction(gender);
 
-    // gemini_api.txt의 ai.models.generateContentStream 호출 구조를 최대한 따름
-    // 단, 스트림이 아닌 단일 응답을 위해 generateContent 사용
+    // API 호출 시 동적 시스템 명령어 사용
     const result = await genAI.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: "user", parts: userMessageParts }],
-      config: apiConfig, // gemini_api.txt 스타일의 config 객체 전달
-      // generationParams를 직접 전달하거나, config 내부에 포함해야 할 수 있음
-      // @google/genai SDK 문서를 봐야 정확하나, 일단 config와 별개로 전달 시도
-      ...generationParams, // temperature, topK 등을 직접 전달
+      config: {
+        // config 객체를 직접 생성하여 전달
+        responseMimeType: "application/json",
+        systemInstruction: [{ text: dynamicSystemInstruction }],
+      },
+      ...generationParams,
     });
 
-    // 응답 텍스트 추출 시도 (gemini_api.txt 스트림 예제의 chunk.text 참고)
-    // 단일 응답의 경우 result.text 또는 result.candidates[0]...text 형태 예상
-    // 이전 linter에서 result.response가 없다고 했으므로, result에서 직접 찾아야 함
     let responseText = "";
-    // 응답 구조가 확실하지 않으므로 여러 가능성을 안전하게 확인
     if (result && result.candidates && result.candidates.length > 0) {
       const candidate = result.candidates[0];
       if (
@@ -154,8 +178,6 @@ export async function POST(request: NextRequest) {
         responseText = candidate.content.parts[0].text || "";
       }
     }
-    // 만약 result.text() 와 같은 직접적인 메서드가 있다면 그것을 사용하는 것이 더 좋음
-    // 현재는 가장 일반적인 상세 구조를 따라감.
 
     if (!responseText) {
       throw new Error(
@@ -189,9 +211,15 @@ export async function POST(request: NextRequest) {
     let errorMessage =
       "An unexpected error occurred while processing your request.";
     const errorDetails = error instanceof Error ? error.message : String(error);
-    const statusCode = 500;
+    const statusCode = 500; // 기본 상태 코드를 500으로 설정
 
-    console.error("Error calling Gemini API:", errorDetails, error);
+    // 콘솔에 더 자세한 오류 정보 로깅
+    console.error(
+      `Error in POST /api/generate-name for input: '${foreignName}', gender: '${gender}':`, // 요청 값 로깅
+      errorDetails,
+      error instanceof Error ? error.stack : "No stack trace available", // 에러 스택 로깅
+      error // 전체 에러 객체 로깅
+    );
 
     if (error instanceof Error) {
       if (error.message?.includes("API_RESPONSE_EMPTY")) {
@@ -208,6 +236,7 @@ export async function POST(request: NextRequest) {
       // 혹은 error.status, error.code 등 API 에러 객체의 속성을 확인하여 상태 코드 조정
     }
 
+    // statusCode를 JSON 응답에 포함시킵니다.
     return NextResponse.json(
       { error: errorMessage, details: errorDetails },
       { status: statusCode }
