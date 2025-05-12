@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 // Cloudflare Pages를 위한 Edge Runtime 설정
 export const runtime = "edge";
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full">
       <body className="flex flex-col h-full">
+        <GoogleAnalytics />
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
