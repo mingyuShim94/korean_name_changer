@@ -5,8 +5,11 @@ const nextConfig: NextConfig = {
   env: {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
   },
-  // 서버 외부 패키지 설정 (Gemini API 관련 패키지)
-  serverExternalPackages: ["@google/genai"],
+  // Cloudflare Pages 환경에 최적화
+  // @google/genai 패키지를 Edge Runtime에서 사용하도록 설정
+  experimental: {
+    serverComponentsExternalPackages: ["@google/genai"],
+  },
   // 보안 헤더 설정
   headers: async () => {
     return [

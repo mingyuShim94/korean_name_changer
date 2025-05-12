@@ -1,0 +1,12 @@
+name = "korean-name-changer"
+compatibility_date = "2023-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# 환경 변수는 Cloudflare 대시보드에서 설정하세요
+# GEMINI_API_KEY 

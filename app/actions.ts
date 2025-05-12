@@ -2,6 +2,9 @@
 
 import { GoogleGenAI } from "@google/genai";
 
+// Edge 환경에서의 실행을 위한 런타임 설정
+export const runtime = "edge";
+
 // KoreanNameData 인터페이스 (API Route 및 page.tsx와 동일한 구조 유지)
 interface KoreanNameData {
   original_name: string;
@@ -93,13 +96,13 @@ const generationParams = {
 export async function generateKoreanNameAction(
   params: GenerateNameParams
 ): Promise<ActionResult> {
-  console.log("Server Action 실행: 이름 생성 요청", params);
+  console.log("Server Action 실행 (Edge Runtime): 이름 생성 요청", params);
 
   try {
-    // 1. API를 직접 호출하는 방식 (API 장애 시 대체 옵션)
+    // 1. API를 직접 호출하는 방식 - Edge 환경에서 최적화
     if (API_KEY) {
       try {
-        console.log("Gemini API 직접 호출 시도");
+        console.log("Gemini API 직접 호출 시도 (Edge Runtime)");
 
         const { name, gender } = params;
         const userMessageParts = [{ text: name }];

@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
-// Edge 런타임에서 Node.js 런타임으로 변경
-export const runtime = "nodejs";
+// Cloudflare Pages에서는 Edge Runtime이 필수입니다
+export const runtime = "edge";
 
 // 타입 정의 (프론트엔드와 공유 가능)
 interface KoreanNameData {
@@ -119,7 +119,7 @@ const generationParams = {
 // const safetySettings = [ ... ];
 
 export async function POST(request: NextRequest) {
-  console.log("API 요청이 시작되었습니다.");
+  console.log("API 요청이 시작되었습니다 (Edge Runtime)");
   if (!API_KEY) {
     console.error("API_KEY가 없습니다. 환경 변수를 확인하세요.");
     // 클라이언트에는 좀 더 일반적인 오류 메시지를 반환합니다.
@@ -133,14 +133,15 @@ export async function POST(request: NextRequest) {
   let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
 
   try {
-    const reqBody = await request.json();
-    foreignName = reqBody.name as string;
+    // Edge Runtime에서 안정적으로 실행되도록 요청 처리 최적화
+    const body = await request.json().catch(() => ({}));
+    foreignName = body?.name as string;
     // gender 값 유효성 검사 및 할당
     if (
-      reqBody.gender &&
-      ["masculine", "feminine", "neutral"].includes(reqBody.gender)
+      body?.gender &&
+      ["masculine", "feminine", "neutral"].includes(body.gender)
     ) {
-      gender = reqBody.gender as GenderOption;
+      gender = body.gender as GenderOption;
     }
 
     if (
