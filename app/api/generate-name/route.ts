@@ -1,7 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+// Edge 런타임에서 Node.js 런타임으로 변경
+export const runtime = "nodejs";
 
 // 타입 정의 (프론트엔드와 공유 가능)
 interface KoreanNameData {
@@ -118,8 +119,9 @@ const generationParams = {
 // const safetySettings = [ ... ];
 
 export async function POST(request: NextRequest) {
+  console.log("API 요청이 시작되었습니다.");
   if (!API_KEY) {
-    // 이 시점에는 API_KEY가 없으면 이미 콘솔에 에러가 찍혔을 것입니다.
+    console.error("API_KEY가 없습니다. 환경 변수를 확인하세요.");
     // 클라이언트에는 좀 더 일반적인 오류 메시지를 반환합니다.
     return NextResponse.json(
       { error: "Server configuration error. API key might be missing." },
