@@ -4,6 +4,9 @@ import "./globals.css";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
+// Cloudflare Pages를 위한 Edge Runtime 설정
+export const runtime = "edge";
+
 // const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {

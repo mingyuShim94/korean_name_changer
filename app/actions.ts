@@ -1,9 +1,6 @@
-"use server";
+"use server"; // runtime = "edge"
 
 import { GoogleGenAI } from "@google/genai";
-
-// Edge 환경에서의 실행을 위한 런타임 설정
-export const runtime = "edge";
 
 // KoreanNameData 인터페이스 (API Route 및 page.tsx와 동일한 구조 유지)
 interface KoreanNameData {

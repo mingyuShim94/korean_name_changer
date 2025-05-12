@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "cf:build": "next build && npx @cloudflare/next-on-pages",
+    "cf:deploy": "node build-for-cloudflare.mjs && wrangler pages deploy .vercel/output/static",
     "start": "next start",
     "lint": "next lint",
-    "pages:build": "npx @cloudflare/next-on-pages",
     "pages:deploy": "npx wrangler pages deploy .vercel/output/static",
     "pages:preview": "npx wrangler pages dev .vercel/output/static"
   },

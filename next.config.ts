@@ -7,9 +7,7 @@ const nextConfig: NextConfig = {
   },
   // Cloudflare Pages 환경에 최적화
   // @google/genai 패키지를 Edge Runtime에서 사용하도록 설정
-  experimental: {
-    serverComponentsExternalPackages: ["@google/genai"],
-  },
+  serverExternalPackages: ["@google/genai"],
   // 보안 헤더 설정
   headers: async () => {
     return [
