@@ -18,7 +18,8 @@ interface KoreanNameData {
   poetic_interpretation: string;
 }
 
-export default function ResultPage() {
+// SearchParams를 읽고 결과를 표시하는 내부 컴포넌트
+function ResultContent() {
   const searchParams = useSearchParams();
   const [resultData, setResultData] = React.useState<KoreanNameData | null>(
     null
@@ -49,6 +50,32 @@ export default function ResultPage() {
     }
   }, [searchParams]);
 
+  if (error) {
+    return (
+      <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
+        <h3 className="font-semibold mb-1">오류 발생:</h3>
+        <p>{error}</p>
+        <Link
+          href="/"
+          className="mt-2 inline-block text-blue-600 hover:underline"
+        >
+          홈으로 돌아가기
+        </Link>
+      </div>
+    );
+  }
+
+  if (resultData) {
+    return <NameResultDisplay loading={false} data={resultData} />;
+  }
+
+  // 데이터는 있지만 아직 resultData가 설정되지 않았거나, dataString이 없는 초기 상태에서 error도 없는 경우
+  // useEffect가 실행되기 전 또는 다른 예상치 못한 상황을 대비한 로딩 메시지 (Suspense fallback과 별개)
+  // 일반적으로 Suspense fallback이 먼저 표시되지만, 만약을 위해 남겨둘 수 있습니다.
+  return <p className="text-center text-muted-foreground">결과 확인 중...</p>;
+}
+
+export default function ResultPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
       <Card className="w-full max-w-md shadow-lg">
@@ -58,29 +85,15 @@ export default function ResultPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {error && (
-            <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-              <h3 className="font-semibold mb-1">오류 발생:</h3>
-              <p>{error}</p>
-              <Link
-                href="/"
-                className="mt-2 inline-block text-blue-600 hover:underline"
-              >
-                홈으로 돌아가기
-              </Link>
-            </div>
-          )}
-          {resultData && !error && (
-            <NameResultDisplay loading={false} data={resultData} />
-          )}
-          {!resultData && !error && (
-            // 데이터 로딩 중이거나, 아직 searchParams 처리가 완료되지 않은 경우 (useEffect 실행 전)
-            // 또는 dataString이 초기에 null일 때 명시적인 메시지를 보여주고 싶다면 여기에 추가
-            // 일반적으로는 useEffect가 실행되면서 error 또는 resultData가 설정됨
-            <p className="text-center text-muted-foreground">
-              결과를 불러오는 중...
-            </p>
-          )}
+          <React.Suspense
+            fallback={
+              <p className="text-center text-muted-foreground">
+                결과를 불러오는 중...
+              </p>
+            }
+          >
+            <ResultContent />
+          </React.Suspense>
         </CardContent>
       </Card>
     </main>
