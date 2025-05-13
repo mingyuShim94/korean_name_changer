@@ -56,15 +56,16 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
+    <main className="flex min-h-fit sm:min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl sm:text-4xl font-bold">
             Convert Your Name to a Korean Name!
           </CardTitle>
           <CardDescription className="text-lg sm:text-xl text-muted-foreground pt-2">
-            Enter a your name and discover a beautiful Korean name. Choose the
-            nuance for your Korean name.
+            Enter a name in any language (e.g., English, Japanese, Arabic) and
+            discover a beautiful Korean name. Choose the nuance for your Korean
+            name.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

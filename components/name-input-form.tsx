@@ -23,6 +23,25 @@ export function NameInputForm({
 }: NameInputFormProps) {
   const [name, setName] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = React.useState(0);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    if (typeof window !== "undefined") {
+      setWindowWidth(window.innerWidth); // 초기 너비 설정
+      window.addEventListener("resize", handleResize);
+    }
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleResize);
+      }
+    };
+  }, []);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,6 +52,11 @@ export function NameInputForm({
     }
     onSubmit(name);
   };
+
+  const placeholderText =
+    windowWidth < 768
+      ? "e.g. Hailey Morgan, さくら 田中"
+      : "e.g. Hailey Morgan, さくら 田中, ليلى الفاروق";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -45,7 +69,7 @@ export function NameInputForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setName(e.target.value)
           }
-          placeholder="e.g. John Smith"
+          placeholder={placeholderText}
           className="block w-full"
           disabled={isLoading}
         />
