@@ -1,6 +1,6 @@
 # Task ID: 14
 # Title: Implement Accessibility Features
-# Status: pending
+# Status: done
 # Dependencies: 6
 # Priority: medium
 # Description: Enhance the application's accessibility by adding proper ARIA attributes, keyboard navigation, and focus management.

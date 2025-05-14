@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Setup Next.js Project with Tailwind CSS and Shadcn UI
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Initialize a new Next.js project with App Router, configure Tailwind CSS, and set up Shadcn UI components library for the Korean Name Changer application.

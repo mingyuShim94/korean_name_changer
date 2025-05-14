@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Implement Main Page with Name Generation Flow
-# Status: pending
+# Status: done
 # Dependencies: 3, 4, 5
 # Priority: high
 # Description: Create the main page that integrates the name input form and result display, managing the state and API calls for the name generation process.

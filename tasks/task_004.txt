@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Design Result Card Component
-# Status: pending
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create a visually appealing card component to display the generated Korean name and its associated information in a structured and readable format.

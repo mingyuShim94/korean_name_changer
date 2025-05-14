@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Implement Name Input UI Component
-# Status: pending
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create a user-friendly input component that allows users to enter their foreign name, with clear instructions and a submission button.

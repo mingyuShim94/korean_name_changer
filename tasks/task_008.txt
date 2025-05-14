@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Loading and Error States
-# Status: pending
+# Status: in-progress
 # Dependencies: 6
 # Priority: medium
 # Description: Create loading indicators, error messages, and fallback states to improve user experience during API calls and error scenarios.

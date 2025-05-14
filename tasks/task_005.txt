@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Setup Gemini API Integration
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Implement the integration with Google Gemini API to generate Korean names based on user input, including proper error handling and response parsing.
