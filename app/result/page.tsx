@@ -4,7 +4,8 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { NameResultDisplay } from "@/components/name-result-display";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // KoreanNameData 인터페이스 (app/page.tsx와 동일한 구조)
 interface KoreanNameData {
@@ -66,7 +67,17 @@ function ResultContent() {
   }
 
   if (resultData) {
-    return <NameResultDisplay loading={false} data={resultData} />;
+    return (
+      <NameResultDisplay
+        loading={false}
+        data={resultData}
+        nameStyle={
+          searchParams.get("nameStyle") === "pureKorean"
+            ? "pureKorean"
+            : "hanja"
+        }
+      />
+    );
   }
 
   // 데이터는 있지만 아직 resultData가 설정되지 않았거나, dataString이 없는 초기 상태에서 error도 없는 경우
@@ -76,15 +87,27 @@ function ResultContent() {
 }
 
 export default function ResultPage() {
+  const searchParams = useSearchParams();
+  const [data, setData] = React.useState<KoreanNameData | null>(null);
+
+  React.useEffect(() => {
+    // URL 쿼리 파라미터에서 데이터 파싱
+    const dataParam = searchParams.get("data");
+    if (dataParam) {
+      try {
+        // URL-인코딩된 JSON 문자열을 디코딩하고 파싱
+        const parsedData = JSON.parse(decodeURIComponent(dataParam));
+        setData(parsedData);
+      } catch (error) {
+        console.error("Error parsing data from URL:", error);
+      }
+    }
+  }, [searchParams]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl sm:text-4xl font-bold">
-            Your Korean Name Result
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <Card className="w-full max-w-lg shadow-lg relative">
+        <CardContent className="p-6 sm:p-8">
           <React.Suspense
             fallback={
               <p className="text-center text-muted-foreground">
@@ -95,6 +118,13 @@ export default function ResultPage() {
             <ResultContent />
           </React.Suspense>
         </CardContent>
+        {data && (
+          <CardFooter className="flex p-6 pt-0 sm:p-8 sm:pt-0">
+            <Button className="w-full text-sm md:text-base text-center" asChild>
+              <Link href="/">Generate Another Name</Link>
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </main>
   );

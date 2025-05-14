@@ -15,6 +15,8 @@ import { generateKoreanNameAction } from "./actions";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine";
+// 이름 스타일 옵션 정의 추가
+type NameStyleOption = "hanja" | "pureKorean";
 
 export default function Home() {
   const router = useRouter();
@@ -22,24 +24,39 @@ export default function Home() {
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
+  // 이름 스타일 상태 추가 (기본값은 한자 이름)
+  const [selectedNameStyle, setSelectedNameStyle] =
+    React.useState<NameStyleOption>("hanja");
 
-  const handleNameSubmit = (name: string, gender: GenderOption) => {
+  const handleNameSubmit = (
+    name: string,
+    gender: GenderOption,
+    nameStyle: NameStyleOption
+  ) => {
     setError(null);
     startTransition(async () => {
       console.log(
         "Submitting with Server Action: Name:",
         name,
         "Gender:",
-        gender
+        gender,
+        "Style:",
+        nameStyle
       );
-      const result = await generateKoreanNameAction({ name, gender });
+      const result = await generateKoreanNameAction({
+        name,
+        gender,
+        nameStyle,
+      });
 
       if (result.error) {
         setError(result.error);
         console.error("Server Action Error:", result.error);
       } else if (result.data) {
         router.push(
-          `/result?data=${encodeURIComponent(JSON.stringify(result.data))}`
+          `/result?data=${encodeURIComponent(
+            JSON.stringify(result.data)
+          )}&nameStyle=${nameStyle}`
         );
       } else {
         // 예상치 못한 경우 (데이터도 없고 에러도 없는 경우)
@@ -63,17 +80,23 @@ export default function Home() {
           </CardTitle>
           <CardDescription className="text-lg sm:text-xl text-muted-foreground pt-2">
             Enter a name in any language (e.g., English, Japanese, Arabic) and
-            discover a beautiful Korean name. Choose the nuance for your Korean
-            name.
+            discover a beautiful Korean name. Choose the nuance and style for
+            your Korean name.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <NameInputForm
-            onSubmit={(name) => handleNameSubmit(name, selectedGender)}
+            onSubmit={(name) =>
+              handleNameSubmit(name, selectedGender, selectedNameStyle)
+            }
             isLoading={isPending}
             selectedGender={selectedGender}
             onGenderChange={(newGender: GenderOption) =>
               setSelectedGender(newGender)
+            }
+            selectedNameStyle={selectedNameStyle}
+            onNameStyleChange={(newStyle: NameStyleOption) =>
+              setSelectedNameStyle(newStyle)
             }
           />
 

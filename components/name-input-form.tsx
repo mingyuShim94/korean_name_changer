@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 type GenderOption = "masculine" | "feminine";
+type NameStyleOption = "hanja" | "pureKorean";
 
 interface NameInputFormProps {
   onSubmit: (name: string) => void;
   isLoading: boolean;
   selectedGender: GenderOption;
   onGenderChange: (gender: GenderOption) => void;
+  selectedNameStyle: NameStyleOption;
+  onNameStyleChange: (style: NameStyleOption) => void;
 }
 
 export function NameInputForm({
@@ -20,6 +23,8 @@ export function NameInputForm({
   isLoading,
   selectedGender,
   onGenderChange,
+  selectedNameStyle,
+  onNameStyleChange,
 }: NameInputFormProps) {
   const [name, setName] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
@@ -118,6 +123,46 @@ export function NameInputForm({
         </RadioGroup>
         <p className="text-xs md:text-sm text-muted-foreground pt-1">
           Choose the nuance for your Korean name.
+        </p>
+      </div>
+      <div className="space-y-1.5 md:space-y-2">
+        <Label className="text-sm md:text-base">Name Style</Label>
+        <RadioGroup
+          value={selectedNameStyle}
+          onValueChange={onNameStyleChange}
+          className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
+          disabled={isLoading}
+        >
+          <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
+            <RadioGroupItem
+              value="hanja"
+              id="hanja"
+              className="h-4 w-4 md:h-5 md:w-5"
+            />
+            <Label
+              htmlFor="hanja"
+              className="font-normal text-sm md:text-base cursor-pointer"
+            >
+              Hanja-based Name (한자)
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
+            <RadioGroupItem
+              value="pureKorean"
+              id="pureKorean"
+              className="h-4 w-4 md:h-5 md:w-5"
+            />
+            <Label
+              htmlFor="pureKorean"
+              className="font-normal text-sm md:text-base cursor-pointer"
+            >
+              Pure Korean Name (순우리말)
+            </Label>
+          </div>
+        </RadioGroup>
+        <p className="text-xs md:text-sm text-muted-foreground pt-1">
+          Choose between traditional Hanja-based name or modern Pure Korean
+          name.
         </p>
       </div>
       <Button

@@ -18,6 +18,8 @@ interface KoreanNameData {
 
 // 프론트엔드에서 전달받을 성별 타입
 type GenderOption = "masculine" | "feminine" | "neutral";
+// 이름 스타일 옵션 추가
+type NameStyleOption = "hanja" | "pureKorean";
 
 const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
 const API_KEY = process.env.GEMINI_API_KEY || "";
@@ -32,7 +34,7 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
-// 기본 시스템 명령어 템플릿
+// 기본 시스템 명령어 템플릿 (한자 기반)
 const baseSystemInstructionText = `You are an AI that transforms foreign names into modern, trendy Korean-style full names (family name + given name) in a culturally resonant way. Focus on creating names that would be suitable for Koreans aged 10-30. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a contemporary Korean name (2–3 syllables) with Chinese characters (Hanja).
 
 ✅ Input Handling Rules:
@@ -91,24 +93,93 @@ const baseSystemInstructionText = `You are an AI that transforms foreign names i
 }
 `;
 
-// 성별에 따른 시스템 명령어 생성 함수
-function getSystemInstruction(gender: GenderOption): string {
+// 순우리말 시스템 명령어 템플릿 추가
+const pureKoreanSystemInstructionText = `You are an AI that transforms foreign names into modern, trendy Korean-style full names (family name + given name) in a culturally resonant way. Focus on creating names that would be suitable for Koreans aged 10-30. You do not translate based on phonetics. Instead, you reinterpret the *meaning*, *imagery*, and *emotional tone* of the original name and generate a contemporary Korean name with Pure Korean words (순우리말) for the given name, while keeping a traditional Korean surname.
+
+✅ Input Handling Rules:
+- If the user provides a **full name** (e.g., Sophia Loren), analyze both the **given name** and the **family name** separately.
+  - The **given name** must inspire the **Korean Pure-Korean given name**.
+  - The **family name** must influence the choice of **Korean surname**. Do not ignore it.
+- If only a **given name** is provided, choose a Korean surname that matches the tone and concept of the generated name.
+
+✅ Output Format (JSON structured):
+
+{
+  "original_name": "[Original Foreign Name]",
+  "korean_name": "[Hangul Name] ([Romanized])",
+  "connection_explanation": "[Explain how the foreign given name inspired the Korean given name, and how the foreign family name influenced the Korean surname. Clarify both connections clearly.]",
+  "hanja_breakdown": [
+    {
+      "character": "[한글 단어]",
+      "meaning": "[Meaning of the pure Korean word and its relevance to the name.]"
+    },
+    ...
+  ],
+  "poetic_interpretation": "[A short, poetic summary of the Korean name, capturing the essence and symbolism of the original name.]"
+}
+
+✅ Style Guidelines:
+- Do not phonetically transliterate.
+- Use only pure Korean words (순우리말) for the given name.
+- The surname should still be a traditional Korean surname (e.g., 김, 이, 박, 최).
+- Always generate **contemporary Korean names** that modern young people (10-30 years old) would use.
+- Avoid overly traditional or archaic name combinations that sound outdated.
+- Choose pure Korean words with beautiful meanings that reflect the original name's essence.
+- Favor names that have natural and pleasing sounds in modern Korean.
+- Consider progressive, modern naming trends in Korea.
+- Be respectful, elegant, and thoughtful in tone — names are deeply personal.
+{GENDER_SPECIFIC_INSTRUCTION}
+✅ Example:
+
+{
+  "original_name": "Sophia Loren",
+  "korean_name": "이하늘 (Lee Haneul)",
+  "connection_explanation": "The name 'Sophia' means 'wisdom' in Greek, signifying deep understanding and insight, which inspired the Korean given name '하늘' (Haneul), meaning 'sky' in pure Korean, representing vast knowledge and infinite potential. The surname 'Loren' is associated with timeless elegance, which matches well with the common Korean surname '이' (Lee), which is both contemporary and carries traditional significance.",
+  "hanja_breakdown": [
+    {
+      "character": "이",
+      "meaning": "A modern and widely used Korean surname, traditionally written as 李 (plum tree), representing strength with elegance."
+    },
+    {
+      "character": "하늘",
+      "meaning": "Sky or heaven in pure Korean - symbolizes boundless wisdom, clarity and broad perspective, reflecting the meaning of 'Sophia'"
+    }
+  ],
+  "poetic_interpretation": "'이하늘' captures the essence of limitless wisdom and beauty. The pure Korean name creates a sense of natural harmony, connecting the person to Korean cultural roots while embracing a fresh, modern identity."
+}
+`;
+
+// 성별에 따른 시스템 명령어 생성 함수 (스타일 옵션 추가)
+function getSystemInstruction(
+  gender: GenderOption,
+  style: NameStyleOption = "hanja"
+): string {
   let genderInstruction = "";
   if (gender === "masculine") {
     genderInstruction =
-      "\n- Generate a name that has a **masculine** nuance, suitable for a boy. Consider Hanja and sounds that evoke strength, wisdom, or a pioneering spirit.";
+      "\n- Generate a name that has a **masculine** nuance, suitable for a boy. Consider " +
+      (style === "hanja" ? "Hanja" : "pure Korean words") +
+      " and sounds that evoke strength, wisdom, or a pioneering spirit.";
   } else if (gender === "feminine") {
     genderInstruction =
-      "\n- Generate a name that has a **feminine** nuance, suitable for a girl. Consider Hanja and sounds that evoke beauty, grace, or a gentle nature.";
+      "\n- Generate a name that has a **feminine** nuance, suitable for a girl. Consider " +
+      (style === "hanja" ? "Hanja" : "pure Korean words") +
+      " and sounds that evoke beauty, grace, or a gentle nature.";
   } else {
     // neutral or unspecified
     genderInstruction =
-      "\n- Generate a name that has a **neutral** nuance, suitable for any gender. Focus on balance and universal appeal in Hanja and sound.";
+      "\n- Generate a name that has a **neutral** nuance, suitable for any gender. Focus on balance and universal appeal in " +
+      (style === "hanja" ? "Hanja" : "pure Korean words") +
+      " and sound.";
   }
-  return baseSystemInstructionText.replace(
-    "{GENDER_SPECIFIC_INSTRUCTION}",
-    genderInstruction
-  );
+
+  // 스타일에 따라 적절한 베이스 텍스트 선택
+  const baseText =
+    style === "hanja"
+      ? baseSystemInstructionText
+      : pureKoreanSystemInstructionText;
+
+  return baseText.replace("{GENDER_SPECIFIC_INSTRUCTION}", genderInstruction);
 }
 
 // Generation parameters (temperature, topK 등)
@@ -135,6 +206,7 @@ export async function POST(request: NextRequest) {
 
   let foreignName: string | undefined;
   let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
+  let nameStyle: NameStyleOption = "hanja"; // 기본값을 hanja로 설정
 
   try {
     // Edge Runtime에서 안정적으로 실행되도록 요청 처리 최적화
@@ -146,6 +218,11 @@ export async function POST(request: NextRequest) {
       ["masculine", "feminine", "neutral"].includes(body.gender)
     ) {
       gender = body.gender as GenderOption;
+    }
+
+    // nameStyle 값 유효성 검사 및 할당
+    if (body?.nameStyle && ["hanja", "pureKorean"].includes(body.nameStyle)) {
+      nameStyle = body.nameStyle as NameStyleOption;
     }
 
     if (
@@ -160,7 +237,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userMessageParts = [{ text: foreignName }];
-    const dynamicSystemInstruction = getSystemInstruction(gender);
+    const dynamicSystemInstruction = getSystemInstruction(gender, nameStyle);
 
     // API 호출 시 동적 시스템 명령어 사용
     const result = await genAI.models.generateContent({
@@ -222,7 +299,7 @@ export async function POST(request: NextRequest) {
 
     // 콘솔에 더 자세한 오류 정보 로깅
     console.error(
-      `Error in POST /api/generate-name for input: '${foreignName}', gender: '${gender}':`, // 요청 값 로깅
+      `Error in POST /api/generate-name for input: '${foreignName}', gender: '${gender}', style: '${nameStyle}':`, // 요청 값 로깅
       errorDetails,
       error instanceof Error ? error.stack : "No stack trace available", // 에러 스택 로깅
       error // 전체 에러 객체 로깅

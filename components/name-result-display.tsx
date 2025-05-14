@@ -3,6 +3,9 @@
 import * as React from "react";
 import { Loader2 } from "lucide-react";
 
+// 이름 스타일 옵션 추가
+type NameStyleOption = "hanja" | "pureKorean";
+
 /**
  * API로부터 받을 것으로 예상되는 한국 이름 데이터의 구조를 정의하는 인터페이스입니다.
  * (Gemini API 응답 형식 기반)
@@ -22,17 +25,23 @@ interface KoreanNameData {
  * NameResultDisplay 컴포넌트가 받는 props의 타입을 정의하는 인터페이스입니다.
  * @param data - 표시할 한국 이름 데이터 또는 null.
  * @param loading - 데이터 로딩 상태 (true: 로딩 중, false: 로딩 완료).
+ * @param nameStyle - 선택된 이름 스타일 (한자 또는 순우리말).
  */
 interface NameResultDisplayProps {
   data: KoreanNameData | null;
   loading: boolean;
+  nameStyle: NameStyleOption;
 }
 
 /**
  * 변환된 한국 이름과 관련 정보를 표시하는 컴포넌트입니다.
  * 로딩 상태 및 데이터 유무에 따라 다른 UI를 렌더링합니다.
  */
-export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
+export function NameResultDisplay({
+  data,
+  loading,
+  nameStyle,
+}: NameResultDisplayProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center space-y-3 py-6 md:py-8">
@@ -66,7 +75,9 @@ export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
 
       <div className="space-y-1">
         <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
-          Korean Name (Hangeul, Hanja, Romanized)
+          {nameStyle === "hanja"
+            ? "Korean Name (Hangeul, Hanja, Romanized)"
+            : "Korean Name (Hangeul, Romanized)"}
         </h3>
         <p className="text-sm md:text-base text-foreground lg:text-lg">
           {data.korean_name}
@@ -85,7 +96,9 @@ export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
       {data.hanja_breakdown && data.hanja_breakdown.length > 0 && (
         <div className="space-y-2.5">
           <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
-            Hanja Breakdown
+            {nameStyle === "hanja"
+              ? "Hanja Breakdown"
+              : "Pure Korean Word Meaning"}
           </h3>
           <div className="space-y-2">
             {data.hanja_breakdown.map((item, index) => (
