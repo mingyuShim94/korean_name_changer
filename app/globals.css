@@ -122,3 +122,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .text-responsive {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
+  }
+}

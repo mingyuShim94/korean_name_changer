@@ -35,9 +35,9 @@ interface NameResultDisplayProps {
 export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-3 py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col items-center justify-center space-y-3 py-6 md:py-8">
+        <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-primary" />
+        <p className="text-xs md:text-sm text-muted-foreground">
           Generating your Korean name...
         </p>
       </div>
@@ -50,53 +50,53 @@ export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
 
   // 데이터가 성공적으로 로드되면 결과를 표시합니다.
   return (
-    <div className="w-full space-y-6">
-      <h2 className="text-center text-xl font-semibold text-foreground sm:text-2xl">
+    <div className="w-full space-y-4 md:space-y-6">
+      <h2 className="text-center text-lg md:text-xl font-semibold text-foreground lg:text-2xl">
         ✨ Generated Korean Name ✨
       </h2>
 
       <div className="space-y-1">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
           Original Name
         </h3>
-        <p className="text-base text-foreground sm:text-lg">
+        <p className="text-sm md:text-base text-foreground lg:text-lg">
           {data.original_name}
         </p>
       </div>
 
       <div className="space-y-1">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
           Korean Name (Hangeul, Hanja, Romanized)
         </h3>
-        <p className="text-base text-foreground sm:text-lg">
+        <p className="text-sm md:text-base text-foreground lg:text-lg">
           {data.korean_name}
         </p>
       </div>
 
       <div className="space-y-1">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
           Meaning and Connection in the Name
         </h3>
-        <p className="whitespace-pre-wrap text-base text-foreground sm:text-lg">
+        <p className="whitespace-pre-wrap text-sm md:text-base text-foreground lg:text-lg">
           {data.connection_explanation}
         </p>
       </div>
 
       {data.hanja_breakdown && data.hanja_breakdown.length > 0 && (
-        <div className="space-y-2.5">
-          <h3 className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
             Hanja Breakdown
           </h3>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
             {data.hanja_breakdown.map((item, index) => (
               <div
                 key={index}
-                className="rounded-md border bg-muted/30 p-3 dark:border-neutral-700/60"
+                className="rounded-md border bg-muted/30 p-2 md:p-3 text-center"
               >
-                <p className="font-semibold text-primary sm:text-base">
+                <p className="text-xl md:text-2xl mb-1 md:mb-2 font-semibold text-primary">
                   {item.character}
                 </p>
-                <p className="text-sm text-foreground/90 sm:text-base">
+                <p className="text-xs md:text-sm text-foreground/90">
                   {item.meaning}
                 </p>
               </div>
@@ -107,10 +107,10 @@ export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
 
       {data.poetic_interpretation && (
         <div className="space-y-1">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
             Poetic Beauty
           </h3>
-          <p className="whitespace-pre-wrap text-base text-foreground sm:text-lg">
+          <p className="whitespace-pre-wrap text-sm md:text-base text-foreground lg:text-lg">
             {data.poetic_interpretation}
           </p>
         </div>

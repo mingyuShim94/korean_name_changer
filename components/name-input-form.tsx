@@ -59,9 +59,11 @@ export function NameInputForm({
       : "e.g. Hailey Morgan, さくら 田中, ليلى الفاروق";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-1.5">
-        <Label htmlFor="foreign-name">Your Name</Label>
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+      <div className="space-y-1 md:space-y-1.5">
+        <Label htmlFor="foreign-name" className="text-sm md:text-base">
+          Your Name
+        </Label>
         <Input
           type="text"
           id="foreign-name"
@@ -70,39 +72,59 @@ export function NameInputForm({
             setName(e.target.value)
           }
           placeholder={placeholderText}
-          className="block w-full"
+          className="block w-full h-10 md:h-11 px-3 md:px-4 text-sm md:text-base"
           disabled={isLoading}
         />
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 pt-1">{error}</p>
+          <p className="text-xs md:text-sm text-red-600 dark:text-red-400 pt-1">
+            {error}
+          </p>
         )}
       </div>
-      <div className="space-y-2">
-        <Label>Name Nuance</Label>
+      <div className="space-y-1.5 md:space-y-2">
+        <Label className="text-sm md:text-base">Name Nuance</Label>
         <RadioGroup
           value={selectedGender}
           onValueChange={onGenderChange}
           className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
           disabled={isLoading}
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="masculine" id="masculine" />
-            <Label htmlFor="masculine" className="font-normal">
+          <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
+            <RadioGroupItem
+              value="masculine"
+              id="masculine"
+              className="h-4 w-4 md:h-5 md:w-5"
+            />
+            <Label
+              htmlFor="masculine"
+              className="font-normal text-sm md:text-base cursor-pointer"
+            >
               Masculine
             </Label>
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="feminine" id="feminine" />
-            <Label htmlFor="feminine" className="font-normal">
+          <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
+            <RadioGroupItem
+              value="feminine"
+              id="feminine"
+              className="h-4 w-4 md:h-5 md:w-5"
+            />
+            <Label
+              htmlFor="feminine"
+              className="font-normal text-sm md:text-base cursor-pointer"
+            >
               Feminine
             </Label>
           </div>
         </RadioGroup>
-        <p className="text-xs text-muted-foreground pt-1">
+        <p className="text-xs md:text-sm text-muted-foreground pt-1">
           Choose the nuance for your Korean name.
         </p>
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button
+        type="submit"
+        className="w-full h-10 md:h-11 text-sm md:text-base active:scale-[0.98] transition-transform"
+        disabled={isLoading}
+      >
         {isLoading ? "Generating..." : "Generate Korean Name"}
       </Button>
     </form>

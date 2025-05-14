@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "Korean Name Changer",
   description:
     "Korean Name Changer is a poetic naming web service that meaningfully reinterprets foreign names into Korean-style names. This service aims to help users with foreign names explore a new identity by connecting the meaning and sentiment of their names with the beauty of Korean culture.",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 export default function RootLayout({
@@ -26,7 +27,7 @@ export default function RootLayout({
       <body className="flex flex-col h-full">
         <GoogleAnalytics />
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="flex-grow container mx-auto py-6 px-4 md:py-10 md:px-6 max-w-4xl">
           {children}
         </main>
         <Footer />
