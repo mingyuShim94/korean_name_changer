@@ -1,6 +1,7 @@
 "use server"; // runtime = "edge"
 
 import { GoogleGenAI } from "@google/genai";
+import { headers } from "next/headers"; // headers 함수 임포트
 
 // KoreanNameData 인터페이스 (API Route 및 page.tsx와 동일한 구조 유지)
 interface KoreanNameData {
@@ -94,6 +95,7 @@ export async function generateKoreanNameAction(
   params: GenerateNameParams
 ): Promise<ActionResult> {
   console.log("Server Action 실행 (Edge Runtime): 이름 생성 요청", params);
+  let baseUrl = "";
 
   try {
     // 1. API를 직접 호출하는 방식 - Edge 환경에서 최적화
@@ -147,18 +149,18 @@ export async function generateKoreanNameAction(
     // 2. API 라우트를 통한 호출 (폴백 방식)
     console.log("API 라우트 방식으로 호출 시도");
 
-    // baseUrl 설정 방식 개선 - 상대 경로 사용
-    // const baseUrl =
-    //   process.env.NEXT_PUBLIC_APP_URL ||
-    //   (process.env.VERCEL_URL
-    //     ? `https://${process.env.VERCEL_URL}`
-    //     : "http://localhost:3000");
+    const heads = await headers();
+    const host = heads.get("host");
+    const protocolHeader = heads.get("x-forwarded-proto");
+    const protocol =
+      protocolHeader ||
+      (process.env.NODE_ENV === "development" ? "http" : "https");
+    baseUrl = `${protocol}://${host}`;
 
-    // console.log("Server Action 실행: baseUrl =", baseUrl);
+    console.log("Server Action 실행: baseUrl =", baseUrl);
 
-    console.log("Server Action 실행: 상대 경로 사용");
-
-    const response = await fetch(`/api/generate-name`, {
+    const response = await fetch(`${baseUrl}/api/generate-name`, {
+      // 절대 URL 사용
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -182,6 +184,24 @@ export async function generateKoreanNameAction(
   } catch (err) {
     console.error("이름 생성 중 오류 발생:", err);
     if (err instanceof Error) {
+      // err 객체가 'cause' 속성을 가질 수 있음을 타입으로 명시
+      const errorWithCause = err as Error & { cause?: unknown };
+      // cause가 객체이고 message 속성을 가지는지 확인
+      if (
+        errorWithCause.cause &&
+        typeof errorWithCause.cause === "object" &&
+        "message" in errorWithCause.cause &&
+        typeof (errorWithCause.cause as { message: unknown }).message ===
+          "string" &&
+        (errorWithCause.cause as { message: string }).message.includes(
+          "Invalid URL"
+        )
+      ) {
+        console.error("Invalid URL 오류 발생:", err);
+        return {
+          error: `Failed to fetch API: Invalid URL. Attempted URL was ${baseUrl}/api/generate-name`,
+        };
+      }
       return { error: err.message };
     }
     return { error: "An unknown error occurred during name generation." };
