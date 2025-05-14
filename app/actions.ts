@@ -147,14 +147,13 @@ export async function generateKoreanNameAction(
     // 2. API 라우트를 통한 호출 (폴백 방식)
     console.log("API 라우트 방식으로 호출 시도");
 
-    // baseUrl 설정 방식 개선
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
+    // baseUrl 설정 방식 개선 - 상대 경로 사용
+    const baseUrl = ""; // 빈 문자열을 사용하여 상대 경로로 API 호출
 
-    console.log("Server Action 실행: baseUrl =", baseUrl);
+    console.log(
+      "Server Action 실행: baseUrl =",
+      baseUrl || "현재 도메인(상대 경로)"
+    );
 
     const response = await fetch(`${baseUrl}/api/generate-name`, {
       method: "POST",
