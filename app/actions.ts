@@ -234,8 +234,18 @@ export async function generateKoreanNameAction(
         errorDetails = (errorWithCause.cause as { message: string }).message;
       }
     }
+    const finalErrorResponse = {
+      error: "API processing error",
+      message: errorMessage,
+      serverErrorDetails: errorDetails,
+    };
+    console.error(
+      "[API Error] Final error response being sent to client:",
+      JSON.stringify(finalErrorResponse)
+    );
+
     return {
-      error: "Action Error",
+      error: "API processing error",
       message: errorMessage,
       details: errorDetails,
     };
