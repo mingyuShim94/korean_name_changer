@@ -83,20 +83,20 @@ export function NameResultDisplay({ data, loading }: NameResultDisplayProps) {
       </div>
 
       {data.hanja_breakdown && data.hanja_breakdown.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <h3 className="text-xs md:text-sm font-medium text-muted-foreground">
             Hanja Breakdown
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="space-y-2">
             {data.hanja_breakdown.map((item, index) => (
               <div
                 key={index}
-                className="rounded-md border bg-muted/30 p-2 md:p-3 text-center"
+                className="rounded-md border bg-muted/30 p-3 dark:border-neutral-700/60"
               >
-                <p className="text-xl md:text-2xl mb-1 md:mb-2 font-semibold text-primary">
+                <p className="font-semibold text-primary sm:text-base">
                   {item.character}
                 </p>
-                <p className="text-xs md:text-sm text-foreground/90">
+                <p className="text-sm text-foreground/90 sm:text-base">
                   {item.meaning}
                 </p>
               </div>
