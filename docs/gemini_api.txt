@@ -70,7 +70,7 @@ async function main() {
         }
     ],
   };
-  const model = 'gemini-2.0-flash';
+  const model = 'gemini-2.5-flash-preview-04-17';
   const contents = [
     {
       role: 'user',
