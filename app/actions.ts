@@ -147,8 +147,12 @@ export async function generateKoreanNameAction(
     // 2. API 라우트를 통한 호출 (폴백 방식)
     console.log("API 라우트 방식으로 호출 시도");
 
-    // baseUrl을 https://mykoreanname.me 로 하드코딩
-    const baseUrl = "https://mykoreanname.me";
+    // baseUrl 설정 방식 개선
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
     console.log("Server Action 실행: baseUrl =", baseUrl);
 
