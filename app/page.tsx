@@ -22,13 +22,6 @@ export default function Home() {
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
-  const [showDomainNotice, setShowDomainNotice] = React.useState(false);
-
-  React.useEffect(() => {
-    if (window.location.hostname === "mykoreanname.me") {
-      setShowDomainNotice(true);
-    }
-  }, []);
 
   const handleNameSubmit = (name: string, gender: GenderOption) => {
     setError(null);
@@ -63,33 +56,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-fit sm:min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
-      {showDomainNotice && (
-        <div className="w-full max-w-2xl mb-6 p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-500/50 rounded-md text-yellow-700 dark:text-yellow-200">
-          <p className="text-sm">
-            The domain{" "}
-            <code className="font-semibold">https://mykoreanname.me/</code> is
-            currently undergoing bug fixes. Please use{" "}
-            <a
-              href="https://korean-name-changer.pages.dev/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold underline hover:text-yellow-800 dark:hover:text-yellow-100"
-            >
-              https://korean-name-changer.pages.dev/
-            </a>{" "}
-            for testing.
-          </p>
-        </div>
-      )}
-      <div className="w-full max-w-2xl mb-6 p-4 bg-orange-100 dark:bg-orange-900/30 border border-orange-400 dark:border-orange-500/50 rounded-md text-orange-700 dark:text-orange-200">
-        <p className="text-sm">
-          Additionally, I&apos;m currently unable to reply to messages on Reddit
-          as my account has been temporarily banned for 3 days. This is due to
-          sending too many links to the Korean name changing site, which was
-          flagged as spam. I apologize for any inconvenience and appreciate your
-          understanding.
-        </p>
-      </div>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl sm:text-4xl font-bold">
