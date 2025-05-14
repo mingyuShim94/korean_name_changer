@@ -1,0 +1,79 @@
+# Task ID: 4
+# Title: Design Result Card Component
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create a visually appealing card component to display the generated Korean name and its associated information in a structured and readable format.
+# Details:
+1. Create a ResultCard component in the components directory:
+```tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
+interface HanjaBreakdown {
+  character: string;
+  meaning: string;
+}
+
+interface KoreanNameResult {
+  original_name: string;
+  korean_name: string;
+  connection_explanation: string;
+  hanja_breakdown: HanjaBreakdown[];
+  poetic_interpretation: string;
+}
+
+interface ResultCardProps {
+  result: KoreanNameResult;
+}
+
+export function ResultCard({ result }: ResultCardProps) {
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-center">{result.korean_name}</CardTitle>
+        <CardDescription className="text-center">Korean name for {result.original_name}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Connection</h3>
+          <p>{result.connection_explanation}</p>
+        </div>
+        
+        <Separator />
+        
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Hanja Characters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {result.hanja_breakdown.map((hanja, index) => (
+              <div key={index} className="border rounded-lg p-4 text-center">
+                <div className="text-3xl mb-2">{hanja.character}</div>
+                <p className="text-sm">{hanja.meaning}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <Separator />
+        
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Poetic Interpretation</h3>
+          <p className="italic">{result.poetic_interpretation}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+2. Implement responsive design for different screen sizes
+3. Add subtle animations or transitions for better user experience
+4. Ensure proper spacing and typography for readability
+5. Use appropriate color schemes and visual hierarchy to highlight important information
+
+# Test Strategy:
+1. Test rendering with sample data matching the expected JSON structure
+2. Verify all sections (connection explanation, hanja breakdown, poetic interpretation) display correctly
+3. Check responsive design on different screen sizes
+4. Ensure proper handling of long text content
+5. Verify accessibility features (color contrast, semantic HTML)
+6. Test with edge cases (missing fields, extra long content)

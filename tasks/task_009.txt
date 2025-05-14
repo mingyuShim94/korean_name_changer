@@ -1,0 +1,74 @@
+# Task ID: 9
+# Title: Implement Responsive Design and Mobile Optimization
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Ensure the application is fully responsive and provides an optimal user experience across different devices and screen sizes.
+# Details:
+1. Review and update all components for responsive design:
+   - Use Tailwind's responsive classes (sm:, md:, lg:, etc.)
+   - Ensure text sizes are appropriate for different screens
+   - Adjust spacing and layout for mobile devices
+
+2. Update the main layout for better mobile experience:
+```tsx
+// In layout.tsx or page.tsx
+<div className="container mx-auto py-6 px-4 md:py-10 md:px-6 max-w-4xl">
+  {/* Content */}
+</div>
+```
+
+3. Optimize the ResultCard component for mobile:
+```tsx
+// Update the Hanja breakdown section
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+  {result.hanja_breakdown.map((hanja, index) => (
+    <div key={index} className="border rounded-lg p-3 md:p-4 text-center">
+      <div className="text-2xl md:text-3xl mb-1 md:mb-2">{hanja.character}</div>
+      <p className="text-xs md:text-sm">{hanja.meaning}</p>
+    </div>
+  ))}
+</div>
+```
+
+4. Add a responsive typography utility in styles/globals.css:
+```css
+@layer utilities {
+  .text-responsive {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
+  }
+}
+```
+
+5. Implement touch-friendly interactions for mobile users:
+```tsx
+// Example for history items
+<div 
+  key={index} 
+  className="p-3 border rounded-md cursor-pointer hover:bg-accent active:bg-accent/90 transition-colors"
+  onClick={() => onSelect(item)}
+>
+  {/* Content */}
+</div>
+```
+
+6. Add meta viewport tag in layout.tsx:
+```tsx
+export const metadata = {
+  title: 'Korean Name Changer',
+  description: 'Discover your poetic Korean name based on the meaning of your original name',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+};
+```
+
+7. Test and optimize for various device sizes using browser dev tools
+
+# Test Strategy:
+1. Test the application on various device sizes (mobile, tablet, desktop)
+2. Verify text remains readable on small screens
+3. Check that interactive elements are appropriately sized for touch input
+4. Test navigation and user flows on mobile devices
+5. Verify that content doesn't overflow or cause horizontal scrolling
+6. Test with different orientations (portrait/landscape)
+7. Verify loading and error states display properly on mobile
+8. Use Chrome DevTools device emulation for testing different devices

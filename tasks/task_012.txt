@@ -1,0 +1,253 @@
+# Task ID: 12
+# Title: Implement Analytics and Logging
+# Status: pending
+# Dependencies: 6
+# Priority: low
+# Description: Add basic analytics tracking and error logging to monitor application usage and identify issues in production.
+# Details:
+1. Create a simple analytics service in lib/analytics.ts:
+```typescript
+// Simple analytics service
+
+// Types for analytics events
+type EventName = 'page_view' | 'name_generated' | 'error' | 'share';
+
+interface AnalyticsEvent {
+  name: EventName;
+  properties?: Record<string, any>;
+  timestamp?: number;
+}
+
+// In a real app, you would integrate with a service like Google Analytics,
+// Mixpanel, Posthog, etc. This is a simple implementation for demonstration.
+class AnalyticsService {
+  private enabled: boolean;
+  
+  constructor() {
+    // Only enable in production or if explicitly enabled
+    this.enabled = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
+  }
+  
+  // Track an event
+  track(event: AnalyticsEvent): void {
+    if (!this.enabled) return;
+    
+    const eventWithTimestamp = {
+      ...event,
+      timestamp: event.timestamp || Date.now(),
+    };
+    
+    // In a real implementation, send to analytics service
+    console.log('[Analytics]', eventWithTimestamp);
+    
+    // Example implementation for sending to a backend endpoint
+    try {
+      if (typeof window !== 'undefined') {
+        // Use sendBeacon for better reliability when available
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(
+            '/api/analytics',
+            JSON.stringify(eventWithTimestamp)
+          );
+        } else {
+          // Fallback to fetch
+          fetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventWithTimestamp),
+            // Use keepalive to ensure the request completes even if the page is unloading
+            keepalive: true,
+          }).catch(err => console.error('Analytics error:', err));
+        }
+      }
+    } catch (error) {
+      // Silently fail for analytics errors
+      console.error('Failed to send analytics:', error);
+    }
+  }
+  
+  // Track page view
+  trackPageView(path?: string): void {
+    const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '');
+    
+    this.track({
+      name: 'page_view',
+      properties: {
+        path: currentPath,
+        referrer: typeof document !== 'undefined' ? document.referrer : '',
+      },
+    });
+  }
+  
+  // Track name generation
+  trackNameGenerated(originalName: string, success: boolean): void {
+    this.track({
+      name: 'name_generated',
+      properties: {
+        original_name: originalName,
+        success,
+      },
+    });
+  }
+  
+  // Track error
+  trackError(errorMessage: string, context?: Record<string, any>): void {
+    this.track({
+      name: 'error',
+      properties: {
+        error_message: errorMessage,
+        ...context,
+      },
+    });
+  }
+  
+  // Track share
+  trackShare(method: string): void {
+    this.track({
+      name: 'share',
+      properties: {
+        method,
+      },
+    });
+  }
+}
+
+// Create a singleton instance
+export const analytics = new AnalyticsService();
+```
+
+2. Create an API route for analytics in app/api/analytics/route.ts:
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    // In a real implementation, you would process and store the analytics data
+    // or forward it to an analytics service
+    console.log('[Server Analytics]', body);
+    
+    // For now, just log it and return success
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error processing analytics:', error);
+    return NextResponse.json({ success: false }, { status: 500 });
+  }
+}
+```
+
+3. Create an error logging service in lib/error-logger.ts:
+```typescript
+import { analytics } from './analytics';
+
+// Simple error logging service
+class ErrorLogger {
+  private enabled: boolean;
+  
+  constructor() {
+    // Enable in all environments but can be disabled
+    this.enabled = process.env.NEXT_PUBLIC_DISABLE_ERROR_LOGGING !== 'true';
+  }
+  
+  // Log an error
+  logError(error: Error | string, context?: Record<string, any>): void {
+    if (!this.enabled) return;
+    
+    const errorMessage = error instanceof Error ? error.message : error;
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Log to console in all environments
+    console.error('[Error]', errorMessage, context, errorStack);
+    
+    // Track in analytics
+    analytics.trackError(errorMessage, {
+      ...context,
+      stack: errorStack,
+    });
+    
+    // In a real app, you might send to a service like Sentry, LogRocket, etc.
+  }
+}
+
+// Create a singleton instance
+export const errorLogger = new ErrorLogger();
+```
+
+4. Update the main page to use analytics and error logging:
+```tsx
+// Add to imports
+import { useEffect } from 'react';
+import { analytics } from '@/lib/analytics';
+import { errorLogger } from '@/lib/error-logger';
+
+// Inside the HomePage component
+
+// Track page view on mount
+useEffect(() => {
+  analytics.trackPageView();
+}, []);
+
+// Update handleSubmit to track name generation
+const handleSubmit = async (name: string) => {
+  setIsLoading(true);
+  setError(null);
+  try {
+    const response = await fetch('/api/generate-name', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate name');
+    }
+
+    const data = await response.json();
+    setResult(data);
+    addToHistory(data);
+    
+    // Track successful name generation
+    analytics.trackNameGenerated(name, true);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate Korean name';
+    setError(errorMessage);
+    
+    // Log the error
+    errorLogger.logError(error, { name, context: 'name_generation' });
+    
+    // Track failed name generation
+    analytics.trackNameGenerated(name, false);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Update share functionality to track sharing
+// In ShareButton component:
+const handleCopy = async () => {
+  try {
+    await navigator.clipboard.writeText(shareText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    
+    // Track share via copy
+    analytics.trackShare('copy');
+  } catch (error) {
+    // ...
+  }
+};
+```
+
+# Test Strategy:
+1. Verify analytics events are logged to the console in development
+2. Test that page view events are tracked on initial load
+3. Verify name generation events are tracked with success/failure status
+4. Test error logging with simulated errors
+5. Check that share events are tracked correctly
+6. Verify the analytics API endpoint receives and processes events
+7. Test that analytics and logging don't affect the user experience
+8. Verify that analytics are only enabled in the appropriate environments

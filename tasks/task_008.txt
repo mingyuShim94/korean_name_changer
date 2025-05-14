@@ -1,0 +1,121 @@
+# Task ID: 8
+# Title: Implement Loading and Error States
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Create loading indicators, error messages, and fallback states to improve user experience during API calls and error scenarios.
+# Details:
+1. Create a LoadingSpinner component in components/loading-spinner.tsx:
+```tsx
+export function LoadingSpinner({ className = '' }: { className?: string }) {
+  return (
+    <div className={`flex justify-center items-center ${className}`}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+```
+2. Create an ErrorMessage component in components/error-message.tsx:
+```tsx
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+interface ErrorMessageProps {
+  title?: string;
+  message: string;
+}
+
+export function ErrorMessage({ title = 'Error', message }: ErrorMessageProps) {
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
+  );
+}
+```
+3. Create a LoadingCard component for the name generation process:
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/loading-spinner';
+
+export function LoadingCard() {
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-center">Generating Your Korean Name</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center py-10">
+        <LoadingSpinner className="mb-4" />
+        <p className="text-center text-muted-foreground">
+          Our AI is crafting a meaningful Korean name based on your original name's essence...
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+```
+4. Update the main page to use these components:
+```tsx
+// Add to imports
+import { LoadingCard } from '@/components/loading-card';
+import { ErrorMessage } from '@/components/error-message';
+
+// Add state for error handling
+const [error, setError] = useState<string | null>(null);
+
+// Update handleSubmit for error handling
+const handleSubmit = async (name: string) => {
+  setIsLoading(true);
+  setError(null); // Reset error state
+  try {
+    // ... existing code ...
+  } catch (error) {
+    console.error('Error generating name:', error);
+    setError(error instanceof Error ? error.message : 'Failed to generate Korean name');
+    // Remove toast if using ErrorMessage component instead
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Update the JSX to show loading and error states
+return (
+  <div className="container mx-auto py-10 px-4 max-w-4xl">
+    {/* ... existing header ... */}
+    
+    {error && (
+      <div className="mb-6">
+        <ErrorMessage message={error} />
+      </div>
+    )}
+    
+    {isLoading ? (
+      <LoadingCard />
+    ) : !result ? (
+      <NameInputForm onSubmit={handleSubmit} isLoading={isLoading} />
+    ) : (
+      <div className="space-y-6">
+        <ResultCard result={result} />
+        <div className="flex justify-center">
+          <Button onClick={handleReset} variant="outline">
+            Try Another Name
+          </Button>
+        </div>
+      </div>
+    )}
+    
+    {/* ... history section ... */}
+  </div>
+);
+```
+
+# Test Strategy:
+1. Test loading states appear during API calls
+2. Verify error messages display correctly when API calls fail
+3. Test error handling with various error scenarios (network errors, API errors, etc.)
+4. Check that error states are properly reset when retrying
+5. Verify loading indicators are accessible and provide good user feedback
+6. Test the transition between loading, error, and success states
+7. Verify error messages are clear and actionable for users
