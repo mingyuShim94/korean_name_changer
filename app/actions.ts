@@ -1,7 +1,6 @@
 "use server"; // runtime = "edge"
 
 import { GoogleGenAI } from "@google/genai";
-import { headers } from "next/headers"; // headers 함수 임포트
 
 // KoreanNameData 인터페이스 (API Route 및 page.tsx와 동일한 구조 유지)
 interface KoreanNameData {
@@ -23,8 +22,6 @@ interface GenerateNameParams {
 interface ActionResult {
   data?: KoreanNameData;
   error?: string;
-  message?: string;
-  details?: string;
 }
 
 // 직접 호출을 위한 추가 상수 및 함수
@@ -97,13 +94,13 @@ export async function generateKoreanNameAction(
   params: GenerateNameParams
 ): Promise<ActionResult> {
   console.log("Server Action 실행 (Edge Runtime): 이름 생성 요청", params);
-  let baseUrl = "";
 
   try {
     // 1. API를 직접 호출하는 방식 - Edge 환경에서 최적화
     if (API_KEY) {
       try {
         console.log("Gemini API 직접 호출 시도 (Edge Runtime)");
+
         const { name, gender } = params;
         const userMessageParts = [{ text: name }];
         const dynamicSystemInstruction = getSystemInstruction(gender);
@@ -122,8 +119,11 @@ export async function generateKoreanNameAction(
         if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
           responseText = result.candidates[0].content.parts[0].text;
           console.log("Gemini API 직접 호출 성공");
+
           try {
             const jsonData = JSON.parse(responseText) as KoreanNameData;
+
+            // 응답 데이터 구조 검증
             if (
               jsonData.original_name &&
               jsonData.korean_name &&
@@ -133,42 +133,28 @@ export async function generateKoreanNameAction(
             ) {
               return { data: jsonData };
             }
-            console.warn(
-              "[Action] Direct API call: Malformed JSON data from Gemini.",
-              responseText
-            );
-            // Malformed JSON이면 폴백 로직으로 갈 수 있도록 여기서 에러를 던지거나 처리하지 않고 넘어감
           } catch (parseError) {
-            console.error(
-              "[Action] Direct API call: JSON parsing error.",
-              parseError,
-              responseText
-            );
-            // 파싱 오류 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
+            console.error("JSON 파싱 오류:", parseError);
+            // 파싱 오류 시 API 라우트 방식으로 폴백
           }
-        } else {
-          console.warn("[Action] Direct API call: Empty response from Gemini.");
-          // 빈 응답 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
         }
       } catch (directApiError) {
-        console.error("[Action] Direct API call: Failed.", directApiError);
-        // 직접 API 호출 실패 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
+        console.error("Gemini API 직접 호출 실패:", directApiError);
+        // 오류 발생 시 API 라우트 방식으로 폴백
       }
     }
-    // 만약 직접 API 호출이 성공해서 여기서 return { data: jsonData } 가 실행됐다면, 아래 폴백 로직은 실행되지 않습니다.
 
     // 2. API 라우트를 통한 호출 (폴백 방식)
-    console.log("API 라우트 방식으로 호출 시도 (폴백)");
+    console.log("API 라우트 방식으로 호출 시도");
 
-    const heads = await headers();
-    const host = heads.get("host");
-    const protocolHeader = heads.get("x-forwarded-proto");
-    const protocol =
-      protocolHeader ||
-      (process.env.NODE_ENV === "development" ? "http" : "https");
-    baseUrl = `${protocol}://${host}`;
+    // baseUrl 설정 방식 개선
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
-    console.log("Server Action 실행 (폴백): baseUrl =", baseUrl);
+    console.log("Server Action 실행: baseUrl =", baseUrl);
 
     const response = await fetch(`${baseUrl}/api/generate-name`, {
       method: "POST",
@@ -178,76 +164,24 @@ export async function generateKoreanNameAction(
       body: JSON.stringify(params),
     });
 
-    console.log("API 응답 상태 (폴백):", response.status);
+    console.log("API 응답 상태:", response.status);
 
     if (!response.ok) {
-      // API 라우트가 JSON 에러를 반환할 것으로 예상
-      const errorData = await response.json().catch(() => {
-        // 만약 response.json() 파싱도 실패하면 (정말 예외적인 HTML 오류 페이지 등)
-        console.error(
-          "[Action] Fallback API call: Failed to parse error response as JSON. Status:",
-          response.status
-        );
-        return {
-          error: "API Error",
-          message: `API request failed with status ${response.status}. Response was not valid JSON.`,
-          serverErrorDetails: "The server returned a non-JSON error response.",
-        };
-      });
-      console.error(
-        "[Action] Fallback API call: Error response from API route.",
-        errorData
-      );
-      // route.ts 에서 보낸 error, message, serverErrorDetails를 그대로 전달하거나, 여기서 가공
+      const errorData = await response.json();
       return {
-        error: errorData.error || "API Request Failed",
-        message:
-          errorData.message ||
+        error:
+          errorData.error ||
           `API request failed with status ${response.status}`,
-        details:
-          errorData.serverErrorDetails || "No further details from server.", // 클라이언트에서 사용할 필드명
       };
     }
 
     const data: KoreanNameData = await response.json();
     return { data };
   } catch (err) {
-    console.error("[Action] Outer catch block: 이름 생성 중 오류 발생:", err);
-    let errorMessage = "An unknown error occurred during name generation.";
-    let errorDetails = "No specific details.";
-
+    console.error("이름 생성 중 오류 발생:", err);
     if (err instanceof Error) {
-      errorMessage = err.message;
-      const errorWithCause = err as Error & { cause?: unknown };
-      if (
-        errorWithCause.cause &&
-        typeof errorWithCause.cause === "object" &&
-        "message" in errorWithCause.cause &&
-        typeof (errorWithCause.cause as { message: unknown }).message ===
-          "string" &&
-        (errorWithCause.cause as { message: string }).message.includes(
-          "Invalid URL"
-        )
-      ) {
-        console.error("[Action] Invalid URL error in outer catch:", err);
-        errorMessage = `Failed to fetch API: Invalid URL. Attempted URL was ${baseUrl}/api/generate-name`;
-        errorDetails = (errorWithCause.cause as { message: string }).message;
-      }
+      return { error: err.message };
     }
-    const finalErrorResponse = {
-      error: "API processing error",
-      message: errorMessage,
-      serverErrorDetails: errorDetails,
-    };
-    console.error(
-      "[API Error] Final error response being sent to client:",
-      JSON.stringify(finalErrorResponse)
-    );
-
-    return {
-      error: "API processing error",
-      message: errorMessage,
-      details: errorDetails,
-    };
+    return { error: "An unknown error occurred during name generation." };
   }
 }

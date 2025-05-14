@@ -122,21 +122,21 @@ export async function POST(request: NextRequest) {
   console.log("API 요청이 시작되었습니다 (Edge Runtime)");
   if (!API_KEY) {
     console.error("API_KEY가 없습니다. 환경 변수를 확인하세요.");
+    // 클라이언트에는 좀 더 일반적인 오류 메시지를 반환합니다.
     return NextResponse.json(
-      {
-        error: "Server configuration error",
-        message: "API key is not configured on the server.", // 좀 더 명확한 메시지
-      },
+      { error: "Server configuration error. API key might be missing." },
       { status: 500 }
     );
   }
 
   let foreignName: string | undefined;
-  let gender: GenderOption = "neutral";
+  let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
 
   try {
+    // Edge Runtime에서 안정적으로 실행되도록 요청 처리 최적화
     const body = await request.json().catch(() => ({}));
     foreignName = body?.name as string;
+    // gender 값 유효성 검사 및 할당
     if (
       body?.gender &&
       ["masculine", "feminine", "neutral"].includes(body.gender)
@@ -150,10 +150,7 @@ export async function POST(request: NextRequest) {
       foreignName.trim() === ""
     ) {
       return NextResponse.json(
-        {
-          error: "Invalid input",
-          message: "Name parameter is required and must be a non-empty string.",
-        },
+        { error: "Name parameter is required and must be a non-empty string." },
         { status: 400 }
       );
     }
@@ -161,10 +158,12 @@ export async function POST(request: NextRequest) {
     const userMessageParts = [{ text: foreignName }];
     const dynamicSystemInstruction = getSystemInstruction(gender);
 
+    // API 호출 시 동적 시스템 명령어 사용
     const result = await genAI.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: "user", parts: userMessageParts }],
       config: {
+        // config 객체를 직접 생성하여 전달
         responseMimeType: "application/json",
         systemInstruction: [{ text: dynamicSystemInstruction }],
       },
@@ -172,12 +171,18 @@ export async function POST(request: NextRequest) {
     });
 
     let responseText = "";
-    if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      responseText = result.candidates[0].content.parts[0].text;
+    if (result && result.candidates && result.candidates.length > 0) {
+      const candidate = result.candidates[0];
+      if (
+        candidate.content &&
+        candidate.content.parts &&
+        candidate.content.parts.length > 0
+      ) {
+        responseText = candidate.content.parts[0].text || "";
+      }
     }
 
     if (!responseText) {
-      console.error("Gemini API returned empty text for input:", foreignName);
       throw new Error(
         "API_RESPONSE_EMPTY: Gemini API did not return text, or text could not be extracted from response structure."
       );
@@ -185,6 +190,7 @@ export async function POST(request: NextRequest) {
 
     const jsonData = JSON.parse(responseText) as KoreanNameData;
 
+    // 응답 데이터 구조 검증 (선택적이지만 권장)
     if (
       !jsonData.original_name ||
       !jsonData.korean_name ||
@@ -193,11 +199,10 @@ export async function POST(request: NextRequest) {
       !jsonData.poetic_interpretation
     ) {
       console.warn(
-        "API_RESPONSE_MALFORMED: Received data does not match expected structure from Gemini for input:",
-        foreignName,
-        "Received:",
+        "API_RESPONSE_MALFORMED: Received data does not match expected structure.",
         jsonData
       );
+      // 여기서 커스텀 오류를 발생시키거나, 기본값을 채워넣을 수 있습니다.
       throw new Error(
         "API_RESPONSE_MALFORMED: Received data does not match expected structure."
       );
@@ -205,41 +210,38 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(jsonData);
   } catch (error) {
+    // error 타입을 Error 또는 unknown으로 변경
     let errorMessage =
       "An unexpected error occurred while processing your request.";
     const errorDetails = error instanceof Error ? error.message : String(error);
-    let statusCode = 500;
+    const statusCode = 500; // 기본 상태 코드를 500으로 설정
 
+    // 콘솔에 더 자세한 오류 정보 로깅
     console.error(
-      `[API Error] Input: '${foreignName}', Gender: '${gender}'. Details: ${errorDetails}. Stack: ${
-        error instanceof Error ? error.stack : "N/A"
-      }`,
-      error
+      `Error in POST /api/generate-name for input: '${foreignName}', gender: '${gender}':`, // 요청 값 로깅
+      errorDetails,
+      error instanceof Error ? error.stack : "No stack trace available", // 에러 스택 로깅
+      error // 전체 에러 객체 로깅
     );
 
     if (error instanceof Error) {
       if (error.message?.includes("API_RESPONSE_EMPTY")) {
         errorMessage = "Gemini API returned an empty response.";
-        statusCode = 502; // Bad Gateway or similar
       } else if (error.message?.includes("API_RESPONSE_MALFORMED")) {
         errorMessage = "Received malformed data from Gemini API.";
-        statusCode = 502;
       } else if (error.name === "SyntaxError") {
         // JSON.parse 오류
         errorMessage =
           "Failed to parse response from Gemini API. Response was not valid JSON.";
-        statusCode = 502;
       }
-      // GoogleGenerativeAI 에러 객체에 따른 상태 코드 조정 (필요시)
-      // if ((error as any).httpErrorCode) { statusCode = (error as any).httpErrorCode; }
+      // GoogleGenerativeAI 에러 객체 확인 (존재한다면)
+      // if (error.httpErrorCode) { statusCode = error.httpErrorCode; }
+      // 혹은 error.status, error.code 등 API 에러 객체의 속성을 확인하여 상태 코드 조정
     }
 
+    // statusCode를 JSON 응답에 포함시킵니다.
     return NextResponse.json(
-      {
-        error: "API processing error", // 일반적인 오류 타입
-        message: errorMessage, // 사용자에게 보여줄 수 있는 메시지
-        serverErrorDetails: errorDetails, // 개발자 확인용 상세 정보
-      },
+      { error: errorMessage, details: errorDetails },
       { status: statusCode }
     );
   }
