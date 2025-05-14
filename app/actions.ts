@@ -25,7 +25,7 @@ interface ActionResult {
 }
 
 // 직접 호출을 위한 추가 상수 및 함수
-const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+const MODEL_NAME = "gemini-2.0-flash";
 const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenAI({ apiKey: API_KEY });
 

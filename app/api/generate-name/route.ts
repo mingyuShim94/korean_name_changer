@@ -19,7 +19,7 @@ interface KoreanNameData {
 // 프론트엔드에서 전달받을 성별 타입
 type GenderOption = "masculine" | "feminine" | "neutral";
 
-const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+const MODEL_NAME = "gemini-2.0-flash";
 const API_KEY = process.env.GEMINI_API_KEY || "";
 
 // API 키가 없을 경우 로드 시점에 오류 발생 또는 경고
