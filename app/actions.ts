@@ -23,6 +23,8 @@ interface GenerateNameParams {
 interface ActionResult {
   data?: KoreanNameData;
   error?: string;
+  message?: string;
+  details?: string;
 }
 
 // 직접 호출을 위한 추가 상수 및 함수
@@ -102,7 +104,6 @@ export async function generateKoreanNameAction(
     if (API_KEY) {
       try {
         console.log("Gemini API 직접 호출 시도 (Edge Runtime)");
-
         const { name, gender } = params;
         const userMessageParts = [{ text: name }];
         const dynamicSystemInstruction = getSystemInstruction(gender);
@@ -121,11 +122,8 @@ export async function generateKoreanNameAction(
         if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
           responseText = result.candidates[0].content.parts[0].text;
           console.log("Gemini API 직접 호출 성공");
-
           try {
             const jsonData = JSON.parse(responseText) as KoreanNameData;
-
-            // 응답 데이터 구조 검증
             if (
               jsonData.original_name &&
               jsonData.korean_name &&
@@ -135,19 +133,32 @@ export async function generateKoreanNameAction(
             ) {
               return { data: jsonData };
             }
+            console.warn(
+              "[Action] Direct API call: Malformed JSON data from Gemini.",
+              responseText
+            );
+            // Malformed JSON이면 폴백 로직으로 갈 수 있도록 여기서 에러를 던지거나 처리하지 않고 넘어감
           } catch (parseError) {
-            console.error("JSON 파싱 오류:", parseError);
-            // 파싱 오류 시 API 라우트 방식으로 폴백
+            console.error(
+              "[Action] Direct API call: JSON parsing error.",
+              parseError,
+              responseText
+            );
+            // 파싱 오류 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
           }
+        } else {
+          console.warn("[Action] Direct API call: Empty response from Gemini.");
+          // 빈 응답 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
         }
       } catch (directApiError) {
-        console.error("Gemini API 직접 호출 실패:", directApiError);
-        // 오류 발생 시 API 라우트 방식으로 폴백
+        console.error("[Action] Direct API call: Failed.", directApiError);
+        // 직접 API 호출 실패 시 API 라우트 방식으로 폴백 (아래 로직으로 이어짐)
       }
     }
+    // 만약 직접 API 호출이 성공해서 여기서 return { data: jsonData } 가 실행됐다면, 아래 폴백 로직은 실행되지 않습니다.
 
     // 2. API 라우트를 통한 호출 (폴백 방식)
-    console.log("API 라우트 방식으로 호출 시도");
+    console.log("API 라우트 방식으로 호출 시도 (폴백)");
 
     const heads = await headers();
     const host = heads.get("host");
@@ -157,10 +168,9 @@ export async function generateKoreanNameAction(
       (process.env.NODE_ENV === "development" ? "http" : "https");
     baseUrl = `${protocol}://${host}`;
 
-    console.log("Server Action 실행: baseUrl =", baseUrl);
+    console.log("Server Action 실행 (폴백): baseUrl =", baseUrl);
 
     const response = await fetch(`${baseUrl}/api/generate-name`, {
-      // 절대 URL 사용
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -168,25 +178,47 @@ export async function generateKoreanNameAction(
       body: JSON.stringify(params),
     });
 
-    console.log("API 응답 상태:", response.status);
+    console.log("API 응답 상태 (폴백):", response.status);
 
     if (!response.ok) {
-      const errorData = await response.json();
+      // API 라우트가 JSON 에러를 반환할 것으로 예상
+      const errorData = await response.json().catch(() => {
+        // 만약 response.json() 파싱도 실패하면 (정말 예외적인 HTML 오류 페이지 등)
+        console.error(
+          "[Action] Fallback API call: Failed to parse error response as JSON. Status:",
+          response.status
+        );
+        return {
+          error: "API Error",
+          message: `API request failed with status ${response.status}. Response was not valid JSON.`,
+          serverErrorDetails: "The server returned a non-JSON error response.",
+        };
+      });
+      console.error(
+        "[Action] Fallback API call: Error response from API route.",
+        errorData
+      );
+      // route.ts 에서 보낸 error, message, serverErrorDetails를 그대로 전달하거나, 여기서 가공
       return {
-        error:
-          errorData.error ||
+        error: errorData.error || "API Request Failed",
+        message:
+          errorData.message ||
           `API request failed with status ${response.status}`,
+        details:
+          errorData.serverErrorDetails || "No further details from server.", // 클라이언트에서 사용할 필드명
       };
     }
 
     const data: KoreanNameData = await response.json();
     return { data };
   } catch (err) {
-    console.error("이름 생성 중 오류 발생:", err);
+    console.error("[Action] Outer catch block: 이름 생성 중 오류 발생:", err);
+    let errorMessage = "An unknown error occurred during name generation.";
+    let errorDetails = "No specific details.";
+
     if (err instanceof Error) {
-      // err 객체가 'cause' 속성을 가질 수 있음을 타입으로 명시
+      errorMessage = err.message;
       const errorWithCause = err as Error & { cause?: unknown };
-      // cause가 객체이고 message 속성을 가지는지 확인
       if (
         errorWithCause.cause &&
         typeof errorWithCause.cause === "object" &&
@@ -197,13 +229,15 @@ export async function generateKoreanNameAction(
           "Invalid URL"
         )
       ) {
-        console.error("Invalid URL 오류 발생:", err);
-        return {
-          error: `Failed to fetch API: Invalid URL. Attempted URL was ${baseUrl}/api/generate-name`,
-        };
+        console.error("[Action] Invalid URL error in outer catch:", err);
+        errorMessage = `Failed to fetch API: Invalid URL. Attempted URL was ${baseUrl}/api/generate-name`;
+        errorDetails = (errorWithCause.cause as { message: string }).message;
       }
-      return { error: err.message };
     }
-    return { error: "An unknown error occurred during name generation." };
+    return {
+      error: "Action Error",
+      message: errorMessage,
+      details: errorDetails,
+    };
   }
 }
