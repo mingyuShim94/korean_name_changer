@@ -3,14 +3,14 @@
 # Status: pending
 # Dependencies: 6
 # Priority: low
-# Description: Add basic analytics tracking and error logging to monitor application usage and identify issues in production.
+# Description: Add basic analytics tracking and error logging to monitor application usage and identify issues in production, including payment-related events.
 # Details:
 1. Create a simple analytics service in lib/analytics.ts:
 ```typescript
 // Simple analytics service
 
 // Types for analytics events
-type EventName = 'page_view' | 'name_generated' | 'error' | 'share';
+type EventName = 'page_view' | 'name_generated' | 'error' | 'share' | 'payment_initiated' | 'payment_succeeded' | 'payment_failed';
 
 interface AnalyticsEvent {
   name: EventName;
@@ -80,12 +80,13 @@ class AnalyticsService {
   }
   
   // Track name generation
-  trackNameGenerated(originalName: string, success: boolean): void {
+  trackNameGenerated(originalName: string, success: boolean, tier: 'free' | 'paid'): void {
     this.track({
       name: 'name_generated',
       properties: {
         original_name: originalName,
         success,
+        tier
       },
     });
   }
@@ -107,6 +108,44 @@ class AnalyticsService {
       name: 'share',
       properties: {
         method,
+      },
+    });
+  }
+
+  // Track payment initiated
+  trackPaymentInitiated(amount: number, currency: string, productId: string): void {
+    this.track({
+      name: 'payment_initiated',
+      properties: {
+        amount,
+        currency,
+        product_id: productId
+      },
+    });
+  }
+
+  // Track payment succeeded
+  trackPaymentSucceeded(amount: number, currency: string, productId: string, transactionId: string): void {
+    this.track({
+      name: 'payment_succeeded',
+      properties: {
+        amount,
+        currency,
+        product_id: productId,
+        transaction_id: transactionId
+      },
+    });
+  }
+
+  // Track payment failed
+  trackPaymentFailed(amount: number, currency: string, productId: string, errorMessage: string): void {
+    this.track({
+      name: 'payment_failed',
+      properties: {
+        amount,
+        currency,
+        product_id: productId,
+        error_message: errorMessage
       },
     });
   }
@@ -210,17 +249,17 @@ const handleSubmit = async (name: string) => {
     setResult(data);
     addToHistory(data);
     
-    // Track successful name generation
-    analytics.trackNameGenerated(name, true);
+    // Track successful name generation with tier
+    analytics.trackNameGenerated(name, true, isPaidUser ? 'paid' : 'free');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate Korean name';
     setError(errorMessage);
     
     // Log the error
-    errorLogger.logError(error, { name, context: 'name_generation' });
+    errorLogger.logError(error, { name, context: 'name_generation', tier: isPaidUser ? 'paid' : 'free' });
     
-    // Track failed name generation
-    analytics.trackNameGenerated(name, false);
+    // Track failed name generation with tier
+    analytics.trackNameGenerated(name, false, isPaidUser ? 'paid' : 'free');
   } finally {
     setIsLoading(false);
   }
@@ -242,12 +281,57 @@ const handleCopy = async () => {
 };
 ```
 
+5. Add payment tracking to the payment handling code:
+```tsx
+// When initiating a payment
+const handlePurchase = () => {
+  try {
+    // Track payment initiation
+    analytics.trackPaymentInitiated(9.99, 'USD', 'premium_name_generator');
+    
+    // Initialize Paddle checkout
+    Paddle.Checkout.open({
+      product: PADDLE_PRODUCT_ID,
+      email: userEmail,
+      successCallback: (data) => {
+        // Track successful payment
+        analytics.trackPaymentSucceeded(
+          9.99, 
+          'USD', 
+          'premium_name_generator',
+          data.checkout.id
+        );
+        
+        // Handle successful payment
+        handleSuccessfulPayment(data);
+      },
+      closeCallback: () => {
+        console.log('Checkout closed without payment');
+      }
+    });
+  } catch (error) {
+    // Log payment error
+    errorLogger.logError(error, { 
+      context: 'payment_initiation',
+      product: 'premium_name_generator'
+    });
+    
+    // Track payment failure
+    const errorMessage = error instanceof Error ? error.message : 'Unknown payment error';
+    analytics.trackPaymentFailed(9.99, 'USD', 'premium_name_generator', errorMessage);
+  }
+};
+```
+
 # Test Strategy:
 1. Verify analytics events are logged to the console in development
 2. Test that page view events are tracked on initial load
-3. Verify name generation events are tracked with success/failure status
-4. Test error logging with simulated errors
+3. Verify name generation events are tracked with success/failure status and correct tier ('free' or 'paid')
+4. Test error logging with simulated errors, including payment-related errors
 5. Check that share events are tracked correctly
 6. Verify the analytics API endpoint receives and processes events
 7. Test that analytics and logging don't affect the user experience
 8. Verify that analytics are only enabled in the appropriate environments
+9. Test payment tracking events (initiated, succeeded, failed) with simulated Paddle interactions
+10. Verify that payment error contexts are properly captured in error logs
+11. Test that the tier property is correctly set in name generation events based on user status

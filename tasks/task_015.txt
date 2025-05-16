@@ -13,7 +13,7 @@
 2. Example .env.example file:
 ```
 # API Keys
-GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY_FREE=your_api_key_here
 
 # Feature Flags
 USE_REAL_API=true
@@ -115,7 +115,7 @@ module.exports = {
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "GEMINI_API_KEY": "@gemini-api-key"
+    "GEMINI_API_KEY_FREE": "@gemini-api-key"
   }
 }
 ```

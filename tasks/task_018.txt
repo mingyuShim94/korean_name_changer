@@ -1,0 +1,43 @@
+# Task ID: 18
+# Title: Integrate Paddle for Paid Name Generation
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Implement Paddle payment processing integration to enable one-time payments for the paid name generation feature, allowing users to unlock premium functionality.
+# Details:
+1. Create a Paddle account and configure products/prices specifically for the paid name generation feature.
+2. Install and configure the Paddle.js SDK within the Next.js application architecture.
+3. Design and implement UI components for payment initiation, including a 'Proceed to Payment' button that appears when users select the paid option from Task 17.
+4. Initialize the Paddle SDK with appropriate vendor ID and product ID when a user initiates the payment process.
+5. Implement the complete Paddle checkout flow, offering both overlay and inline checkout options based on UX requirements.
+6. Create handlers for successful payment callbacks that:
+   - Update application state to reflect payment completion
+   - Store payment verification in session storage or as a short-lived client-side token
+   - Enable access to the paid generation API (from Task 16) for the current session
+7. Implement robust error handling for payment failures or cancellations, with clear user feedback and retry options.
+8. Ensure proper integration with the free/paid selection UI from Task 17, making this payment flow a prerequisite for accessing the paid Gemini API from Task 16.
+9. Implement appropriate loading states during payment processing to improve user experience.
+10. Add logging for payment events to assist with troubleshooting and analytics.
+11. Consider implementing basic analytics to track conversion rates from selection to payment completion.
+
+# Test Strategy:
+1. Configure and thoroughly test the Paddle sandbox environment before moving to production.
+2. Create comprehensive test cases covering the entire payment flow:
+   - Verify the Paddle checkout launches correctly when a user selects the paid option
+   - Test with various payment methods available in the sandbox
+   - Confirm the checkout UI renders properly on different devices and screen sizes
+3. Test successful payment scenarios:
+   - Verify callback handling correctly updates application state
+   - Confirm the paid API becomes accessible after successful payment
+   - Ensure the UI updates appropriately to reflect payment completion
+4. Test payment failure scenarios:
+   - Simulate various error conditions (card decline, insufficient funds, etc.)
+   - Verify appropriate error messages are displayed to users
+   - Confirm the retry flow works correctly
+5. Test payment cancellation:
+   - Ensure users can cancel payment and return to the application
+   - Verify the application state remains consistent after cancellation
+6. Perform integration testing with Task 17 (selection UI) and Task 16 (paid API):
+   - Verify the complete flow from selection to payment to API access
+7. Conduct security testing to ensure payment information is handled securely.
+8. Test session persistence to confirm payment status is maintained appropriately during the user session.

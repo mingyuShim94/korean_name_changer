@@ -7,7 +7,7 @@
 # Details:
 1. Create a .env.local file to store the Gemini API key:
 ```
-GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY_FREE=your_api_key_here
 ```
 2. Install the Google Generative AI SDK:
 ```bash
@@ -18,7 +18,7 @@ npm install @google/generative-ai
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_FREE || '');
 
 // Define the expected response structure
 export interface KoreanNameResult {

@@ -8,7 +8,7 @@ import {
 
 async function main() {
   const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY_FREE,
   });
   const config = {
     responseMimeType: 'application/json',
@@ -41,7 +41,7 @@ async function main() {
 ✅ Style Guidelines:
 - Do not phonetically transliterate.
 - Always generate **natural Korean names** that real people could have (e.g., 김하린, 이서윤, 박도현).
-- Select meaningful Hanja that poetically reflect the original name’s imagery and values.
+- Select meaningful Hanja that poetically reflect the original name's imagery and values.
 - Be respectful, elegant, and thoughtful in tone — names are deeply personal.
 
 ✅ Example:

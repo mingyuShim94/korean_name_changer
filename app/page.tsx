@@ -12,11 +12,17 @@ import {
 } from "@/components/ui/card";
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
 import { generateKoreanNameAction } from "./actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // 성별 느낌 옵션 정의 수정
-type GenderOption = "masculine" | "feminine";
+type GenderOption = "masculine" | "feminine" | "neutral";
 // 이름 스타일 옵션 정의 추가
 type NameStyleOption = "hanja" | "pureKorean";
+
+// PremiumRequestData 인터페이스가 비었으므로 제거 또는 주석 처리
+// interface PremiumRequestData {
+//   preferredSyllables?: string;
+// }
 
 export default function Home() {
   const router = useRouter();
@@ -24,11 +30,11 @@ export default function Home() {
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
-  // 이름 스타일 상태 추가 (기본값은 한자 이름)
   const [selectedNameStyle, setSelectedNameStyle] =
     React.useState<NameStyleOption>("hanja");
+  const [activeTab, setActiveTab] = React.useState<"free" | "premium">("free");
 
-  const handleNameSubmit = (
+  const handleFreeNameSubmit = (
     name: string,
     gender: GenderOption,
     nameStyle: NameStyleOption
@@ -36,7 +42,7 @@ export default function Home() {
     setError(null);
     startTransition(async () => {
       console.log(
-        "Submitting with Server Action: Name:",
+        "Submitting FREE with Server Action: Name:",
         name,
         "Gender:",
         gender,
@@ -47,20 +53,65 @@ export default function Home() {
         name,
         gender,
         nameStyle,
+        isPremium: false,
       });
 
       if (result.error) {
         setError(result.error);
-        console.error("Server Action Error:", result.error);
+        console.error("Server Action Error (Free):", result.error);
       } else if (result.data) {
         router.push(
           `/result?data=${encodeURIComponent(
             JSON.stringify(result.data)
-          )}&nameStyle=${nameStyle}`
+          )}&nameStyle=${nameStyle}&type=free`
         );
       } else {
-        // 예상치 못한 경우 (데이터도 없고 에러도 없는 경우)
         setError("An unexpected issue occurred. No data or error returned.");
+      }
+    });
+  };
+
+  // premiumData 인자 제거
+  const handlePremiumNameSubmit = (
+    name: string,
+    gender: GenderOption,
+    nameStyle: NameStyleOption
+    // premiumData?: PremiumRequestData // 더 이상 사용하지 않음
+  ) => {
+    setError(null);
+    startTransition(async () => {
+      console.log(
+        "Submitting PREMIUM: Name:",
+        name,
+        "Gender:",
+        gender,
+        "Style:",
+        nameStyle
+        // "Preferred Syllables:", // preferredSyllables 관련 로그 제거
+        // premiumData?.preferredSyllables
+      );
+
+      const result = await generateKoreanNameAction({
+        name,
+        gender,
+        nameStyle,
+        isPremium: true,
+        // preferredSyllables: premiumData?.preferredSyllables, // preferredSyllables 전달 제거
+      });
+
+      if (result.error) {
+        setError(result.error);
+        console.error("Server Action Error (Premium):", result.error);
+      } else if (result.data) {
+        router.push(
+          `/result?data=${encodeURIComponent(
+            JSON.stringify(result.data)
+          )}&nameStyle=${nameStyle}&type=premium`
+        );
+      } else {
+        setError(
+          "An unexpected issue occurred (Premium). No data or error returned."
+        );
       }
     });
   };
@@ -79,30 +130,75 @@ export default function Home() {
             Convert Your Name to a Korean Name!
           </CardTitle>
           <CardDescription className="text-lg sm:text-xl text-muted-foreground pt-2">
-            Enter a name in any language (e.g., English, Japanese, Arabic) and
-            discover a beautiful Korean name. Choose the nuance and style for
-            your Korean name.
+            Enter a name in any language and discover a beautiful Korean name.
+            Choose the nuance and style.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <NameInputForm
-            onSubmit={(name) =>
-              handleNameSubmit(name, selectedGender, selectedNameStyle)
+          <Tabs
+            value={activeTab}
+            onValueChange={(value: string) =>
+              setActiveTab(value as "free" | "premium")
             }
-            isLoading={isPending}
-            selectedGender={selectedGender}
-            onGenderChange={(newGender: GenderOption) =>
-              setSelectedGender(newGender)
-            }
-            selectedNameStyle={selectedNameStyle}
-            onNameStyleChange={(newStyle: NameStyleOption) =>
-              setSelectedNameStyle(newStyle)
-            }
-          />
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="free">Free</TabsTrigger>
+              <TabsTrigger value="premium">
+                ✨ Premium(Free during beta test)
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="free" className="pt-6">
+              <NameInputForm
+                onSubmit={(name) =>
+                  handleFreeNameSubmit(name, selectedGender, selectedNameStyle)
+                }
+                isLoading={isPending}
+                selectedGender={selectedGender}
+                onGenderChange={(gender) => setSelectedGender(gender)}
+                selectedNameStyle={selectedNameStyle}
+                onNameStyleChange={(style) => setSelectedNameStyle(style)}
+                isPremium={false}
+              />
+            </TabsContent>
+            <TabsContent value="premium" className="pt-6 space-y-4">
+              <div className="p-4 border rounded-md bg-gradient-to-r from-yellow-100 via-amber-50 to-yellow-100 dark:from-yellow-800/30 dark:via-amber-900/20 dark:to-yellow-800/30">
+                <h4 className="font-semibold text-lg mb-2 text-amber-700 dark:text-amber-400">
+                  🌟 The Special Features of Premium Name Generation!
+                </h4>
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  The premium service offers a more diverse and in-depth
+                  interpretation of the generated names. Discover the cultural
+                  meanings, pronunciation characteristics, and deep meanings of
+                  the hanja contained in the names.
+                  <br />
+                  🎉 During the beta test, this premium service is available for
+                  free!
+                </p>
+              </div>
+              <NameInputForm
+                // onSubmit 콜백 시그니처 변경: (name) => ...
+                onSubmit={(name) =>
+                  handlePremiumNameSubmit(
+                    name,
+                    selectedGender,
+                    selectedNameStyle
+                    // premiumFormData 더 이상 전달 안 함
+                  )
+                }
+                isLoading={isPending}
+                selectedGender={selectedGender}
+                onGenderChange={(gender) => setSelectedGender(gender)}
+                selectedNameStyle={selectedNameStyle}
+                onNameStyleChange={(style) => setSelectedNameStyle(style)}
+                isPremium={true}
+              />
+            </TabsContent>
+          </Tabs>
 
           {error && (
             <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-              <h3 className="font-semibold mb-1">Error occurred:</h3>
+              <h3 className="font-semibold mb-1">오류 발생:</h3>
               <p>{error}</p>
             </div>
           )}

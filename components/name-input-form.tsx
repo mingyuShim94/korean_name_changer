@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-type GenderOption = "masculine" | "feminine";
+type GenderOption = "masculine" | "feminine" | "neutral";
 type NameStyleOption = "hanja" | "pureKorean";
 
 interface NameInputFormProps {
@@ -16,6 +16,7 @@ interface NameInputFormProps {
   onGenderChange: (gender: GenderOption) => void;
   selectedNameStyle: NameStyleOption;
   onNameStyleChange: (style: NameStyleOption) => void;
+  isPremium?: boolean;
 }
 
 export function NameInputForm({
@@ -118,6 +119,19 @@ export function NameInputForm({
               className="font-normal text-sm md:text-base cursor-pointer"
             >
               Feminine
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
+            <RadioGroupItem
+              value="neutral"
+              id="neutral"
+              className="h-4 w-4 md:h-5 md:w-5"
+            />
+            <Label
+              htmlFor="neutral"
+              className="font-normal text-sm md:text-base cursor-pointer"
+            >
+              Neutral
             </Label>
           </div>
         </RadioGroup>

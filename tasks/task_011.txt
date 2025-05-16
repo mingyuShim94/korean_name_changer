@@ -3,11 +3,11 @@
 # Status: pending
 # Dependencies: 5
 # Priority: medium
-# Description: Create a fallback mechanism with mock data for development and testing purposes, to avoid API calls during development and handle API failures gracefully.
+# Description: Create a fallback mechanism with mock data for development and testing purposes, to avoid API calls during development and handle API failures gracefully. Include mock data for both free and paid generation options.
 # Details:
 1. Create a mock data file in lib/mock-data.ts:
 ```typescript
-import { KoreanNameResult } from './gemini';
+import { KoreanNameResult, PaidKoreanNameResult } from './gemini';
 
 export const MOCK_RESULTS: Record<string, KoreanNameResult> = {
   'sophia loren': {
@@ -72,32 +72,117 @@ export const MOCK_RESULTS: Record<string, KoreanNameResult> = {
   }
 };
 
-// Default mock result for fallback
+// Paid tier mock results with additional fields and options
+export const PAID_MOCK_RESULTS: Record<string, PaidKoreanNameResult> = {
+  'sophia loren': {
+    original_name: 'Sophia Loren',
+    korean_name: '이예지 (李藝智, Lee Ye-ji)',
+    connection_explanation: '\'소피아\'라는 이름은 그리스어로 \'지혜\'를 의미하며, 깊은 이해와 통찰력을 나타냅니다. 이는 \'예술적 지혜\' 또는 \'교양 있는 지성\'을 의미하는 한국 이름 \'예지(藝智)\'에 영감을 주었습니다. 성씨 \'로렌\'은 시대를 초월하는 우아함과 고전적인 아름다움을 연상시키는데, 이는 \'자두나무\'를 원래 의미하며 우아한 전통과 회복력을 전달하는 한국의 흔하고 역사적으로 중요한 성씨 \'이(李)\'와 유사합니다.',
+    hanja_breakdown: [
+      {
+        character: '李',
+        meaning: '자두나무를 참조하며, 굳건함과 고전적인 우아함을 상징하는 널리 퍼진 전통적인 한국 성씨입니다.'
+      },
+      {
+        character: '藝',
+        meaning: '예술, 기술, 재능, 교양 — 소피아 로렌의 거장다운 예술성과 세련된 존재감을 반영합니다.'
+      },
+      {
+        character: '智',
+        meaning: '지혜, 지성 — 원래 이름 \'소피아\'의 의미와 직접적으로 일치합니다.'
+      }
+    ],
+    poetic_interpretation: '\'이예지\'는 깊은 통찰력과 예술적 우아함을 모두 갖춘 지혜롭고 교양 있는 정신의 이미지를 구현합니다. 이는 마치 조용하고 지적인 아름다움으로 피어나는 자두나무처럼, 심오한 내면의 힘과 결합된 고전적인 아름다움의 본질을 포착합니다.',
+    alternative_names: [
+      {
+        korean_name: '이소현 (李昭賢, Lee So-hyun)',
+        explanation: '소피아의 \'지혜\' 의미를 한국어로 직접 번역한 이름으로, 밝고(昭) 현명한(賢) 사람을 의미합니다.'
+      },
+      {
+        korean_name: '이아름 (李雅琳, Lee A-reum)',
+        explanation: '로렌의 우아함과 아름다움을 강조한 이름으로, 우아하고(雅) 보석처럼 빛나는(琳) 아름다움을 표현합니다.'
+      }
+    ],
+    cultural_notes: '한국에서 \'예지\'라는 이름은 지혜롭고 예술적인 여성을 연상시키며, 특히 문화 예술계에서 활동하는 사람들에게 어울립니다. 한자 \'藝\' 는 예술과 관련된 직업이나 취미를 가진 사람들에게 특히 의미가 있습니다.',
+    pronunciation_guide: '이(Lee): 영어의 \'lee\'와 비슷하게 발음합니다. 예지(Ye-ji): \'예\'는 \'yeh\'처럼, \'지\'는 \'jee\'처럼 발음하며 강세는 첫 음절에 둡니다.',
+    calligraphy_style: 'traditional'
+  },
+  'john smith': {
+    original_name: 'John Smith',
+    korean_name: '김진성 (金眞誠, Kim Jin-seong)',
+    connection_explanation: '\'존\'은 히브리어 기원으로 \'하느님은 자비롭다\'라는 의미를 가지며, 신실함과 은혜를 상징합니다. 이는 \'진실함\'과 \'성실함\'을 의미하는 한국 이름 \'진성(眞誠)\'으로 연결됩니다. \'스미스\'는 원래 \'대장장이\'를 의미하는 직업 성씨로, 장인 정신과 금속 작업을 나타냅니다. 이는 \'금(金)\'의 의미를 가진 한국의 가장 흔한 성씨 중 하나인 \'김(金)\'과 자연스럽게 연결됩니다.',
+    hanja_breakdown: [
+      {
+        character: '金',
+        meaning: '금속, 금 - 스미스(대장장이)의 직업적 의미와 직접 연결되며, 한국에서 가장 흔한 성씨 중 하나입니다.'
+      },
+      {
+        character: '眞',
+        meaning: '진실, 진짜, 참됨 - 존 이름의 신실함과 진정성을 반영합니다.'
+      },
+      {
+        character: '誠',
+        meaning: '성실, 진심, 정직 - 존 이름의 덕성과 도덕적 품질을 보완합니다.'
+      }
+    ],
+    poetic_interpretation: '\'김진성\'은 금속처럼 단단하고 변함없는 진실성과 성실함을 가진 사람을 묘사합니다. 이는 대장장이가 쇠를 정성껏 다루어 가치 있는 물건으로 변화시키듯, 진실된 마음으로 세상에 의미 있는 기여를 하는 사람의 모습을 떠올리게 합니다.',
+    alternative_names: [
+      {
+        korean_name: '김준호 (金俊昊, Kim Jun-ho)',
+        explanation: '준수하고(俊) 크게 빛나는(昊) 사람이라는 의미로, 존의 강인함과 리더십을 반영합니다.'
+      },
+      {
+        korean_name: '김장인 (金匠人, Kim Jang-in)',
+        explanation: '장인(匠人)은 직접적으로 \'장인\' 또는 \'기술자\'를 의미하여 스미스 성의 직업적 의미를 그대로 반영합니다.'
+      }
+    ],
+    cultural_notes: '김(金)은 한국에서 가장 흔한 성씨 중 하나로, 약 전체 인구의 20%가 이 성을 가지고 있습니다. 진성(眞誠)이라는 이름은 비즈니스나 리더십 역할에서 신뢰와 성실함을 강조하는 데 적합합니다.',
+    pronunciation_guide: '김(Kim): 영어의 \'kim\'과 거의 동일합니다. 진성(Jin-seong): \'진\'은 \'jean\'처럼, \'성\'은 \'sung\'처럼 발음하며 두 음절 모두 비슷한 강세를 둡니다.',
+    calligraphy_style: 'modern'
+  }
+};
+
+// Default mock results for fallback
 export const DEFAULT_MOCK_RESULT: KoreanNameResult = MOCK_RESULTS['sophia loren'];
+export const DEFAULT_PAID_MOCK_RESULT: PaidKoreanNameResult = PAID_MOCK_RESULTS['sophia loren'];
 
 // Function to get mock result
-export function getMockResult(name: string): KoreanNameResult {
+export function getMockResult(name: string, isPaid: boolean = false): KoreanNameResult | PaidKoreanNameResult {
   const normalizedName = name.toLowerCase().trim();
   
   // Check if we have a specific mock for this name
-  for (const [mockName, result] of Object.entries(MOCK_RESULTS)) {
-    if (normalizedName.includes(mockName)) {
-      return result;
+  if (isPaid) {
+    for (const [mockName, result] of Object.entries(PAID_MOCK_RESULTS)) {
+      if (normalizedName.includes(mockName)) {
+        return result;
+      }
     }
+    
+    // If no specific paid mock found, return a default with the original name updated
+    return {
+      ...DEFAULT_PAID_MOCK_RESULT,
+      original_name: name
+    };
+  } else {
+    for (const [mockName, result] of Object.entries(MOCK_RESULTS)) {
+      if (normalizedName.includes(mockName)) {
+        return result;
+      }
+    }
+    
+    // If no specific mock found, return a default with the original name updated
+    return {
+      ...DEFAULT_MOCK_RESULT,
+      original_name: name
+    };
   }
-  
-  // If no specific mock found, return a default with the original name updated
-  return {
-    ...DEFAULT_MOCK_RESULT,
-    original_name: name
-  };
 }
 ```
 
 2. Update the API route to use mock data in development:
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { generateKoreanName } from '@/lib/gemini';
+import { generateKoreanName, generatePaidKoreanName } from '@/lib/gemini';
 import { getMockResult } from '@/lib/mock-data';
 
 // Environment flag for using mock data
@@ -106,7 +191,7 @@ const USE_MOCK_DATA = process.env.NODE_ENV === 'development' && process.env.USE_
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name } = body;
+    const { name, isPaid = false } = body;
     
     if (!name || typeof name !== 'string') {
       return NextResponse.json(
@@ -119,13 +204,18 @@ export async function POST(request: NextRequest) {
     if (USE_MOCK_DATA) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockResult = getMockResult(name);
+      const mockResult = getMockResult(name, isPaid);
       return NextResponse.json(mockResult);
     }
     
-    // Use real API
-    const result = await generateKoreanName(name);
-    return NextResponse.json(result);
+    // Use real API based on tier
+    if (isPaid) {
+      const result = await generatePaidKoreanName(name);
+      return NextResponse.json(result);
+    } else {
+      const result = await generateKoreanName(name);
+      return NextResponse.json(result);
+    }
   } catch (error) {
     console.error('Error in generate-name API route:', error);
     return NextResponse.json(
@@ -138,14 +228,14 @@ export async function POST(request: NextRequest) {
 
 3. Create a .env.local file with configuration options:
 ```
-GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY_FREE=your_api_key_here
 # Set to 'true' to use real API in development
 USE_REAL_API=false
 ```
 
 4. Add a fallback mechanism in the generateKoreanName function:
 ```typescript
-import { DEFAULT_MOCK_RESULT } from './mock-data';
+import { DEFAULT_MOCK_RESULT, DEFAULT_PAID_MOCK_RESULT } from './mock-data';
 
 export async function generateKoreanName(foreignName: string): Promise<KoreanNameResult> {
   try {
@@ -166,6 +256,26 @@ export async function generateKoreanName(foreignName: string): Promise<KoreanNam
     };
   }
 }
+
+export async function generatePaidKoreanName(foreignName: string): Promise<PaidKoreanNameResult> {
+  try {
+    // Implementation for paid tier...
+  } catch (error) {
+    console.error('Error calling Gemini API for paid tier:', error);
+    
+    // In production, rethrow the error
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Failed to generate premium Korean name');
+    }
+    
+    // In development, return paid mock data as fallback
+    console.warn('Using paid mock data as fallback due to API error');
+    return {
+      ...DEFAULT_PAID_MOCK_RESULT,
+      original_name: foreignName
+    };
+  }
+}
 ```
 
 # Test Strategy:
@@ -176,3 +286,7 @@ export async function generateKoreanName(foreignName: string): Promise<KoreanNam
 5. Test the fallback mechanism when API calls fail
 6. Verify that the simulated network delay provides a realistic loading experience
 7. Test with various input names to see how the mock system handles them
+8. Test both free and paid tiers to ensure appropriate mock data is returned
+9. Verify that the paid tier mock data includes all additional fields expected in the premium version
+10. Test the isPaid parameter to confirm it correctly switches between free and paid mock responses
+11. Verify that the UI correctly renders both types of mock responses

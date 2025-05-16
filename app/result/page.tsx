@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { NameResultDisplay } from "@/components/name-result-display";
+import { ImprovedResultDisplay } from "@/components/improved-result-display";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -17,23 +17,53 @@ interface KoreanNameData {
     meaning: string;
   }>;
   poetic_interpretation: string;
+  virtue_and_life_direction: string;
 }
+
+// 프리미엄 결과 데이터 인터페이스
+interface PremiumKoreanNameData {
+  original_name: string;
+  suggested_korean_name: {
+    hangul: string;
+    hanja?: string;
+    romanization: string;
+  };
+  interpretation: {
+    core_meaning_summary: string;
+    element_analysis: Array<{
+      hangul_syllable: string;
+      hanja_character?: string;
+      meaning_english_hint: string;
+      relevance_to_name: string;
+    }>;
+    connection_and_rationale: string;
+    synthesized_meaning_and_aspiration: string;
+    poetic_interpretation_of_korean_name: string;
+    virtue_and_life_direction: string;
+    cultural_blessing_note: string;
+    full_interpretation_text_narrative: string;
+  };
+}
+
+// 결과 데이터 유니온 타입
+type ResultData = KoreanNameData | PremiumKoreanNameData;
 
 // SearchParams를 읽고 결과를 표시하는 내부 컴포넌트
 function ResultContent() {
   const searchParams = useSearchParams();
-  const [resultData, setResultData] = React.useState<KoreanNameData | null>(
-    null
-  );
+  const [resultData, setResultData] = React.useState<ResultData | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [isPremium, setIsPremium] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const dataString = searchParams.get("data");
+    const type = searchParams.get("type") || "free";
+
+    setIsPremium(type === "premium");
+
     if (dataString) {
       try {
-        const parsedData: KoreanNameData = JSON.parse(
-          decodeURIComponent(dataString)
-        );
+        const parsedData = JSON.parse(decodeURIComponent(dataString));
         setResultData(parsedData);
       } catch (e) {
         console.error("Failed to parse result data:", e);
@@ -66,29 +96,22 @@ function ResultContent() {
     );
   }
 
-  if (resultData) {
-    return (
-      <NameResultDisplay
-        loading={false}
-        data={resultData}
-        nameStyle={
-          searchParams.get("nameStyle") === "pureKorean"
-            ? "pureKorean"
-            : "hanja"
-        }
-      />
-    );
-  }
-
-  // 데이터는 있지만 아직 resultData가 설정되지 않았거나, dataString이 없는 초기 상태에서 error도 없는 경우
-  // useEffect가 실행되기 전 또는 다른 예상치 못한 상황을 대비한 로딩 메시지 (Suspense fallback과 별개)
-  // 일반적으로 Suspense fallback이 먼저 표시되지만, 만약을 위해 남겨둘 수 있습니다.
-  return <p className="text-center text-muted-foreground">결과 확인 중...</p>;
+  // 개선된 ImprovedResultDisplay 컴포넌트 사용
+  const nameStyle =
+    searchParams.get("nameStyle") === "pureKorean" ? "pureKorean" : "hanja";
+  return (
+    <ImprovedResultDisplay
+      data={resultData}
+      loading={false}
+      nameStyle={nameStyle}
+      isPremium={isPremium}
+    />
+  );
 }
 
 export default function ResultPage() {
   const searchParams = useSearchParams();
-  const [data, setData] = React.useState<KoreanNameData | null>(null);
+  const [data, setData] = React.useState<ResultData | null>(null);
 
   React.useEffect(() => {
     // URL 쿼리 파라미터에서 데이터 파싱

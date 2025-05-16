@@ -1,6 +1,6 @@
 # Task ID: 7
 # Title: Implement Session History Feature
-# Status: pending
+# Status: deferred
 # Dependencies: 6
 # Priority: medium
 # Description: Create a feature to store and display previously generated names within the current session using browser session storage.

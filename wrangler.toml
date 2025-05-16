@@ -9,4 +9,4 @@ vars = { ENVIRONMENT = "production" }
 vars = { ENVIRONMENT = "staging" }
 
 # 환경 변수는 Cloudflare 대시보드에서 설정하세요
-# GEMINI_API_KEY 
+# GEMINI_API_KEY_FREE 

@@ -1,0 +1,48 @@
+# Task ID: 17
+# Title: Implement Free/Paid Selection UI and API Routing on Main Page
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Add UI elements to the main page to allow users to choose between free and paid name generation, and route API requests accordingly based on the user's selection and payment status.
+# Details:
+1. Design and implement UI components (toggle, radio buttons, or similar) on the main page that clearly distinguish between free and paid name generation tiers.
+2. Implement state management to track the user's selected tier (free/paid).
+3. Create a payment status verification mechanism that checks if a user has completed payment for the paid tier.
+4. If a user selects the paid tier but hasn't completed payment, implement a flow to guide them to the Paddle payment integration.
+5. Modify the existing form submission handler to check the selected tier before making API calls:
+   - For free tier selection, route requests to the existing `/api/generate-name` endpoint
+   - For paid tier selection (with verified payment), route requests to the new paid API endpoint
+6. Implement UI state changes based on tier selection, such as:
+   - Displaying different feature descriptions for each tier
+   - Showing pricing information for the paid tier
+   - Potentially enabling/disabling certain form options based on the selected tier
+7. Add appropriate loading states and error handling for both API routes.
+8. Ensure the UI clearly communicates which tier is currently selected and what benefits each tier provides.
+9. Consider implementing a "preview" of paid features that encourages free users to upgrade.
+10. Maintain a consistent user experience regardless of which tier is selected.
+
+# Test Strategy:
+1. Unit tests:
+   - Test the tier selection component in isolation
+   - Verify state management correctly tracks the selected tier
+   - Test the payment status verification logic with mock data
+
+2. Integration tests:
+   - Verify the form correctly routes to the free API when free tier is selected
+   - Verify the form correctly routes to the paid API when paid tier is selected and payment is verified
+   - Test the payment flow redirection when paid tier is selected without payment
+
+3. UI/UX tests:
+   - Verify the tier selection UI renders correctly on different screen sizes
+   - Ensure the UI updates appropriately when switching between tiers
+   - Check that feature descriptions and pricing information display correctly
+
+4. User flow tests:
+   - Complete end-to-end test of selecting free tier and generating a name
+   - Complete end-to-end test of selecting paid tier, completing mock payment, and generating a name
+   - Test the flow when a user cancels payment but tries to use paid features
+
+5. Edge cases:
+   - Test behavior when API calls fail
+   - Verify proper handling of payment verification timeouts or errors
+   - Test with various combinations of form inputs for both tiers
