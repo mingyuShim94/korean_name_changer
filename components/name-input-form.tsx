@@ -17,6 +17,8 @@ interface NameInputFormProps {
   selectedNameStyle: NameStyleOption;
   onNameStyleChange: (style: NameStyleOption) => void;
   isPremium?: boolean;
+  inputName?: string;
+  onNameChange?: (name: string) => void;
 }
 
 export function NameInputForm({
@@ -26,8 +28,10 @@ export function NameInputForm({
   onGenderChange,
   selectedNameStyle,
   onNameStyleChange,
+  inputName = "",
+  onNameChange,
 }: NameInputFormProps) {
-  const [name, setName] = React.useState("");
+  const [name, setName] = React.useState(inputName);
   const [error, setError] = React.useState<string | null>(null);
   const [windowWidth, setWindowWidth] = React.useState(0);
 
@@ -49,6 +53,13 @@ export function NameInputForm({
     };
   }, []);
 
+  // inputName prop이 변경되면 내부 상태 업데이트
+  React.useEffect(() => {
+    if (inputName !== undefined) {
+      setName(inputName);
+    }
+  }, [inputName]);
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -57,6 +68,14 @@ export function NameInputForm({
       return;
     }
     onSubmit(name);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    if (onNameChange) {
+      onNameChange(newName);
+    }
   };
 
   const placeholderText =
@@ -74,9 +93,7 @@ export function NameInputForm({
           type="text"
           id="foreign-name"
           value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setName(e.target.value)
-          }
+          onChange={handleNameChange}
           placeholder={placeholderText}
           className="block w-full h-10 md:h-11 px-3 md:px-4 text-sm md:text-base"
           disabled={isLoading}

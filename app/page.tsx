@@ -13,6 +13,7 @@ import {
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
 import { generateKoreanNameAction } from "./actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trackButtonClick, trackPageView } from "@/lib/analytics";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
@@ -33,12 +34,21 @@ export default function Home() {
   const [selectedNameStyle, setSelectedNameStyle] =
     React.useState<NameStyleOption>("hanja");
   const [activeTab, setActiveTab] = React.useState<"free" | "premium">("free");
+  const [inputName, setInputName] = React.useState<string>("");
+
+  // 페이지 로드 시 페이지 조회 이벤트 추적
+  React.useEffect(() => {
+    trackPageView("/", "Home Page - Korean Name Generator");
+  }, []);
 
   const handleFreeNameSubmit = (
     name: string,
     gender: GenderOption,
     nameStyle: NameStyleOption
   ) => {
+    // Google Analytics 이벤트 추적
+    trackButtonClick("generate_korean_name", `free_${gender}_${nameStyle}`);
+
     setError(null);
     startTransition(async () => {
       console.log(
@@ -78,6 +88,9 @@ export default function Home() {
     nameStyle: NameStyleOption
     // premiumData?: PremiumRequestData // 더 이상 사용하지 않음
   ) => {
+    // Google Analytics 이벤트 추적
+    trackButtonClick("generate_korean_name", `premium_${gender}_${nameStyle}`);
+
     setError(null);
     startTransition(async () => {
       console.log(
@@ -116,6 +129,12 @@ export default function Home() {
     });
   };
 
+  // Tab 전환 시 이벤트 추적
+  const handleTabChange = (value: string) => {
+    trackButtonClick("tab_switch", value);
+    setActiveTab(value as "free" | "premium");
+  };
+
   if (isPending) {
     return (
       <FullScreenLoader message="AI is creating a Korean name. Please wait a moment..." />
@@ -137,9 +156,7 @@ export default function Home() {
         <CardContent className="space-y-6">
           <Tabs
             value={activeTab}
-            onValueChange={(value: string) =>
-              setActiveTab(value as "free" | "premium")
-            }
+            onValueChange={handleTabChange}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2">
@@ -159,6 +176,8 @@ export default function Home() {
                 selectedNameStyle={selectedNameStyle}
                 onNameStyleChange={(style) => setSelectedNameStyle(style)}
                 isPremium={false}
+                inputName={inputName}
+                onNameChange={setInputName}
               />
             </TabsContent>
             <TabsContent value="premium" className="pt-6 space-y-4">
@@ -192,6 +211,8 @@ export default function Home() {
                 selectedNameStyle={selectedNameStyle}
                 onNameStyleChange={(style) => setSelectedNameStyle(style)}
                 isPremium={true}
+                inputName={inputName}
+                onNameChange={setInputName}
               />
             </TabsContent>
           </Tabs>

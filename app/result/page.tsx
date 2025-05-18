@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ImprovedResultDisplay } from "@/components/improved-result-display";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { trackButtonClick, trackPageView } from "@/lib/analytics";
 
 // KoreanNameData 인터페이스 (app/page.tsx와 동일한 구조)
 interface KoreanNameData {
@@ -89,6 +90,7 @@ function ResultContent() {
         <Link
           href="/"
           className="mt-2 inline-block text-blue-600 hover:underline"
+          onClick={() => trackButtonClick("return_to_home", "from_error")}
         >
           홈으로 돌아가기
         </Link>
@@ -113,6 +115,20 @@ export default function ResultPage() {
   const searchParams = useSearchParams();
   const [data, setData] = React.useState<ResultData | null>(null);
 
+  // 페이지 로드 시 이벤트 추적
+  React.useEffect(() => {
+    const type = searchParams.get("type") || "free";
+    const nameStyle = searchParams.get("nameStyle") || "hanja";
+
+    // 결과 페이지 조회 이벤트 추적
+    trackPageView(
+      "/result",
+      `Result Page - ${
+        type === "premium" ? "Premium" : "Free"
+      } ${nameStyle} Name`
+    );
+  }, [searchParams]);
+
   React.useEffect(() => {
     // URL 쿼리 파라미터에서 데이터 파싱
     const dataParam = searchParams.get("data");
@@ -126,6 +142,11 @@ export default function ResultPage() {
       }
     }
   }, [searchParams]);
+
+  // 홈으로 돌아가기 버튼 클릭 이벤트 처리
+  const handleGoHomeClick = () => {
+    trackButtonClick("generate_another_name", "from_result_page");
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
@@ -144,7 +165,9 @@ export default function ResultPage() {
         {data && (
           <CardFooter className="flex p-6 pt-0 sm:p-8 sm:pt-0">
             <Button className="w-full text-sm md:text-base text-center" asChild>
-              <Link href="/">Generate Another Name</Link>
+              <Link href="/" onClick={handleGoHomeClick}>
+                Generate Another Name
+              </Link>
             </Button>
           </CardFooter>
         )}

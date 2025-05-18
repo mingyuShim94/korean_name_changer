@@ -10,11 +10,35 @@ export const runtime = "edge";
 
 // const inter = Inter({ subsets: ["latin"] });
 
+// BASE_URL 설정
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Korean Name Changer",
+  title: "MyKoreanName - Convert Your Name to a Korean Name",
   description:
-    "Korean Name Changer is a poetic naming web service that meaningfully reinterprets foreign names into Korean-style names. This service aims to help users with foreign names explore a new identity by connecting the meaning and sentiment of their names with the beauty of Korean culture.",
+    "Convert your name to a beautiful Korean name with MyKoreanName. Choose between masculine, feminine, or neutral styles, and pick either Hanja (Chinese character) or pure Korean name formats. Currently free during beta test. Discover a new cultural identity with a meaningful Korean name interpretation.",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  keywords:
+    "korean name, name translator, hanja name, pure korean name, name converter, korean culture",
+  authors: [
+    {
+      name: "MyKoreanName Team",
+    },
+  ],
+  openGraph: {
+    title: "MyKoreanName - Get Your Korean Name",
+    description:
+      "Transform your name into a beautiful Korean name with deep cultural meaning. Free service available in Hanja or Pure Korean style.",
+    images: [
+      {
+        url: `${BASE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: "MyKoreanName",
+      },
+    ],
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -44,7 +44,8 @@ export const baseSystemInstructionText = `{
     "Select meaningful Hanja that reflect the original name's essence while keeping a modern sensibility.",
     "Prefer name characters and combinations that have a clean, appealing sound in modern Korean.",
     "Consider current Korean naming trends while maintaining personal meaning.",
-    "Be respectful, elegant, and thoughtful in tone — names are deeply personal."
+    "Be respectful, elegant, and thoughtful in tone — names are deeply personal.",
+    "IMPORTANT: For longer text explanations, insert paragraph breaks every 2-3 sentences to improve readability. Do not create explanations longer than 3 sentences without a paragraph break. This is essential for user experience and text clarity."
   ],
   "gender_specific_instruction_placeholder": "{GENDER_SPECIFIC_INSTRUCTION}"
 }`;
@@ -88,7 +89,8 @@ export const pureKoreanSystemInstructionText = `{
     "Choose pure Korean words with beautiful meanings that reflect the original name's essence.",
     "Favor names that have natural and pleasing sounds in modern Korean.",
     "Consider progressive, modern naming trends in Korea.",
-    "Be respectful, elegant, and thoughtful in tone — names are deeply personal."
+    "Be respectful, elegant, and thoughtful in tone — names are deeply personal.",
+    "IMPORTANT: For longer text explanations, insert paragraph breaks every 2-3 sentences to improve readability. Do not create explanations longer than 3 sentences without a paragraph break. This is essential for user experience and text clarity."
   ],
   "gender_specific_instruction_placeholder": "{GENDER_SPECIFIC_INSTRUCTION}"
 }`;
@@ -127,7 +129,8 @@ export const premiumSystemInstructionText = `{
       "virtue_and_life_direction": "What virtues (e.g., wisdom, kindness, resilience) are suggested by the name, and what kind of life path or influence it encourages in line with Korean cultural values.",
       "cultural_blessing_note": "A warm, culturally respectful message expressing hopes for the name to bring good fortune, in line with Korean naming traditions.",
       "full_interpretation_text_narrative": "A single, flowing narrative that synthesizes all the above sections—especially core meaning, element analysis, connection to the original name, symbolic meaning, poetic nuance, virtue, and cultural blessing—without repeating content. This should read like a refined name explanation from a professional Korean naming consultant."
-    }
+    
+      }
   },
   "style_guidelines": [
     "Avoid phonetic translation. Focus on meaning, tone, and symbolism.",
@@ -142,7 +145,8 @@ export const premiumSystemInstructionText = `{
     "Blend modern naming trends with originality and depth.",
     "Tone should be respectful, elegant, warm, and culturally sensitive.",
     "Avoid redundant explanation across multiple sections.",
-    "Use concise and clear language in technical sections; poetic and warm tone in the blessing and narrative sections."
+    "Use concise and clear language in technical sections; poetic and warm tone in the blessing and narrative sections.",
+    "IMPORTANT: For longer text explanations, insert paragraph breaks every 2-3 sentences to improve readability. Do not create explanations longer than 3 sentences without a paragraph break. This is essential for user experience and text clarity."
   ],
   "gender_specific_instruction_placeholder": "{GENDER_SPECIFIC_INSTRUCTION}"
 }`;
@@ -179,7 +183,8 @@ export const premiumPureKoreanSystemInstructionText = `{
       "virtue_and_life_direction": "What virtues (e.g., wisdom, kindness, resilience) are suggested by the name, and what kind of life path or influence it encourages in line with Korean cultural values.",
       "cultural_blessing_note": "A warm, culturally respectful message expressing hopes for the name to bring good fortune, in line with Korean naming traditions.",
       "full_interpretation_text_narrative": "A single, flowing narrative that synthesizes all the above sections—especially core meaning, element analysis, connection to the original name, symbolic meaning, poetic nuance, virtue, and cultural blessing—without repeating content. This should read like a refined name explanation from a professional Korean naming consultant."
-    }
+    
+      }
   },
   "style_guidelines": [
     "Avoid phonetic translation. Focus on meaning, tone, and symbolism.",
@@ -195,7 +200,8 @@ export const premiumPureKoreanSystemInstructionText = `{
     "Blend modern naming trends with originality and depth.",
     "Tone should be respectful, elegant, warm, and culturally sensitive.",
     "Avoid redundant explanation across multiple sections.",
-    "Use concise and clear language in technical sections; poetic and warm tone in the blessing and narrative sections."
+    "Use concise and clear language in technical sections; poetic and warm tone in the blessing and narrative sections.",
+    "IMPORTANT: For longer text explanations, insert paragraph breaks every 2-3 sentences to improve readability. Do not create explanations longer than 3 sentences without a paragraph break. This is essential for user experience and text clarity."
   ],
   "gender_specific_instruction_placeholder": "{GENDER_SPECIFIC_INSTRUCTION}"
 }`;
