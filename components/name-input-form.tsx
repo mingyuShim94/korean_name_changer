@@ -174,7 +174,7 @@ export function NameInputForm({
               htmlFor="hanja"
               className="font-normal text-sm md:text-base cursor-pointer"
             >
-              Hanja-based Name (한자)
+              Hanja-based Name
             </Label>
           </div>
           <div className="flex items-center space-x-2 py-1 touch-action-manipulation">
@@ -187,7 +187,7 @@ export function NameInputForm({
               htmlFor="pureKorean"
               className="font-normal text-sm md:text-base cursor-pointer"
             >
-              Pure Korean Name (순우리말)
+              Pure Korean Name
             </Label>
           </div>
         </RadioGroup>

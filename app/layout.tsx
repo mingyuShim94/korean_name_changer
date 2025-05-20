@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 // import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/header";
@@ -13,11 +13,17 @@ export const runtime = "edge";
 // BASE_URL 설정
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+// viewport 설정을 별도로 내보내기
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "MyKoreanName - Convert Your Name to a Korean Name",
   description:
     "Convert your name to a beautiful Korean name with MyKoreanName. Choose between masculine, feminine, or neutral styles, and pick either Hanja (Chinese character) or pure Korean name formats. Currently free during beta test. Discover a new cultural identity with a meaningful Korean name interpretation.",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   keywords:
     "korean name, name translator, hanja name, pure korean name, name converter, korean culture",
   authors: [

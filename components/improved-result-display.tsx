@@ -11,60 +11,63 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
 
-// 이름 스타일 옵션
-type NameStyleOption = "hanja" | "pureKorean";
-
-/**
- * 일반 한국 이름 데이터 인터페이스
- */
-interface KoreanNameData {
+// 새로운 인터페이스 정의 - 무료 버전
+interface FreeKoreanNameData {
   original_name: string;
-  korean_name: string;
-  connection_explanation: string;
-  hanja_breakdown: Array<{
-    character: string;
-    meaning: string;
-  }>;
-  poetic_interpretation: string;
-  virtue_and_life_direction: string;
+  original_name_analysis: {
+    summary: string;
+  };
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
+  };
 }
 
-/**
- * 프리미엄 한국 이름 데이터 인터페이스
- */
+// 새로운 인터페이스 정의 - 프리미엄 버전
 interface PremiumKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
+  original_name_analysis: {
+    letters: {
+      letter: string;
+      meaning: string;
+    }[];
+    summary: string;
   };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    synthesized_meaning_and_aspiration: string;
-    poetic_interpretation_of_korean_name: string;
-    virtue_and_life_direction: string;
-    cultural_blessing_note: string;
-    full_interpretation_text_narrative: string;
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
+    life_values: string;
+  };
+  social_share_content: {
+    formatted: string;
+    summary: string;
   };
 }
+
+// 결과 데이터 유니온 타입
+type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
 
 /**
  * 통합 결과 표시 컴포넌트 Props
  */
 interface ImprovedResultDisplayProps {
-  data: KoreanNameData | PremiumKoreanNameData | null;
+  data: ResultData | null;
   loading: boolean;
   nameStyle: NameStyleOption;
   isPremium: boolean;
+  gender?: GenderOption;
 }
 
 /**
@@ -83,6 +86,7 @@ export function ImprovedResultDisplay({
   loading,
   nameStyle,
   isPremium,
+  gender = "neutral",
 }: ImprovedResultDisplayProps) {
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
@@ -99,10 +103,23 @@ export function ImprovedResultDisplay({
 
   // 데이터 타입 확인 함수
   const isPremiumData = (
-    data: KoreanNameData | PremiumKoreanNameData | null
+    data: ResultData | null
   ): data is PremiumKoreanNameData => {
-    return data !== null && "suggested_korean_name" in data;
+    return (
+      data !== null &&
+      "social_share_content" in data &&
+      "life_values" in data.korean_name_suggestion
+    );
   };
+
+  // Free 데이터 타입 확인 함수
+  // const isBasicData = (data: ResultData | null): data is FreeKoreanNameData => {
+  //   return (
+  //     data !== null &&
+  //     !("social_share_content" in data) &&
+  //     !("life_values" in data.korean_name_suggestion)
+  //   );
+  // };
 
   // 데이터가 변경되면 음성 생성
   React.useEffect(() => {
@@ -110,12 +127,6 @@ export function ImprovedResultDisplay({
       generateNameAudio();
     }
   }, [data, loading]);
-
-  // 한국어 이름을 추출 (괄호 부분 제외)
-  const extractKoreanName = (koreanNameText: string): string => {
-    const match = koreanNameText.match(/^([^\(]+)/);
-    return match ? match[1].trim() : koreanNameText;
-  };
 
   // Google TTS API를 호출하여 음성 생성
   const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
@@ -136,13 +147,8 @@ export function ImprovedResultDisplay({
     try {
       setAudioLoading(true);
 
-      // 한국어 이름 추출
-      let koreanName = "";
-      if (isPremiumData(data)) {
-        koreanName = data.suggested_korean_name.hangul;
-      } else {
-        koreanName = extractKoreanName(data.korean_name);
-      }
+      // 한국어 이름 추출 (새 데이터 구조에 맞게 변경)
+      const koreanName = data.korean_name_suggestion.full_name.split(" ")[0]; // 성과 이름만 추출 (괄호 없이)
 
       // 음성 생성
       const audioUrl = await fetchAudioFromGoogleTTS(koreanName);
@@ -173,100 +179,85 @@ export function ImprovedResultDisplay({
   }
 
   // 핵심 요약 데이터 추출
-  const getCoreSummary = () => {
-    if (isPremiumData(data)) {
-      return data.interpretation.core_meaning_summary;
-    } else {
-      return data.connection_explanation.split(".")[0] + ".";
-    }
+  const getCoreSummary = (): string => {
+    return data.original_name_analysis.summary;
   };
 
   // 기본 이름 정보 렌더링
   const renderNameBasics = () => {
-    if (isPremiumData(data)) {
-      return (
-        <>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                {data.suggested_korean_name.hangul}
-              </h2>
-              <span className="text-sm text-muted-foreground italic">
-                ({data.suggested_korean_name.romanization})
-              </span>
-            </div>
-            {data.suggested_korean_name.hanja && nameStyle === "hanja" && (
-              <p className="text-sm text-muted-foreground">
-                한자: {data.suggested_korean_name.hanja}
-              </p>
-            )}
-            <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
-          </div>
-        </>
-      );
-    } else {
-      const koreanName = extractKoreanName(data.korean_name);
-      // 괄호 안의 한자와 로마자 추출
-      const match = data.korean_name.match(/\(([^)]+)\)/);
-      const extraInfo = match ? match[1] : "";
+    // 성과 이름 분리
+    const fullName = data.korean_name_suggestion.full_name;
+    const hanjaMatch = fullName.match(/\(([^)]+)\)/);
+    const hanja = hanjaMatch ? hanjaMatch[1] : undefined;
 
-      return (
-        <>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-2xl md:text-3xl font-bold">{koreanName}</h2>
-              {extraInfo && (
-                <span className="text-sm text-muted-foreground italic">
-                  ({extraInfo})
-                </span>
-              )}
-            </div>
-            <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
+    // 로마자 표기 (새 데이터 구조에는 없으므로 이름 자체를 사용)
+    const nameParts = fullName.split(" ");
+    const romanization =
+      nameParts.length > 1
+        ? `${nameParts[0]} ${nameParts[1]}`
+        : fullName.replace(/\s*\([^)]*\)\s*/, ""); // 괄호 제거
+
+    return (
+      <>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-2xl md:text-3xl font-bold">
+              {fullName.replace(/\s*\([^)]*\)\s*/, "")} {/* 괄호 제거 */}
+            </h2>
+            <span className="text-sm text-muted-foreground italic">
+              ({romanization})
+            </span>
           </div>
-        </>
-      );
-    }
+          {hanja && nameStyle === "hanja" && (
+            <p className="text-sm text-muted-foreground">Hanja: {hanja}</p>
+          )}
+          <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
+        </div>
+      </>
+    );
   };
 
   // 이름 요소 분석 렌더링
   const renderNameElements = () => {
-    if (isPremiumData(data)) {
-      return (
-        <div className="flex flex-wrap gap-3 justify-center">
-          {data.interpretation.element_analysis.map((item, index) => (
-            <div
-              key={index}
-              className="flex flex-col items-center gap-1 rounded-md border bg-muted/30 p-3 dark:border-neutral-700/60"
+    // 이름 요소 데이터 가져오기
+    const syllables = data.korean_name_suggestion.syllables;
+
+    return (
+      <div className="flex flex-col gap-6">
+        {syllables.map((item, index) => (
+          <div
+            key={index}
+            className="flex flex-col items-center gap-3 rounded-md border shadow-sm bg-muted/30 p-5 dark:border-neutral-700/60"
+          >
+            <Badge
+              variant="outline"
+              className="text-primary text-base px-3 py-1"
             >
-              <Badge variant="outline" className="text-primary">
-                {item.hangul_syllable}
-                {item.hanja_character &&
-                  nameStyle === "hanja" &&
-                  ` (${item.hanja_character})`}
-              </Badge>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                {item.meaning_english_hint}
-              </p>
+              {item.syllable}
+              {item.hanja && nameStyle === "hanja" && ` (${item.hanja})`}
+            </Badge>
+            <div className="space-y-2 w-full">
+              <div className="bg-background/60 rounded-md p-2 w-full">
+                <p className="text-sm sm:text-base font-medium text-center">
+                  <span className="text-primary">Meaning:</span> {item.meaning}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
-      );
-    } else {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {data.hanja_breakdown.map((item, index) => (
-            <div
-              key={index}
-              className="rounded-md border bg-muted/30 p-3 dark:border-neutral-700/60"
-            >
-              <Badge variant="outline" className="text-primary mb-1">
-                {item.character}
-              </Badge>
-              <p className="text-sm sm:text-base">{item.meaning}</p>
-            </div>
-          ))}
-        </div>
-      );
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // 성별에 따른 스타일 적용
+  const getGenderColorClass = () => {
+    switch (gender) {
+      case "masculine":
+        return "from-blue-100/70 via-sky-50/70 to-blue-100/70 dark:from-blue-900/30 dark:via-sky-900/20 dark:to-blue-900/30";
+      case "feminine":
+        return "from-pink-100/70 via-rose-50/70 to-pink-100/70 dark:from-pink-900/30 dark:via-rose-900/20 dark:to-pink-900/30";
+      default:
+        return "from-green-100/70 via-emerald-50/70 to-green-100/70 dark:from-green-900/30 dark:via-emerald-900/20 dark:to-green-900/30";
     }
   };
 
@@ -274,13 +265,32 @@ export function ImprovedResultDisplay({
   return (
     <div className="w-full space-y-6">
       {/* 상단 배지 */}
-      {isPremium && (
-        <div className="flex justify-center">
+      <div className="flex justify-center gap-2">
+        {isPremium && (
           <span className="inline-flex items-center rounded-md bg-amber-100/80 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20">
             ✨ Premium Analysis ✨
           </span>
-        </div>
-      )}
+        )}
+        <span
+          className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+            gender === "masculine"
+              ? "bg-blue-100/80 text-blue-800 ring-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20"
+              : gender === "feminine"
+              ? "bg-pink-100/80 text-pink-800 ring-pink-500/30 dark:bg-pink-500/10 dark:text-pink-400 dark:ring-pink-500/20"
+              : "bg-green-100/80 text-green-800 ring-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20"
+          }`}
+        >
+          {gender === "masculine"
+            ? "Masculine"
+            : gender === "feminine"
+            ? "Feminine"
+            : "Neutral"}{" "}
+          Name
+        </span>
+        <span className="inline-flex items-center rounded-md bg-purple-100/80 px-2 py-1 text-xs font-medium text-purple-800 ring-1 ring-inset ring-purple-500/30 dark:bg-purple-500/10 dark:text-purple-400 dark:ring-purple-500/20">
+          {nameStyle === "pureKorean" ? "Pure Korean" : "Hanja"} Style
+        </span>
+      </div>
 
       {/* 원래 이름 */}
       <div className="text-center">
@@ -300,7 +310,9 @@ export function ImprovedResultDisplay({
       </div>
 
       {/* 핵심 의미 요약 (강조된 박스) */}
-      <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
+      <div
+        className={`bg-gradient-to-r ${getGenderColorClass()} p-4 rounded-lg text-center border border-primary/10`}
+      >
         <p className="text-md md:text-lg">{getCoreSummary()}</p>
       </div>
 
@@ -328,135 +340,116 @@ export function ImprovedResultDisplay({
       {viewMode === "concise" && (
         <div className="space-y-4">
           {/* 이름 요소 분석 */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex justify-center items-center">
-              <h3 className="text-base font-semibold text-muted-foreground mb-2">
+              <h3 className="text-base md:text-lg font-semibold text-primary mb-2">
                 {nameStyle === "hanja"
                   ? "Name Elements Analysis"
                   : "Name Meaning Analysis"}
               </h3>
             </div>
-            <div className="bg-muted/20 p-3 rounded-md border">
+            <div className="bg-muted/20 p-4 rounded-md border">
               {renderNameElements()}
             </div>
           </div>
 
-          {/* 문화적 연결 */}
+          {/* 이름의 의미와 근거 (모든 사용자) */}
           <div className="space-y-1 text-center">
             <h3 className="text-base font-semibold text-muted-foreground mb-2">
-              Connection to Original Name
+              Name Meaning
             </h3>
             <div className="bg-muted/20 p-3 rounded-md border">
               <p className="whitespace-pre-wrap text-sm md:text-base">
-                {isPremiumData(data)
-                  ? data.interpretation.connection_and_rationale
-                  : data.connection_explanation}
+                {data.korean_name_suggestion.rationale}
               </p>
             </div>
           </div>
 
-          {/* 시적 해석 */}
-          <div className="space-y-1 text-center">
-            <h3 className="text-base font-semibold text-muted-foreground mb-2">
-              Poetic Interpretation
-            </h3>
-            <div className="bg-muted/20 p-3 rounded-md border">
-              <p className="whitespace-pre-wrap text-sm md:text-base italic">
-                {isPremiumData(data)
-                  ? `"${data.interpretation.poetic_interpretation_of_korean_name}"`
-                  : data.poetic_interpretation}
-              </p>
+          {/* 삶의 가치 (프리미엄만) */}
+          {isPremiumData(data) && (
+            <div className="space-y-1 text-center">
+              <h3 className="text-base font-semibold text-muted-foreground mb-2">
+                Life Values
+              </h3>
+              <div className="bg-muted/20 p-3 rounded-md border">
+                <p className="whitespace-pre-wrap text-sm md:text-base">
+                  {data.korean_name_suggestion.life_values}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* 상세 뷰 - 모든 정보 */}
-      {viewMode === "detailed" && (
+      {/* 상세 뷰 - 모든 정보 (프리미엄 전용) */}
+      {viewMode === "detailed" && isPremiumData(data) && (
         <div className="space-y-4">
           {/* 아코디언으로 구성된 상세 내용 */}
           <Accordion type="single" collapsible className="w-full">
             {/* 이름 요소 */}
             <AccordionItem value="elements">
               <AccordionTrigger>Name Elements Analysis</AccordionTrigger>
-              <AccordionContent>{renderNameElements()}</AccordionContent>
+              <AccordionContent>
+                <div className="mt-2 bg-muted/20 p-4 rounded-md border">
+                  {renderNameElements()}
+                </div>
+              </AccordionContent>
             </AccordionItem>
 
-            {/* 이름 연결성 */}
-            <AccordionItem value="connection">
-              <AccordionTrigger>Connection to Original Name</AccordionTrigger>
+            {/* 원본 이름 분석 */}
+            <AccordionItem value="original">
+              <AccordionTrigger>Original Name Analysis</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4">
+                  {data.original_name_analysis.letters.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-muted/10 p-3 rounded-md border"
+                    >
+                      <p className="font-semibold">{item.letter}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.meaning}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 이름의 의미와 근거 */}
+            <AccordionItem value="rationale">
+              <AccordionTrigger>Name Meaning & Rationale</AccordionTrigger>
               <AccordionContent>
                 <p className="whitespace-pre-wrap text-sm md:text-base">
-                  {isPremiumData(data)
-                    ? data.interpretation.connection_and_rationale
-                    : data.connection_explanation}
+                  {data.korean_name_suggestion.rationale}
                 </p>
               </AccordionContent>
             </AccordionItem>
 
-            {/* 뜻과 바람 */}
-            <AccordionItem value="meaning">
-              <AccordionTrigger>Meaning & Aspiration</AccordionTrigger>
+            {/* 삶의 가치 */}
+            <AccordionItem value="life-values">
+              <AccordionTrigger>Life Values</AccordionTrigger>
               <AccordionContent>
                 <p className="whitespace-pre-wrap text-sm md:text-base">
-                  {isPremiumData(data)
-                    ? data.interpretation.synthesized_meaning_and_aspiration
-                    : data.connection_explanation.split(".").slice(1).join(".")}
+                  {data.korean_name_suggestion.life_values}
                 </p>
               </AccordionContent>
             </AccordionItem>
 
-            {/* 시적 해석 */}
-            <AccordionItem value="poetic">
-              <AccordionTrigger>Poetic Interpretation</AccordionTrigger>
+            {/* 소셜 공유 내용 */}
+            <AccordionItem value="social">
+              <AccordionTrigger>Social Share Content</AccordionTrigger>
               <AccordionContent>
-                <p className="whitespace-pre-wrap text-sm md:text-base italic">
-                  {isPremiumData(data)
-                    ? `"${data.interpretation.poetic_interpretation_of_korean_name}"`
-                    : data.poetic_interpretation}
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* 덕목과 삶의 방향 */}
-            <AccordionItem value="virtues">
-              <AccordionTrigger>Virtues & Life Direction</AccordionTrigger>
-              <AccordionContent>
-                <p className="whitespace-pre-wrap text-sm md:text-base">
-                  {isPremiumData(data)
-                    ? data.interpretation.virtue_and_life_direction
-                    : data.virtue_and_life_direction}
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* 프리미엄 전용 - 문화적 축복 */}
-            {isPremiumData(data) && (
-              <AccordionItem value="blessing">
-                <AccordionTrigger>Cultural Blessing</AccordionTrigger>
-                <AccordionContent>
-                  <div className="bg-gradient-to-r from-yellow-100/70 via-amber-50/70 to-yellow-100/70 dark:from-yellow-900/30 dark:via-amber-900/20 dark:to-yellow-900/30 p-4 rounded-md">
-                    <p className="whitespace-pre-wrap text-sm md:text-base text-amber-800 dark:text-amber-300 italic">
-                      {data.interpretation.cultural_blessing_note}
-                    </p>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* 프리미엄 전용 - 전체 설명 */}
-            {isPremiumData(data) && (
-              <AccordionItem value="full">
-                <AccordionTrigger>
-                  Complete Name Interpretation
-                </AccordionTrigger>
-                <AccordionContent>
-                  <p className="whitespace-pre-wrap text-sm md:text-base">
-                    {data.interpretation.full_interpretation_text_narrative}
+                <div className="text-center">
+                  <p className="text-2xl mb-3">
+                    {data.social_share_content.formatted}
                   </p>
-                </AccordionContent>
-              </AccordionItem>
-            )}
+                  <p className="whitespace-pre-wrap text-sm md:text-base">
+                    {data.social_share_content.summary}
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
       )}

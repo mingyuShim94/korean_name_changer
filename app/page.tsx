@@ -14,6 +14,14 @@ import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
 import { generateKoreanNameAction } from "./actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
+// import { initializePaddle } from "@paddle/paddle-js"; // Paddle 잠시 비활성화
+
+// window에 커스텀 속성 타입 선언
+declare global {
+  interface Window {
+    __paddleInitialized?: boolean;
+  }
+}
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
@@ -73,7 +81,7 @@ export default function Home() {
         router.push(
           `/result?data=${encodeURIComponent(
             JSON.stringify(result.data)
-          )}&nameStyle=${nameStyle}&type=free`
+          )}&nameStyle=${nameStyle}&type=free&gender=${gender}`
         );
       } else {
         setError("An unexpected issue occurred. No data or error returned.");
@@ -81,18 +89,35 @@ export default function Home() {
     });
   };
 
-  // premiumData 인자 제거
   const handlePremiumNameSubmit = (
     name: string,
     gender: GenderOption,
     nameStyle: NameStyleOption
-    // premiumData?: PremiumRequestData // 더 이상 사용하지 않음
   ) => {
     // Google Analytics 이벤트 추적
     trackButtonClick("generate_korean_name", `premium_${gender}_${nameStyle}`);
 
     setError(null);
     startTransition(async () => {
+      // Paddle.js 초기화 부분 주석 처리 (결제 비활성화)
+      /* 
+      if (typeof window !== "undefined" && !window.__paddleInitialized) {
+        try {
+          const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "";
+          if (!token) {
+            setError("Paddle 클라이언트 토큰이 설정되지 않았습니다.");
+            return;
+          }
+          await initializePaddle({ token });
+          window.__paddleInitialized = true;
+          console.log("Paddle.js 초기화 완료");
+        } catch (e) {
+          setError("Paddle.js 초기화 중 오류 발생: " + (e as Error).message);
+          return;
+        }
+      }
+      */
+
       console.log(
         "Submitting PREMIUM: Name:",
         name,
@@ -100,8 +125,6 @@ export default function Home() {
         gender,
         "Style:",
         nameStyle
-        // "Preferred Syllables:", // preferredSyllables 관련 로그 제거
-        // premiumData?.preferredSyllables
       );
 
       const result = await generateKoreanNameAction({
@@ -109,7 +132,6 @@ export default function Home() {
         gender,
         nameStyle,
         isPremium: true,
-        // preferredSyllables: premiumData?.preferredSyllables, // preferredSyllables 전달 제거
       });
 
       if (result.error) {
@@ -119,7 +141,7 @@ export default function Home() {
         router.push(
           `/result?data=${encodeURIComponent(
             JSON.stringify(result.data)
-          )}&nameStyle=${nameStyle}&type=premium`
+          )}&nameStyle=${nameStyle}&type=premium&gender=${gender}`
         );
       } else {
         setError(
@@ -196,13 +218,11 @@ export default function Home() {
                 </p>
               </div>
               <NameInputForm
-                // onSubmit 콜백 시그니처 변경: (name) => ...
                 onSubmit={(name) =>
                   handlePremiumNameSubmit(
                     name,
                     selectedGender,
                     selectedNameStyle
-                    // premiumFormData 더 이상 전달 안 함
                   )
                 }
                 isLoading={isPending}

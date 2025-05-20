@@ -52,12 +52,31 @@ export function trackButtonClick(buttonName: string, additionalInfo?: string) {
   );
 }
 
+// URL에서 실제 페이지 경로만 추출하는 함수
+function sanitizeUrl(url: string): string {
+  try {
+    // URL에서 경로만 추출 (쿼리 파라미터 제외)
+    const urlObj = new URL(url, window.location.origin);
+    return urlObj.pathname;
+  } catch {
+    // URL 파싱에 실패한 경우 입력값 그대로 반환
+    return url;
+  }
+}
+
 // 페이지 조회 이벤트 추적을 위한 헬퍼 함수
 export function trackPageView(pagePath: string, pageTitle: string) {
   if (typeof window !== "undefined" && window.gtag) {
+    // 페이지 경로를 단순화하여 쿼리 파라미터 제거
+    const cleanPagePath = sanitizeUrl(pagePath);
+
+    // 페이지 제목이 너무 길면 잘라내기 (최대 100자)
+    const trimmedPageTitle =
+      pageTitle.length > 100 ? pageTitle.substring(0, 97) + "..." : pageTitle;
+
     window.gtag("event", "page_view", {
-      page_path: pagePath,
-      page_title: pageTitle,
+      page_path: cleanPagePath,
+      page_title: trimmedPageTitle,
     });
   }
 }

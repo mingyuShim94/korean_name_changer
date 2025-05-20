@@ -1,57 +1,40 @@
 "use server"; // runtime = "edge"
 
 import { GoogleGenAI } from "@google/genai";
-// system prompt 및 타입 import
+// krNameSystemPrompts 사용하도록 변경
 import {
-  getSystemInstruction,
+  generateKoreanNameSystemPrompt,
   GenderOption,
   NameStyleOption,
-} from "./lib/nameSystemPrompts";
+  KoreanNamePromptOptions,
+  OriginalNameAnalysis,
+  KoreanNameSuggestion,
+  SocialShareContent,
+} from "./lib/krNameSystemPrompts";
 
-// KoreanNameData 인터페이스 (API Route 및 page.tsx와 동일한 구조 유지)
-interface KoreanNameData {
+// 새로운 응답 데이터 타입 정의 - 무료 버전
+interface FreeKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
+  original_name_analysis: {
+    summary: string;
   };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    poetic_interpretation_of_korean_name: string;
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
   };
 }
 
-// 프리미엄용 응답 데이터 타입 정의 (더 자세한 해석을 위함)
+// 새로운 응답 데이터 타입 정의 - 프리미엄 버전
 interface PremiumKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
-  };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    synthesized_meaning_and_aspiration: string;
-    poetic_interpretation_of_korean_name: string;
-    virtue_and_life_direction: string;
-    cultural_blessing_note: string;
-    full_interpretation_text_narrative: string;
-  };
+  original_name_analysis: OriginalNameAnalysis;
+  korean_name_suggestion: KoreanNameSuggestion;
+  social_share_content: SocialShareContent;
 }
 
 // 파라미터 타입도 수정
@@ -63,14 +46,56 @@ interface GenerateNameParams {
 }
 
 interface ActionResult {
-  data?: KoreanNameData | PremiumKoreanNameData;
+  data?: FreeKoreanNameData | PremiumKoreanNameData;
   error?: string;
 }
 
 // 직접 호출을 위한 추가 상수 및 함수
 const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
-const API_KEY = process.env.GEMINI_API_KEY_FREE || "";
-const genAI = new GoogleGenAI({ apiKey: API_KEY });
+
+// isPremium 여부에 따라 다른 API 키 사용
+function getApiKey(isPremium: boolean): string {
+  const key = isPremium
+    ? process.env.GEMINI_API_KEY_PAID || ""
+    : process.env.GEMINI_API_KEY_FREE || "";
+
+  console.log(
+    `API Key Length (${isPremium ? "Premium" : "Free"}): ${key.length}`
+  );
+  return key;
+}
+
+// 응답 텍스트에서 JSON만 추출하는 헬퍼 함수
+function extractJsonFromText(text: string): string {
+  try {
+    // JSON 문자열의 시작과 끝을 찾습니다
+    const jsonStart = text.indexOf("{");
+    const jsonEnd = text.lastIndexOf("}") + 1;
+
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      const jsonString = text.substring(jsonStart, jsonEnd);
+      // 유효한 JSON인지 테스트
+      JSON.parse(jsonString);
+      return jsonString;
+    }
+
+    // JSON 형식이 아닌 경우 원본 반환
+    return text;
+  } catch (error) {
+    console.error("JSON 추출 실패:", error);
+    // 원본 텍스트에 JSON이 포함된 곳을 찾아 출력
+    console.log(
+      "텍스트 내 JSON 범위 추정:",
+      text.indexOf("{"),
+      "부터",
+      text.lastIndexOf("}"),
+      "까지"
+    );
+    console.log("텍스트 샘플(처음 50자):", text.substring(0, 50));
+    console.log("텍스트 샘플(마지막 50자):", text.substring(text.length - 50));
+    return text;
+  }
+}
 
 // Generation parameters
 const generationParams = {
@@ -87,19 +112,46 @@ export async function generateKoreanNameAction(
 
   try {
     // 1. API를 직접 호출하는 방식 - Edge 환경에서 최적화
-    if (API_KEY) {
+    // API 키가 있는지 확인
+    if (process.env.GEMINI_API_KEY_FREE || process.env.GEMINI_API_KEY_PAID) {
       try {
         console.log("Gemini API 직접 호출 시도 (Edge Runtime)");
 
         const { name, gender, nameStyle = "hanja", isPremium = false } = params; // 기본값 설정
         const userMessageParts = [{ text: name }];
-        const dynamicSystemInstruction = getSystemInstruction(
+
+        // prompt 옵션 객체 생성
+        const promptOptions: KoreanNamePromptOptions = {
           gender,
           nameStyle,
-          isPremium // isPremium 매개변수 전달
+        };
+
+        // 동적 시스템 프롬프트 생성
+        const dynamicSystemInstruction =
+          generateKoreanNameSystemPrompt(promptOptions);
+
+        console.log(
+          "Selected System Prompt String in Action (일부):",
+          dynamicSystemInstruction.substring(0, 200) + "..."
         );
 
-        const result = await genAI.models.generateContent({
+        // isPremium에 따라 적절한 API 키 사용
+        const apiKey = getApiKey(isPremium);
+        if (!apiKey) {
+          return {
+            error: `API key missing for ${
+              isPremium ? "premium" : "free"
+            } service.`,
+          };
+        }
+
+        // 새 GoogleGenAI 인스턴스 생성
+        const genAI = new GoogleGenAI({ apiKey });
+
+        // 스트림 모드만 사용
+        console.log("스트림 모드로 Gemini API 호출...");
+
+        const streamResponse = await genAI.models.generateContentStream({
           model: MODEL_NAME,
           contents: [{ role: "user", parts: userMessageParts }],
           config: {
@@ -109,45 +161,87 @@ export async function generateKoreanNameAction(
           ...generationParams,
         });
 
-        let responseText = "";
-        if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
-          responseText = result.candidates[0].content.parts[0].text;
-          console.log("Gemini API 직접 호출 성공");
+        let fullResponse = "";
+        for await (const chunk of streamResponse) {
+          fullResponse += chunk.text || "";
+        }
 
-          try {
-            const jsonData = JSON.parse(responseText);
+        console.log("스트림 응답 길이:", fullResponse.length);
+        console.log("응답 샘플:", fullResponse.substring(0, 100) + "...");
 
-            // 프리미엄 모드인 경우 다른 형식으로 처리
-            if (isPremium) {
-              // 프리미엄 데이터 구조 확인
-              if (
-                typeof jsonData.original_name === "string" &&
-                jsonData.suggested_korean_name &&
-                jsonData.interpretation
-              ) {
-                const premiumData = jsonData as PremiumKoreanNameData;
-                return { data: premiumData };
-              }
+        // 받은 텍스트에서 JSON 추출
+        const jsonText = extractJsonFromText(fullResponse);
+
+        try {
+          const jsonData = JSON.parse(jsonText);
+          console.log("JSON 구문 분석 성공, 데이터 구조 검증 중...");
+
+          // API 응답에 original_name 필드 추가 (요구 사항)
+          jsonData.original_name = name;
+
+          // 프리미엄 모드인 경우 전체 데이터 반환
+          if (isPremium) {
+            // 프리미엄 응답 구조 검증
+            if (
+              jsonData.original_name_analysis &&
+              jsonData.korean_name_suggestion &&
+              jsonData.social_share_content
+            ) {
+              console.log("프리미엄 데이터 구조 검증 성공");
+              const premiumData = jsonData as PremiumKoreanNameData;
+              return { data: premiumData };
             } else {
-              // 일반 모드 처리 - 새로운 JSON 구조에 맞게 수정
-              if (
-                typeof jsonData.original_name === "string" &&
-                jsonData.suggested_korean_name &&
-                jsonData.interpretation &&
-                jsonData.interpretation.core_meaning_summary &&
-                jsonData.interpretation.element_analysis &&
-                jsonData.interpretation.connection_and_rationale &&
-                jsonData.interpretation.poetic_interpretation_of_korean_name
-              ) {
-                // 구조가 맞으면 그대로 반환
-                const resultData = jsonData as KoreanNameData;
-                return { data: resultData };
-              }
+              console.error(
+                "응답 데이터 구조 검증 실패 (Premium):",
+                JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
+              );
+              return {
+                error: "Invalid response format from AI service (Premium mode)",
+              };
             }
-          } catch (parseError) {
-            console.error("JSON 파싱 오류:", parseError);
-            // 파싱 오류 시 API 라우트 방식으로 폴백
+          } else {
+            // 무료 모드 처리 - 필요한 데이터만 필터링
+            if (
+              jsonData.original_name_analysis &&
+              jsonData.korean_name_suggestion
+            ) {
+              console.log("무료 데이터 구조 검증 성공");
+              // 무료 모드에 맞게 데이터 필터링
+              const freeData: FreeKoreanNameData = {
+                original_name: name,
+                original_name_analysis: {
+                  summary: jsonData.original_name_analysis.summary,
+                },
+                korean_name_suggestion: {
+                  full_name: jsonData.korean_name_suggestion.full_name,
+                  syllables: jsonData.korean_name_suggestion.syllables,
+                  rationale: jsonData.korean_name_suggestion.rationale,
+                },
+              };
+              return { data: freeData };
+            } else {
+              console.error(
+                "응답 데이터 구조 검증 실패 (Free):",
+                JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
+              );
+              return {
+                error: "Invalid response format from AI service (Free mode)",
+              };
+            }
           }
+        } catch (parseError) {
+          console.error("JSON 파싱 오류:", parseError);
+          console.error(
+            "응답 텍스트 샘플:",
+            jsonText.substring(0, 200) + "..."
+          );
+          return {
+            error:
+              "JSON 파싱 실패: " +
+              (parseError instanceof Error
+                ? parseError.message
+                : String(parseError)),
+          };
         }
       } catch (directApiError) {
         console.error("Gemini API 직접 호출 실패:", directApiError);
@@ -175,19 +269,38 @@ export async function generateKoreanNameAction(
       body: JSON.stringify(params),
     });
 
-    console.log("API 응답 상태:", response.status);
+    console.log("API 응답 완료");
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return {
-        error:
-          errorData.error ||
-          `API request failed with status ${response.status}`,
-      };
+      const errorText = await response.text();
+      let errorMessage = `API request failed with status ${response.status}`;
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        console.error("응답 오류 파싱 실패:", e);
+        console.error("원본 오류 응답:", errorText.substring(0, 200));
+      }
+
+      return { error: errorMessage };
     }
 
-    const data: KoreanNameData | PremiumKoreanNameData = await response.json();
-    return { data };
+    const responseText = await response.text();
+
+    try {
+      const data = JSON.parse(responseText) as
+        | FreeKoreanNameData
+        | PremiumKoreanNameData;
+      return { data };
+    } catch (parseError) {
+      console.error("API 응답 JSON 파싱 오류:", parseError);
+      console.error(
+        "응답 텍스트 프리뷰:",
+        responseText.substring(0, 200) + "..."
+      );
+      return { error: "Failed to parse API response as JSON" };
+    }
   } catch (err) {
     console.error("이름 생성 중 오류 발생:", err);
     if (err instanceof Error) {

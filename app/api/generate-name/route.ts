@@ -1,73 +1,96 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
-// system prompt 및 타입 import
+// krNameSystemPrompts 사용하도록 변경
 import {
-  getSystemInstruction,
+  generateKoreanNameSystemPrompt,
   GenderOption,
   NameStyleOption,
-} from "../../lib/nameSystemPrompts";
+  KoreanNamePromptOptions,
+  OriginalNameAnalysis,
+  KoreanNameSuggestion,
+  SocialShareContent,
+} from "../../lib/krNameSystemPrompts";
 
 // Cloudflare Pages에서는 Edge Runtime이 필수입니다
 export const runtime = "edge";
 
-// 타입 정의 (프론트엔드와 공유 가능)
-interface KoreanNameData {
+// 새로운 응답 데이터 타입 정의 - 무료 버전
+interface FreeKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
+  original_name_analysis: {
+    summary: string;
   };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    poetic_interpretation_of_korean_name: string;
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
   };
 }
 
-// 프리미엄용 응답 데이터 타입 정의
+// 새로운 응답 데이터 타입 정의 - 프리미엄 버전
 interface PremiumKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
-  };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    synthesized_meaning_and_aspiration: string;
-    poetic_interpretation_of_korean_name: string;
-    virtue_and_life_direction: string;
-    cultural_blessing_note: string;
-    full_interpretation_text_narrative: string;
-  };
+  original_name_analysis: OriginalNameAnalysis;
+  korean_name_suggestion: KoreanNameSuggestion;
+  social_share_content: SocialShareContent;
 }
 
 const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
-const API_KEY = process.env.GEMINI_API_KEY_FREE || "";
+// isPremium 여부에 따라 다른 API 키 사용
+function getApiKey(isPremium: boolean): string {
+  const key = isPremium
+    ? process.env.GEMINI_API_KEY_PAID || ""
+    : process.env.GEMINI_API_KEY_FREE || "";
 
-// API 키가 없을 경우 로드 시점에 오류 발생 또는 경고
-if (!API_KEY) {
+  console.log(
+    `API Key Length (${isPremium ? "Premium" : "Free"}): ${key.length}`
+  );
+  return key;
+}
+
+// 응답 텍스트에서 JSON만 추출하는 헬퍼 함수
+function extractJsonFromText(text: string): string {
+  try {
+    // JSON 문자열의 시작과 끝을 찾습니다
+    const jsonStart = text.indexOf("{");
+    const jsonEnd = text.lastIndexOf("}") + 1;
+
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      const jsonString = text.substring(jsonStart, jsonEnd);
+      // 유효한 JSON인지 테스트
+      JSON.parse(jsonString);
+      return jsonString;
+    }
+
+    // JSON 형식이 아닌 경우 원본 반환
+    return text;
+  } catch (error) {
+    console.error("JSON 추출 실패:", error);
+    // 원본 텍스트에 JSON이 포함된 곳을 찾아 출력
+    console.log(
+      "텍스트 내 JSON 범위 추정:",
+      text.indexOf("{"),
+      "부터",
+      text.lastIndexOf("}"),
+      "까지"
+    );
+    console.log("텍스트 샘플(처음 50자):", text.substring(0, 50));
+    console.log("텍스트 샘플(마지막 50자):", text.substring(text.length - 50));
+    return text;
+  }
+}
+
+// API 키 검증
+if (!process.env.GEMINI_API_KEY_FREE || !process.env.GEMINI_API_KEY_PAID) {
   console.error(
-    "CRITICAL: GEMINI_API_KEY_FREE is not set in environment variables."
+    "CRITICAL: One or more Gemini API keys are not set in environment variables."
   );
   // 프로덕션 환경에서는 여기서 애플리케이션을 중단하거나, 기능을 비활성화할 수 있습니다.
 }
-
-const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
 // Generation parameters (temperature, topK 등)
 const generationParams = {
@@ -77,19 +100,8 @@ const generationParams = {
   maxOutputTokens: 8192,
 };
 
-// SafetySettings는 @google/genai에서의 정확한 사용법 확인 필요. 현재는 생략.
-// const safetySettings = [ ... ];
-
 export async function POST(request: NextRequest) {
   console.log("API 요청이 시작되었습니다 (Edge Runtime)");
-  if (!API_KEY) {
-    console.error("API_KEY가 없습니다. 환경 변수를 확인하세요.");
-    // 클라이언트에는 좀 더 일반적인 오류 메시지를 반환합니다.
-    return NextResponse.json(
-      { error: "Server configuration error. API key might be missing." },
-      { status: 500 }
-    );
-  }
 
   let foreignName: string | undefined;
   let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
@@ -98,7 +110,13 @@ export async function POST(request: NextRequest) {
 
   try {
     // Edge Runtime에서 안정적으로 실행되도록 요청 처리 최적화
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json().catch((e) => {
+      console.error("요청 JSON 파싱 오류:", e);
+      return {};
+    });
+
+    console.log("API 요청 본문:", JSON.stringify(body));
+
     foreignName = body?.name as string;
     // gender 값 유효성 검사 및 할당
     if (
@@ -129,85 +147,154 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userMessageParts = [{ text: foreignName }];
-    const dynamicSystemInstruction = getSystemInstruction(
-      gender,
-      nameStyle,
-      isPremium
+    console.log(
+      `API 요청 파라미터: name=${foreignName}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
     );
 
-    // API 호출 시 동적 시스템 명령어 사용
-    const result = await genAI.models.generateContent({
+    const userMessageParts = [{ text: foreignName }];
+
+    // 프롬프트 옵션 객체 생성
+    const promptOptions: KoreanNamePromptOptions = {
+      gender,
+      nameStyle,
+    };
+
+    // 동적 시스템 프롬프트 생성
+    const dynamicSystemInstruction =
+      generateKoreanNameSystemPrompt(promptOptions);
+
+    // 선택된 시스템 프롬프트 문자열을 콘솔에 출력
+    console.log(
+      "Selected System Prompt String in API Route (일부):",
+      dynamicSystemInstruction.substring(0, 200) + "..."
+    );
+
+    // isPremium에 따라 적절한 API 키 사용
+    const apiKey = getApiKey(isPremium);
+    if (!apiKey) {
+      return NextResponse.json(
+        {
+          error: `API key missing for ${
+            isPremium ? "premium" : "free"
+          } service.`,
+        },
+        { status: 500 }
+      );
+    }
+
+    // 매번 새로운 GoogleGenAI 인스턴스 생성
+    const genAI = new GoogleGenAI({ apiKey });
+
+    // 스트림 모드로 API 호출
+    console.log("스트림 모드로 Gemini API 호출 시작...");
+
+    const streamResponse = await genAI.models.generateContentStream({
       model: MODEL_NAME,
       contents: [{ role: "user", parts: userMessageParts }],
       config: {
-        // config 객체를 직접 생성하여 전달
         responseMimeType: "application/json",
         systemInstruction: [{ text: dynamicSystemInstruction }],
       },
       ...generationParams,
     });
 
-    let responseText = "";
-    if (result && result.candidates && result.candidates.length > 0) {
-      const candidate = result.candidates[0];
-      if (
-        candidate.content &&
-        candidate.content.parts &&
-        candidate.content.parts.length > 0
-      ) {
-        responseText = candidate.content.parts[0].text || "";
-      }
+    let fullResponse = "";
+    for await (const chunk of streamResponse) {
+      fullResponse += chunk.text || "";
     }
 
-    if (!responseText) {
-      throw new Error(
-        "API_RESPONSE_EMPTY: Gemini API did not return text, or text could not be extracted from response structure."
+    console.log("스트림 응답 길이:", fullResponse.length);
+    console.log("응답 샘플:", fullResponse.substring(0, 100) + "...");
+
+    // 받은 텍스트에서 JSON 추출
+    const jsonText = extractJsonFromText(fullResponse);
+
+    if (!jsonText) {
+      console.error("API_RESPONSE_EMPTY: 응답에 텍스트가 없습니다.");
+      return NextResponse.json(
+        { error: "Empty response from Gemini API" },
+        { status: 500 }
       );
     }
 
-    const jsonData = JSON.parse(responseText);
+    try {
+      const jsonData = JSON.parse(jsonText);
+      console.log("JSON 구문 분석 성공, 데이터 구조 검증 중...");
 
-    // 프리미엄 모드인 경우 다른 형식으로 검증
-    if (isPremium) {
-      // 프리미엄 응답 구조 검증
-      if (
-        !jsonData.original_name ||
-        !jsonData.suggested_korean_name ||
-        !jsonData.interpretation
-      ) {
-        console.warn(
-          "API_RESPONSE_MALFORMED: Received premium data does not match expected structure.",
-          jsonData
-        );
-        throw new Error(
-          "API_RESPONSE_MALFORMED: Received premium data does not match expected structure."
-        );
-      }
-      // 프리미엄 데이터 그대로 반환
-      return NextResponse.json(jsonData as PremiumKoreanNameData);
-    } else {
-      // 일반 모드 처리
-      // 응답 데이터 구조 검증
-      if (
-        !jsonData.original_name ||
-        !jsonData.suggested_korean_name ||
-        !jsonData.interpretation ||
-        !jsonData.interpretation.core_meaning_summary ||
-        !jsonData.interpretation.element_analysis ||
-        !jsonData.interpretation.connection_and_rationale ||
-        !jsonData.interpretation.poetic_interpretation_of_korean_name
-      ) {
-        console.warn(
-          "API_RESPONSE_MALFORMED: Received data does not match expected structure.",
-          jsonData
-        );
-        throw new Error(
-          "API_RESPONSE_MALFORMED: Received data does not match expected structure."
-        );
-      }
+      // API 응답에 original_name 필드 추가 (요구 사항)
+      jsonData.original_name = foreignName;
 
-      return NextResponse.json(jsonData as KoreanNameData);
+      // 프리미엄 모드인 경우 전체 데이터 반환
+      if (isPremium) {
+        // 프리미엄 응답 구조 검증
+        if (
+          jsonData.original_name_analysis &&
+          jsonData.korean_name_suggestion &&
+          jsonData.social_share_content
+        ) {
+          console.log("프리미엄 데이터 구조 검증 성공");
+          const premiumData = jsonData as PremiumKoreanNameData;
+          return NextResponse.json(premiumData);
+        } else {
+          console.error(
+            "응답 데이터 구조 검증 실패 (Premium):",
+            JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
+          );
+          return NextResponse.json(
+            {
+              error: "Received premium data does not match expected structure",
+            },
+            { status: 500 }
+          );
+        }
+      } else {
+        // 무료 모드 처리 - 데이터 필터링
+        if (
+          jsonData.original_name_analysis &&
+          jsonData.korean_name_suggestion
+        ) {
+          console.log("무료 데이터 구조 검증 성공");
+          // 무료 모드에 맞게 필요한 데이터만 필터링
+          const freeData: FreeKoreanNameData = {
+            original_name: foreignName,
+            original_name_analysis: {
+              summary: jsonData.original_name_analysis.summary,
+            },
+            korean_name_suggestion: {
+              full_name: jsonData.korean_name_suggestion.full_name,
+              syllables: jsonData.korean_name_suggestion.syllables,
+              rationale: jsonData.korean_name_suggestion.rationale,
+            },
+          };
+
+          return NextResponse.json(freeData);
+        } else {
+          console.error(
+            "응답 데이터 구조 검증 실패 (Free):",
+            JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
+          );
+          return NextResponse.json(
+            { error: "Received data does not match expected structure" },
+            { status: 500 }
+          );
+        }
+      }
+    } catch (parseError) {
+      console.error("JSON 파싱 오류:", parseError);
+      console.error(
+        "응답 텍스트의 처음 300자:",
+        jsonText.substring(0, 300) + "..."
+      );
+      return NextResponse.json(
+        {
+          error: "Failed to parse Gemini API response as JSON",
+          details:
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError),
+        },
+        { status: 500 }
+      );
     }
   } catch (error) {
     // error 타입을 Error 또는 unknown으로 변경
@@ -234,12 +321,8 @@ export async function POST(request: NextRequest) {
         errorMessage =
           "Failed to parse response from Gemini API. Response was not valid JSON.";
       }
-      // GoogleGenerativeAI 에러 객체 확인 (존재한다면)
-      // if (error.httpErrorCode) { statusCode = error.httpErrorCode; }
-      // 혹은 error.status, error.code 등 API 에러 객체의 속성을 확인하여 상태 코드 조정
     }
 
-    // statusCode를 JSON 응답에 포함시킵니다.
     return NextResponse.json(
       { error: errorMessage, details: errorDetails },
       { status: statusCode }

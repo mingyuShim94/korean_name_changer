@@ -7,47 +7,53 @@ import { ImprovedResultDisplay } from "@/components/improved-result-display";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
+import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
 
-// KoreanNameData 인터페이스 (app/page.tsx와 동일한 구조)
-interface KoreanNameData {
+// 새로운 인터페이스 정의 - 무료 버전
+interface FreeKoreanNameData {
   original_name: string;
-  korean_name: string;
-  connection_explanation: string;
-  hanja_breakdown: Array<{
-    character: string;
-    meaning: string;
-  }>;
-  poetic_interpretation: string;
-  virtue_and_life_direction: string;
+  original_name_analysis: {
+    summary: string;
+  };
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
+  };
 }
 
-// 프리미엄 결과 데이터 인터페이스
+// 새로운 인터페이스 정의 - 프리미엄 버전
 interface PremiumKoreanNameData {
   original_name: string;
-  suggested_korean_name: {
-    hangul: string;
-    hanja?: string;
-    romanization: string;
+  original_name_analysis: {
+    letters: {
+      letter: string;
+      meaning: string;
+    }[];
+    summary: string;
   };
-  interpretation: {
-    core_meaning_summary: string;
-    element_analysis: Array<{
-      hangul_syllable: string;
-      hanja_character?: string;
-      meaning_english_hint: string;
-      relevance_to_name: string;
-    }>;
-    connection_and_rationale: string;
-    synthesized_meaning_and_aspiration: string;
-    poetic_interpretation_of_korean_name: string;
-    virtue_and_life_direction: string;
-    cultural_blessing_note: string;
-    full_interpretation_text_narrative: string;
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
+    life_values: string;
+  };
+  social_share_content: {
+    formatted: string;
+    summary: string;
   };
 }
 
 // 결과 데이터 유니온 타입
-type ResultData = KoreanNameData | PremiumKoreanNameData;
+type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
 
 // SearchParams를 읽고 결과를 표시하는 내부 컴포넌트
 function ResultContent() {
@@ -55,17 +61,38 @@ function ResultContent() {
   const [resultData, setResultData] = React.useState<ResultData | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isPremium, setIsPremium] = React.useState<boolean>(false);
+  const [nameStyle, setNameStyle] = React.useState<NameStyleOption>("hanja");
+  const [gender, setGender] = React.useState<GenderOption>("neutral");
 
   React.useEffect(() => {
     const dataString = searchParams.get("data");
+
+    // 검색 파라미터에서 필요한 값들 추출
     const type = searchParams.get("type") || "free";
+    const style = searchParams.get("nameStyle") || "hanja";
+    const genderParam = searchParams.get("gender") || "neutral";
 
     setIsPremium(type === "premium");
+    setNameStyle(style as NameStyleOption);
+    setGender(genderParam as GenderOption);
 
     if (dataString) {
       try {
         const parsedData = JSON.parse(decodeURIComponent(dataString));
-        setResultData(parsedData);
+
+        // 파싱된 데이터가 올바른 형식인지 검증
+        if (parsedData && parsedData.original_name) {
+          // premium 데이터인지 확인
+          const isPremiumResult =
+            type === "premium" ||
+            ("social_share_content" in parsedData &&
+              parsedData.korean_name_suggestion?.life_values);
+
+          setIsPremium(isPremiumResult);
+          setResultData(parsedData);
+        } else {
+          throw new Error("Data format is invalid");
+        }
       } catch (e) {
         console.error("Failed to parse result data:", e);
         setError(
@@ -74,8 +101,6 @@ function ResultContent() {
       }
     } else {
       // 데이터가 없는 경우, 예를 들어 직접 /result로 접근한 경우
-      // 이 경우 에러 메시지를 설정하거나, 홈페이지로 리디렉션 할 수 있습니다.
-      // 여기서는 에러 메시지를 설정합니다.
       setError(
         "표시할 결과 데이터가 없습니다. 홈으로 돌아가 다시 시도해주세요."
       );
@@ -99,54 +124,50 @@ function ResultContent() {
   }
 
   // 개선된 ImprovedResultDisplay 컴포넌트 사용
-  const nameStyle =
-    searchParams.get("nameStyle") === "pureKorean" ? "pureKorean" : "hanja";
   return (
-    <ImprovedResultDisplay
-      data={resultData}
-      loading={false}
-      nameStyle={nameStyle}
-      isPremium={isPremium}
-    />
+    <>
+      <ImprovedResultDisplay
+        data={resultData}
+        loading={false}
+        nameStyle={nameStyle}
+        isPremium={isPremium}
+        gender={gender}
+      />
+      {resultData && (
+        <CardFooter className="flex p-6 pt-0 sm:p-8 sm:pt-0">
+          <Button className="w-full text-sm md:text-base text-center" asChild>
+            <Link
+              href="/"
+              onClick={() =>
+                trackButtonClick("generate_another_name", "from_result_page")
+              }
+            >
+              Generate Another Name
+            </Link>
+          </Button>
+        </CardFooter>
+      )}
+    </>
   );
 }
 
 export default function ResultPage() {
   const searchParams = useSearchParams();
-  const [data, setData] = React.useState<ResultData | null>(null);
 
   // 페이지 로드 시 이벤트 추적
   React.useEffect(() => {
     const type = searchParams.get("type") || "free";
     const nameStyle = searchParams.get("nameStyle") || "hanja";
+    const gender = searchParams.get("gender") || "neutral";
 
     // 결과 페이지 조회 이벤트 추적
     trackPageView(
       "/result",
       `Result Page - ${
         type === "premium" ? "Premium" : "Free"
-      } ${nameStyle} Name`
+      } ${nameStyle} Name (${gender})`
     );
   }, [searchParams]);
-
-  React.useEffect(() => {
-    // URL 쿼리 파라미터에서 데이터 파싱
-    const dataParam = searchParams.get("data");
-    if (dataParam) {
-      try {
-        // URL-인코딩된 JSON 문자열을 디코딩하고 파싱
-        const parsedData = JSON.parse(decodeURIComponent(dataParam));
-        setData(parsedData);
-      } catch (error) {
-        console.error("Error parsing data from URL:", error);
-      }
-    }
-  }, [searchParams]);
-
-  // 홈으로 돌아가기 버튼 클릭 이벤트 처리
-  const handleGoHomeClick = () => {
-    trackButtonClick("generate_another_name", "from_result_page");
-  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
@@ -162,15 +183,6 @@ export default function ResultPage() {
             <ResultContent />
           </React.Suspense>
         </CardContent>
-        {data && (
-          <CardFooter className="flex p-6 pt-0 sm:p-8 sm:pt-0">
-            <Button className="w-full text-sm md:text-base text-center" asChild>
-              <Link href="/" onClick={handleGoHomeClick}>
-                Generate Another Name
-              </Link>
-            </Button>
-          </CardFooter>
-        )}
       </Card>
     </main>
   );
