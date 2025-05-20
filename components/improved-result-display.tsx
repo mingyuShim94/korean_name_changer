@@ -21,12 +21,9 @@ interface FreeKoreanNameData {
   };
   korean_name_suggestion: {
     full_name: string;
-    syllables: {
-      syllable: string;
-      hanja: string;
-      meaning: string;
-    }[];
-    rationale: string;
+  };
+  social_share_content: {
+    formatted: string;
   };
 }
 
@@ -44,6 +41,7 @@ interface PremiumKoreanNameData {
     full_name: string;
     syllables: {
       syllable: string;
+      romanization: string;
       hanja: string;
       meaning: string;
     }[];
@@ -190,12 +188,13 @@ export function ImprovedResultDisplay({
     const hanjaMatch = fullName.match(/\(([^)]+)\)/);
     const hanja = hanjaMatch ? hanjaMatch[1] : undefined;
 
-    // 로마자 표기 (새 데이터 구조에는 없으므로 이름 자체를 사용)
-    const nameParts = fullName.split(" ");
-    const romanization =
-      nameParts.length > 1
-        ? `${nameParts[0]} ${nameParts[1]}`
-        : fullName.replace(/\s*\([^)]*\)\s*/, ""); // 괄호 제거
+    // syllables에서 로마자 표기 조합
+    let romanization = "";
+    if (isPremiumData(data) && data.korean_name_suggestion.syllables) {
+      romanization = data.korean_name_suggestion.syllables
+        .map((s) => s.romanization)
+        .join("");
+    }
 
     return (
       <>
@@ -220,6 +219,13 @@ export function ImprovedResultDisplay({
   // 이름 요소 분석 렌더링
   const renderNameElements = () => {
     // 이름 요소 데이터 가져오기
+    if (!isPremiumData(data) || !data.korean_name_suggestion.syllables) {
+      return (
+        <p className="text-sm text-muted-foreground text-center">
+          Detailed name element analysis is available for premium users.
+        </p>
+      );
+    }
     const syllables = data.korean_name_suggestion.syllables;
 
     return (
@@ -235,6 +241,7 @@ export function ImprovedResultDisplay({
             >
               {item.syllable}
               {item.hanja && nameStyle === "hanja" && ` (${item.hanja})`}
+              {` / ${item.romanization}`}
             </Badge>
             <div className="space-y-2 w-full">
               <div className="bg-background/60 rounded-md p-2 w-full">
@@ -360,7 +367,10 @@ export function ImprovedResultDisplay({
             </h3>
             <div className="bg-muted/20 p-3 rounded-md border">
               <p className="whitespace-pre-wrap text-sm md:text-base">
-                {data.korean_name_suggestion.rationale}
+                {/* 프리미엄 데이터에만 rationale이 있다고 가정하고 처리 */}
+                {isPremiumData(data) && data.korean_name_suggestion.rationale
+                  ? data.korean_name_suggestion.rationale
+                  : "Basic name meaning is provided. More detailed rationale is available for premium users."}
               </p>
             </div>
           </div>
@@ -421,6 +431,7 @@ export function ImprovedResultDisplay({
               <AccordionTrigger>Name Meaning & Rationale</AccordionTrigger>
               <AccordionContent>
                 <p className="whitespace-pre-wrap text-sm md:text-base">
+                  {/* data.korean_name_suggestion.rationale 접근은 isPremiumData(data) 내부이므로 안전 */}
                   {data.korean_name_suggestion.rationale}
                 </p>
               </AccordionContent>
@@ -442,11 +453,15 @@ export function ImprovedResultDisplay({
               <AccordionContent>
                 <div className="text-center">
                   <p className="text-2xl mb-3">
+                    {/* 모든 사용자에게 formatted 제공 */}
                     {data.social_share_content.formatted}
                   </p>
-                  <p className="whitespace-pre-wrap text-sm md:text-base">
-                    {data.social_share_content.summary}
-                  </p>
+                  {/* 프리미엄 사용자에게만 summary 제공 */}
+                  {isPremiumData(data) && data.social_share_content.summary && (
+                    <p className="whitespace-pre-wrap text-sm md:text-base">
+                      {data.social_share_content.summary}
+                    </p>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>

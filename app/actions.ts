@@ -20,12 +20,9 @@ interface FreeKoreanNameData {
   };
   korean_name_suggestion: {
     full_name: string;
-    syllables: {
-      syllable: string;
-      hanja: string;
-      meaning: string;
-    }[];
-    rationale: string;
+  };
+  social_share_content: {
+    formatted: string;
   };
 }
 
@@ -203,7 +200,8 @@ export async function generateKoreanNameAction(
             // 무료 모드 처리 - 필요한 데이터만 필터링
             if (
               jsonData.original_name_analysis &&
-              jsonData.korean_name_suggestion
+              jsonData.korean_name_suggestion &&
+              jsonData.social_share_content
             ) {
               console.log("무료 데이터 구조 검증 성공");
               // 무료 모드에 맞게 데이터 필터링
@@ -214,8 +212,9 @@ export async function generateKoreanNameAction(
                 },
                 korean_name_suggestion: {
                   full_name: jsonData.korean_name_suggestion.full_name,
-                  syllables: jsonData.korean_name_suggestion.syllables,
-                  rationale: jsonData.korean_name_suggestion.rationale,
+                },
+                social_share_content: {
+                  formatted: jsonData.social_share_content.formatted,
                 },
               };
               return { data: freeData };
@@ -253,11 +252,7 @@ export async function generateKoreanNameAction(
     console.log("API 라우트 방식으로 호출 시도");
 
     // baseUrl 설정 방식 개선
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
     console.log("Server Action 실행: baseUrl =", baseUrl);
 
@@ -270,6 +265,7 @@ export async function generateKoreanNameAction(
     });
 
     console.log("API 응답 완료");
+    // console.log("API 응답 상태:", response.json());
 
     if (!response.ok) {
       const errorText = await response.text();

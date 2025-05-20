@@ -17,12 +17,9 @@ interface FreeKoreanNameData {
   };
   korean_name_suggestion: {
     full_name: string;
-    syllables: {
-      syllable: string;
-      hanja: string;
-      meaning: string;
-    }[];
-    rationale: string;
+  };
+  social_share_content: {
+    formatted: string;
   };
 }
 
@@ -40,6 +37,7 @@ interface PremiumKoreanNameData {
     full_name: string;
     syllables: {
       syllable: string;
+      romanization: string;
       hanja: string;
       meaning: string;
     }[];
