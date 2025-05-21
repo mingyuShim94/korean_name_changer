@@ -17,7 +17,15 @@ interface FreeKoreanNameData {
   };
   korean_name_suggestion: {
     full_name: string;
+    rationale?: string;
+    syllables?: {
+      syllable: string;
+      romanization: string;
+      hanja?: string;
+      meaning: string;
+    }[];
   };
+  korean_name_impression?: string;
   social_share_content: {
     formatted: string;
   };
@@ -44,6 +52,7 @@ interface PremiumKoreanNameData {
     rationale: string;
     life_values: string;
   };
+  korean_name_impression: string;
   social_share_content: {
     formatted: string;
     summary: string;
@@ -52,6 +61,20 @@ interface PremiumKoreanNameData {
 
 // 결과 데이터 유니온 타입
 type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
+
+// syllables 정보를 포함한 확장된 무료 티어 데이터 타입 - 기존 인터페이스와 통일
+interface UpgradedFreeKoreanNameData extends FreeKoreanNameData {
+  korean_name_suggestion: {
+    full_name: string;
+    rationale?: string;
+    syllables?: {
+      syllable: string;
+      romanization: string;
+      hanja?: string;
+      meaning: string;
+    }[];
+  };
+}
 
 // SearchParams를 읽고 결과를 표시하는 내부 컴포넌트
 function ResultContent() {
@@ -70,6 +93,7 @@ function ResultContent() {
     const style = searchParams.get("nameStyle") || "hanja";
     const genderParam = searchParams.get("gender") || "neutral";
 
+    // URL 파라미터 기준으로 premium 여부 결정 (데이터 구조에 의존하지 않음)
     setIsPremium(type === "premium");
     setNameStyle(style as NameStyleOption);
     setGender(genderParam as GenderOption);
@@ -80,18 +104,10 @@ function ResultContent() {
 
         // 파싱된 데이터가 올바른 형식인지 검증
         if (parsedData && parsedData.original_name) {
-          // premium 데이터인지 확인
-          const isPremiumResult =
-            type === "premium" ||
-            ("social_share_content" in parsedData &&
-              parsedData.korean_name_suggestion?.life_values);
-
-          setIsPremium(isPremiumResult);
-
-          // 무료 사용자의 경우 데이터 필터링
-          if (type !== "premium" && !isPremiumResult) {
-            // 무료 티어에는 korean_name_suggestion만 제공
-            const freeData: FreeKoreanNameData = {
+          // 무료 사용자의 경우 데이터 필터링 (URL 파라미터 기준)
+          if (type !== "premium") {
+            // 무료 티어에도 syllables 정보를 포함시켜 유료와 같은 UI 구성 가능하게 함
+            const freeData: UpgradedFreeKoreanNameData = {
               original_name: parsedData.original_name,
               original_name_analysis: {
                 summary:
@@ -100,7 +116,12 @@ function ResultContent() {
               },
               korean_name_suggestion: {
                 full_name: parsedData.korean_name_suggestion?.full_name || "",
+                rationale: parsedData.korean_name_suggestion?.rationale || "",
+                // 서버에서 온 syllables 정보가 있으면 그대로 사용
+                syllables: parsedData.korean_name_suggestion?.syllables || [],
               },
+              korean_name_impression:
+                parsedData.korean_name_impression || undefined,
               social_share_content: {
                 formatted:
                   parsedData.social_share_content?.formatted ||
@@ -109,7 +130,7 @@ function ResultContent() {
                   }`,
               },
             };
-            setResultData(freeData);
+            setResultData(freeData as ResultData);
           } else {
             // 프리미엄 사용자는 전체 데이터 제공
             setResultData(parsedData);

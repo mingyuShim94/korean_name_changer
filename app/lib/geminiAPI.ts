@@ -20,26 +20,12 @@ export const generationParams = {
   maxOutputTokens: 8192,
 };
 
-// 새로운 응답 데이터 타입 정의 - 무료 버전
-export interface FreeKoreanNameData {
-  original_name: string;
-  original_name_analysis: {
-    summary: string;
-  };
-  korean_name_suggestion: {
-    full_name: string;
-    rationale: string;
-  };
-  social_share_content: {
-    formatted: string;
-  };
-}
-
-// 새로운 응답 데이터 타입 정의 - 프리미엄 버전
-export interface PremiumKoreanNameData {
+// 응답 데이터 타입 정의 (프리미엄 타입으로 통일)
+export interface KoreanNameData {
   original_name: string;
   original_name_analysis: OriginalNameAnalysis;
   korean_name_suggestion: KoreanNameSuggestion;
+  korean_name_impression: string;
   social_share_content: SocialShareContent;
 }
 
@@ -52,7 +38,7 @@ export interface GenerateNameParams {
 }
 
 export interface ActionResult {
-  data?: FreeKoreanNameData | PremiumKoreanNameData;
+  data?: KoreanNameData;
   error?: string;
 }
 
@@ -156,7 +142,7 @@ export function extractJsonFromText(text: string): string {
 export async function generateKoreanNameWithGemini(
   params: GenerateNameParams
 ): Promise<{
-  data?: FreeKoreanNameData | PremiumKoreanNameData;
+  data?: KoreanNameData;
   error?: string;
 }> {
   try {
@@ -228,58 +214,25 @@ export async function generateKoreanNameWithGemini(
       // API 응답에 original_name 필드 추가 (요구 사항)
       jsonData.original_name = name;
 
-      // 프리미엄 모드인 경우 전체 데이터 반환
-      if (isPremium) {
-        // 프리미엄 응답 구조 검증
-        if (
-          jsonData.original_name_analysis &&
-          jsonData.korean_name_suggestion &&
-          jsonData.social_share_content
-        ) {
-          console.log("프리미엄 데이터 구조 검증 성공");
-          const premiumData = jsonData as PremiumKoreanNameData;
-          return { data: premiumData };
-        } else {
-          console.error(
-            "응답 데이터 구조 검증 실패 (Premium):",
-            JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
-          );
-          return {
-            error: "Invalid response format from AI service (Premium mode)",
-          };
-        }
+      // 공통 데이터 구조 검증
+      if (
+        jsonData.original_name_analysis &&
+        jsonData.korean_name_suggestion &&
+        jsonData.social_share_content
+      ) {
+        console.log("데이터 구조 검증 성공");
+
+        // 데이터 타입을 KoreanNameData로 통일
+        const koreanNameData = jsonData as KoreanNameData;
+        return { data: koreanNameData };
       } else {
-        // 무료 모드 처리 - 필요한 데이터만 필터링
-        if (
-          jsonData.original_name_analysis &&
-          jsonData.korean_name_suggestion &&
-          jsonData.social_share_content
-        ) {
-          console.log("무료 데이터 구조 검증 성공");
-          // 무료 모드에 맞게 데이터 필터링
-          const freeData: FreeKoreanNameData = {
-            original_name: name,
-            original_name_analysis: {
-              summary: jsonData.original_name_analysis.summary,
-            },
-            korean_name_suggestion: {
-              full_name: jsonData.korean_name_suggestion.full_name,
-              rationale: jsonData.korean_name_suggestion.rationale,
-            },
-            social_share_content: {
-              formatted: jsonData.social_share_content.formatted,
-            },
-          };
-          return { data: freeData };
-        } else {
-          console.error(
-            "응답 데이터 구조 검증 실패 (Free):",
-            JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
-          );
-          return {
-            error: "Invalid response format from AI service (Free mode)",
-          };
-        }
+        console.error(
+          "응답 데이터 구조 검증 실패:",
+          JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
+        );
+        return {
+          error: "Invalid response format from AI service",
+        };
       }
     } catch (parseError) {
       console.error("JSON 파싱 오류:", parseError);

@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { AudioPlayer } from "@/components/audio-player";
 import { Button } from "@/components/ui/button";
 import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
+import { useRouter } from "next/navigation";
 
 // 새로운 인터페이스 정의 - 무료 버전
 interface FreeKoreanNameData {
@@ -15,7 +16,14 @@ interface FreeKoreanNameData {
   korean_name_suggestion: {
     full_name: string;
     rationale?: string;
+    syllables?: {
+      syllable: string;
+      romanization: string;
+      hanja?: string;
+      meaning: string;
+    }[];
   };
+  korean_name_impression?: string;
   social_share_content: {
     formatted: string;
   };
@@ -42,6 +50,7 @@ interface PremiumKoreanNameData {
     rationale: string;
     life_values: string;
   };
+  korean_name_impression: string;
   social_share_content: {
     formatted: string;
     summary: string;
@@ -82,6 +91,10 @@ export function ImprovedResultDisplay({
 }: ImprovedResultDisplayProps) {
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
+  const [showOriginalAnalysis, setShowOriginalAnalysis] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const [showBetaPopup, setShowBetaPopup] = React.useState(false);
+  const router = useRouter();
 
   // 데이터 타입 확인 함수
   const isPremiumData = (
@@ -91,6 +104,17 @@ export function ImprovedResultDisplay({
       data !== null &&
       "social_share_content" in data &&
       "life_values" in data.korean_name_suggestion
+    );
+  };
+
+  // syllables 정보를 가지고 있는지 확인하는 함수
+  const hasSyllables = (data: ResultData | null): boolean => {
+    return (
+      data !== null &&
+      "korean_name_suggestion" in data &&
+      "syllables" in data.korean_name_suggestion &&
+      Array.isArray(data.korean_name_suggestion.syllables) &&
+      data.korean_name_suggestion.syllables.length > 0
     );
   };
 
@@ -134,6 +158,23 @@ export function ImprovedResultDisplay({
     }
   };
 
+  // 클립보드에 텍스트를 복사하는 함수
+  const copyToClipboard = (formatted: string, summary: string) => {
+    // formatted, summary와 해시태그를 합쳐서 복사할 텍스트 생성
+    const textToCopy = `${formatted}\n\n${summary}\n\n#KoreanNameEmoji #mykoreanname`;
+
+    navigator.clipboard.writeText(textToCopy).then(
+      () => {
+        // 복사 성공
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000); // 2초 후 상태 초기화
+      },
+      (err) => {
+        console.error("클립보드 복사 실패:", err);
+      }
+    );
+  };
+
   // 로딩 중 UI
   if (loading) {
     return (
@@ -158,9 +199,11 @@ export function ImprovedResultDisplay({
 
   // 무료 티어 결과 화면 렌더링
   const renderFreeResult = () => {
+    const showSyllables = hasSyllables(data);
+
     return (
       <div className="space-y-8">
-        {/* 한국어 이름 제안 (무료 티어 간소화 버전) */}
+        {/* 한국어 이름 제안 (무료 티어 버전) */}
         <section className="bg-white rounded-xl shadow p-6 text-center">
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
             Korean Name Suggestion
@@ -172,10 +215,36 @@ export function ImprovedResultDisplay({
             </h3>
           </div>
 
+          {/* syllables 정보가 있는 경우 표시 */}
+          {showSyllables && data.korean_name_suggestion.syllables && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              {data.korean_name_suggestion.syllables.map(
+                (item, index: number) => (
+                  <div
+                    key={index}
+                    className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
+                  >
+                    <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
+                      {item.syllable} ({item.romanization})
+                    </div>
+                    {nameStyle === "hanja" && item.hanja && (
+                      <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-2 py-1 rounded-md mx-auto my-1 inline-block">
+                        {item.hanja}
+                      </div>
+                    )}
+                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                      {item.meaning}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+
           {/* 이름의 의미 (rationale) */}
           {data.korean_name_suggestion.rationale && (
-            <div className="mb-5">
-              <h4 className="text-lg font-semibold text-indigo-700 mb-3">
+            <div className="mb-5 text-left">
+              <h4 className="text-lg font-semibold text-indigo-700 mb-3 text-center">
                 Name Meaning
               </h4>
               <p className="text-gray-600 whitespace-pre-wrap">
@@ -184,14 +253,70 @@ export function ImprovedResultDisplay({
             </div>
           )}
 
-          {/* 공유 형식 */}
-          <div className="mt-6 pt-4 border-t">
-            <h4 className="text-lg font-semibold text-indigo-700 mb-3">
-              Share Your Korean Name
-            </h4>
+          {/* 이름 인상 - 무료 티어에서는 표시하지 않음 */}
+        </section>
+
+        {/* 공유 가능한 요약 */}
+        <section className="bg-white rounded-xl shadow p-6 text-center">
+          <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+            Shareable Summary
+          </h2>
+
+          <div className="relative bg-gray-50 p-5 rounded-lg mb-4">
             <p className="text-xl font-semibold text-gray-800 mb-2">
               {data.social_share_content.formatted}
             </p>
+            <p className="text-indigo-500 text-sm mt-4">
+              #KoreanNameEmoji #mykoreanname
+            </p>
+
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() =>
+                  copyToClipboard(
+                    data.social_share_content.formatted,
+                    data.original_name_analysis.summary
+                  )
+                }
+                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                  copied
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-200"
+                }`}
+                aria-label="Copy to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                      <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
+                    </svg>
+                    <span>Copy to clipboard</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </section>
 
@@ -200,29 +325,42 @@ export function ImprovedResultDisplay({
           <h3 className="text-xl font-semibold text-indigo-600 mb-3">
             Unlock Premium Features
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-indigo-50 p-3 rounded-lg text-center">
               <h4 className="font-semibold text-indigo-800">
-                Detailed Analysis
+                Detailed Original Name Analysis
               </h4>
               <p className="text-sm text-gray-600">
-                Understand every syllable meaning
+                In-depth breakdown of each letter/part of your original name.
+              </p>
+            </div>
+            <div className="bg-indigo-50 p-3 rounded-lg text-center">
+              <h4 className="font-semibold text-indigo-800">
+                Cultural Impression
+              </h4>
+              <p className="text-sm text-gray-600">
+                How the suggested Korean name is perceived in Korean society.
+              </p>
+            </div>
+            <div className="bg-indigo-50 p-3 rounded-lg text-center">
+              <h4 className="font-semibold text-indigo-800">Life Values</h4>
+              <p className="text-sm text-gray-600">
+                Explore the deeper meanings and virtues embodied by the name.
               </p>
             </div>
             <div className="bg-indigo-50 p-3 rounded-lg text-center">
               <h4 className="font-semibold text-indigo-800">
                 Audio Pronunciation
               </h4>
-              <p className="text-sm text-gray-600">Hear how your name sounds</p>
-            </div>
-            <div className="bg-indigo-50 p-3 rounded-lg text-center">
-              <h4 className="font-semibold text-indigo-800">Life Values</h4>
               <p className="text-sm text-gray-600">
-                Learn cultural significance
+                Hear how your name sounds.
               </p>
             </div>
           </div>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md">
+          <Button
+            onClick={() => setShowBetaPopup(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md"
+          >
             Upgrade to Premium
           </Button>
         </section>
@@ -236,32 +374,58 @@ export function ImprovedResultDisplay({
 
     return (
       <div className="space-y-8">
-        {/* 원본 이름 분석 */}
-        <section className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-2xl font-semibold text-indigo-600 mb-4 text-center">
-            Original Name Analysis
-          </h2>
-          <div className="text-center mb-5">
-            <h3 className="text-3xl font-bold text-gray-800 mb-2">
-              {data.original_name}
-            </h3>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 mb-6">
-            {data.original_name_analysis.letters.map((item, index) => (
-              <div
-                key={index}
-                className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
-              >
-                <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
-                  {item.letter}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                  {item.meaning}
-                </div>
+        {/* 원본 이름 분석 - 드롭다운 형태 */}
+        <section className="bg-white rounded-xl shadow overflow-hidden">
+          <button
+            onClick={() => setShowOriginalAnalysis(!showOriginalAnalysis)}
+            className="w-full p-6 relative focus:outline-none"
+          >
+            <h2 className="text-2xl font-semibold text-indigo-600 text-center">
+              Original Name Analysis
+            </h2>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform absolute right-6 top-1/2 transform -translate-y-1/2 ${
+                showOriginalAnalysis ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </button>
+
+          {showOriginalAnalysis && (
+            <div className="p-6 pt-0">
+              <div className="text-center mb-5">
+                <h3 className="text-3xl font-bold text-gray-800 mb-2">
+                  {data.original_name}
+                </h3>
               </div>
-            ))}
-          </div>
-          <p className="mt-4 text-gray-600 italic">{getCoreSummary()}</p>
+              <div className="flex flex-wrap justify-center gap-4 mb-6">
+                {data.original_name_analysis.letters.map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
+                  >
+                    <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
+                      {item.letter}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                      {item.meaning}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-gray-600">{getCoreSummary()}</p>
+            </div>
+          )}
         </section>
 
         {/* 한국어 이름 제안 */}
@@ -272,7 +436,19 @@ export function ImprovedResultDisplay({
 
           <div className="text-center mb-5 flex flex-col items-center">
             <h3 className="text-3xl font-bold text-gray-800 mb-2">
-              {data.korean_name_suggestion.full_name}
+              {(() => {
+                // full_name에서 한자 부분을 제거하고 영어 발음 추가
+                const koreanName =
+                  data.korean_name_suggestion.full_name.split(" ")[0]; // 한글 이름만 추출
+
+                // 로마자로 된 발음 수집
+                const romanizations = data.korean_name_suggestion.syllables.map(
+                  (item) => item.romanization
+                );
+                const fullRomanization = romanizations.join(" ");
+
+                return `${koreanName} (${fullRomanization})`;
+              })()}
             </h3>
             {isPremium && (
               <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
@@ -286,12 +462,13 @@ export function ImprovedResultDisplay({
                 className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
               >
                 <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
-                  {item.syllable}{" "}
-                  {item.hanja && nameStyle === "hanja" && `(${item.hanja})`}
+                  {item.syllable} ({item.romanization})
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">
-                  {item.romanization}
-                </div>
+                {nameStyle === "hanja" && item.hanja && (
+                  <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-2 py-1 rounded-md mx-auto my-1 inline-block">
+                    {item.hanja}
+                  </div>
+                )}
                 <div className="text-sm text-gray-500 dark:text-gray-400 italic">
                   {item.meaning}
                 </div>
@@ -299,7 +476,7 @@ export function ImprovedResultDisplay({
             ))}
           </div>
 
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
             {data.korean_name_suggestion.rationale}
           </p>
 
@@ -307,8 +484,17 @@ export function ImprovedResultDisplay({
             <h4 className="text-lg font-semibold text-indigo-700 dark:text-indigo-400">
               Life Values
             </h4>
-            <p className="text-gray-600 dark:text-gray-300 italic">
+            <p className="text-gray-600 dark:text-gray-300 italic whitespace-pre-wrap">
               {data.korean_name_suggestion.life_values}
+            </p>
+          </div>
+
+          <div className="mt-4 border-t pt-4">
+            <h4 className="text-lg font-semibold text-indigo-700 dark:text-indigo-400">
+              Cultural Impression
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300 italic whitespace-pre-wrap">
+              {data.korean_name_impression}
             </p>
           </div>
         </section>
@@ -318,12 +504,66 @@ export function ImprovedResultDisplay({
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
             Shareable Summary
           </h2>
-          <p className="text-xl font-semibold text-gray-800 mb-2">
-            {data.social_share_content.formatted}
-          </p>
-          <p className="text-gray-600 italic">
-            {data.social_share_content.summary}
-          </p>
+
+          <div className="relative bg-gray-50 p-5 rounded-lg mb-4">
+            <p className="text-xl font-semibold text-gray-800 mb-2">
+              {data.social_share_content.formatted}
+            </p>
+            <p className="text-gray-600 italic mb-4">
+              {data.social_share_content.summary}
+            </p>
+            <p className="text-indigo-500 text-sm">
+              #KoreanNameEmoji #mykoreanname
+            </p>
+
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() =>
+                  copyToClipboard(
+                    data.social_share_content.formatted,
+                    data.social_share_content.summary
+                  )
+                }
+                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                  copied
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-200"
+                }`}
+                aria-label="Copy to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                      <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
+                    </svg>
+                    <span>Copy to clipboard</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </section>
       </div>
     );
@@ -372,6 +612,31 @@ export function ImprovedResultDisplay({
 
       {/* 무료 또는 프리미엄 결과 */}
       {isPremium ? renderPremiumResult() : renderFreeResult()}
+
+      {/* Beta Version Notice Popup */}
+      {showBetaPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full text-center">
+            <h3 className="text-lg font-semibold text-indigo-600 mb-2">
+              ✨ Special Beta Version Notice ✨
+            </h3>
+            <p className="text-sm text-gray-700 mb-4">
+              During this beta period, you can enjoy all premium features for
+              free! Feel free to explore all the features. We look forward to
+              your support for our official launch.
+            </p>
+            <Button
+              onClick={() => {
+                setShowBetaPopup(false);
+                router.push("/");
+              }}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full"
+            >
+              Confirm (Go to Home)
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* 문화적 참고 설명 */}
       <div className="mt-6 pt-4 pb-5 border-t text-sm text-gray-500 dark:text-gray-400">
