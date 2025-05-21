@@ -3,8 +3,7 @@
 import {
   GenerateNameParams,
   ActionResult,
-  FreeKoreanNameData,
-  PremiumKoreanNameData,
+  KoreanNameData,
   generateKoreanNameWithGemini,
 } from "./lib/geminiAPI";
 
@@ -72,9 +71,7 @@ export async function generateKoreanNameAction(
     const responseText = await response.text();
 
     try {
-      const data = JSON.parse(responseText) as
-        | FreeKoreanNameData
-        | PremiumKoreanNameData;
+      const data = JSON.parse(responseText) as KoreanNameData;
       return { data };
     } catch (parseError) {
       console.error("API 응답 JSON 파싱 오류:", parseError);
