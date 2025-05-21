@@ -87,7 +87,33 @@ function ResultContent() {
               parsedData.korean_name_suggestion?.life_values);
 
           setIsPremium(isPremiumResult);
-          setResultData(parsedData);
+
+          // 무료 사용자의 경우 데이터 필터링
+          if (type !== "premium" && !isPremiumResult) {
+            // 무료 티어에는 korean_name_suggestion만 제공
+            const freeData: FreeKoreanNameData = {
+              original_name: parsedData.original_name,
+              original_name_analysis: {
+                summary:
+                  parsedData.original_name_analysis?.summary ||
+                  "Your Korean name is based on your original name's essence.",
+              },
+              korean_name_suggestion: {
+                full_name: parsedData.korean_name_suggestion?.full_name || "",
+              },
+              social_share_content: {
+                formatted:
+                  parsedData.social_share_content?.formatted ||
+                  `${parsedData.original_name} : ${
+                    parsedData.korean_name_suggestion?.full_name || ""
+                  }`,
+              },
+            };
+            setResultData(freeData);
+          } else {
+            // 프리미엄 사용자는 전체 데이터 제공
+            setResultData(parsedData);
+          }
         } else {
           throw new Error("Data format is invalid");
         }
@@ -133,16 +159,33 @@ function ResultContent() {
       />
       {resultData && (
         <CardFooter className="flex p-6 pt-0 sm:p-8 sm:pt-0">
-          <Button className="w-full text-sm md:text-base text-center" asChild>
-            <Link
-              href="/"
-              onClick={() =>
-                trackButtonClick("generate_another_name", "from_result_page")
-              }
-            >
-              Generate Another Name
-            </Link>
-          </Button>
+          <div className="flex flex-col w-full gap-3">
+            <Button className="w-full text-sm md:text-base text-center" asChild>
+              <Link
+                href="/"
+                onClick={() =>
+                  trackButtonClick("generate_another_name", "from_result_page")
+                }
+              >
+                Generate Another Name
+              </Link>
+            </Button>
+            {!isPremium && (
+              <Button
+                className="w-full text-sm md:text-base text-center bg-indigo-600 hover:bg-indigo-700"
+                asChild
+              >
+                <Link
+                  href="/"
+                  onClick={() =>
+                    trackButtonClick("upgrade_to_premium", "from_result_page")
+                  }
+                >
+                  Upgrade to Premium
+                </Link>
+              </Button>
+            )}
+          </div>
         </CardFooter>
       )}
     </>

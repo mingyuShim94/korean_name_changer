@@ -213,7 +213,7 @@ export function generateKoreanNameSystemPrompt(
     ],
 
     closing_instruction:
-      "Act as a warm, insightful name interpreter who creates emotionally meaningful Korean names.",
+      "Act as a warm, insightful name interpreter who creates emotionally meaningful Korean names. IMPORTANT: Return ONLY a valid JSON object with the exact structure of output_format. Do not include any text, commentary, or explanation outside the JSON object.",
   };
 
   return JSON.stringify(prompt, null, 2);
