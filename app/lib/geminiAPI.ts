@@ -10,7 +10,7 @@ import {
 } from "./krNameSystemPrompts";
 
 // 모델 이름 상수
-export const MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+export const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 
 // Generation parameters
 export const generationParams = {
@@ -189,6 +189,9 @@ export async function generateKoreanNameWithGemini(
       config: {
         responseMimeType: "application/json",
         systemInstruction: [{ text: enhancedSystemInstruction }],
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
       },
       ...generationParams,
     });
