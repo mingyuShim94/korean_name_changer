@@ -8,6 +8,13 @@ import { GenderOption, NameStyleOption } from "../../lib/krNameSystemPrompts";
 // Cloudflare Pages에서는 Edge Runtime이 필수입니다
 export const runtime = "edge";
 
+// 허용할 도메인 목록 (프로덕션 환경에서는 실제 도메인으로 교체)
+const allowedOrigins = [
+  "https://korean-name-changer.pages.dev",
+  "https://mykoreanname.me",
+  "http://localhost:3000",
+];
+
 // API 키 검증
 if (!process.env.GEMINI_API_KEY_FREE || !process.env.GEMINI_API_KEY_PAID) {
   console.error(
@@ -18,6 +25,28 @@ if (!process.env.GEMINI_API_KEY_FREE || !process.env.GEMINI_API_KEY_PAID) {
 
 export async function POST(request: NextRequest) {
   console.log("API 요청이 시작되었습니다 (Edge Runtime)");
+
+  // 요청 Origin 확인
+  const origin = request.headers.get("origin") || "";
+  console.log("요청 Origin:", origin);
+
+  // CORS 설정을 위한 헤더
+  const corsHeaders: HeadersInit = {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[0],
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
+  };
+
+  // OPTIONS 요청에 대한 처리 (preflight)
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
 
   let foreignName: string | undefined;
   let gender: GenderOption = "neutral"; // 기본값을 neutral로 설정
@@ -59,7 +88,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Name parameter is required and must be a non-empty string." },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -79,16 +108,19 @@ export async function POST(request: NextRequest) {
     const result = await generateKoreanNameWithGemini(params);
 
     if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     if (result.data) {
-      return NextResponse.json(result.data);
+      return NextResponse.json(result.data, { headers: corsHeaders });
     }
 
     return NextResponse.json(
       { error: "No data returned from name generation service" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   } catch (error) {
     // error 타입을 Error 또는 unknown으로 변경
@@ -119,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { error: errorMessage, details: errorDetails },
-      { status: statusCode }
+      { status: statusCode, headers: corsHeaders }
     );
   }
 }

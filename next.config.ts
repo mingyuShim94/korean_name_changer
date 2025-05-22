@@ -18,6 +18,19 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "no-store, max-age=0",
           },
+          // CORS 헤더 추가 - API 라우트에 대한 접근 허용
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*", // 모든 도메인에서 접근 허용 (프로덕션에서는 특정 도메인으로 제한해야 함)
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET, POST, OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type, Authorization, Origin",
+          },
         ],
       },
     ];
