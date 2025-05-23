@@ -110,15 +110,15 @@ export default function Home() {
     const paddleToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
     if (paddleToken) {
       initializePaddle({
-        environment: "sandbox",
+        environment: "production",
         token: paddleToken,
-        debug: true,
+        debug: false,
       }).then((instance) => {
         if (instance) {
           instance.Checkout.open({
             items: [
               {
-                priceId: "pri_01jvhrsyghp4mdpphn24tb3sqw",
+                priceId: "pri_01jvyxzq6j0spngbb4f26t5ava",
                 quantity: 1,
               },
             ],
