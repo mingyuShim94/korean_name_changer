@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
 
-// 새로운 인터페이스 정의 - 무료 버전
+// New interface definition - Free version
 interface FreeKoreanNameData {
   original_name: string;
   original_name_analysis: {
@@ -31,7 +31,7 @@ interface FreeKoreanNameData {
   };
 }
 
-// 새로운 인터페이스 정의 - 프리미엄 버전
+// New interface definition - Premium version
 interface PremiumKoreanNameData {
   original_name: string;
   original_name_analysis: {
@@ -59,10 +59,10 @@ interface PremiumKoreanNameData {
   };
 }
 
-// 결과 데이터 유니온 타입
+// Result data union type
 type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
 
-// syllables 정보를 포함한 확장된 무료 티어 데이터 타입 - 기존 인터페이스와 통일
+// Extended free tier data type with syllables information - unified with existing interface
 interface UpgradedFreeKoreanNameData extends FreeKoreanNameData {
   korean_name_suggestion: {
     full_name: string;
@@ -76,7 +76,7 @@ interface UpgradedFreeKoreanNameData extends FreeKoreanNameData {
   };
 }
 
-// SearchParams를 읽고 결과를 표시하는 내부 컴포넌트
+// Internal component that reads SearchParams and displays results
 function ResultContent() {
   const searchParams = useSearchParams();
   const [resultData, setResultData] = React.useState<ResultData | null>(null);
@@ -88,12 +88,12 @@ function ResultContent() {
   React.useEffect(() => {
     const dataString = searchParams.get("data");
 
-    // 검색 파라미터에서 필요한 값들 추출
+    // Extract required values from search parameters
     const type = searchParams.get("type") || "free";
     const style = searchParams.get("nameStyle") || "hanja";
     const genderParam = searchParams.get("gender") || "neutral";
 
-    // URL 파라미터 기준으로 premium 여부 결정 (데이터 구조에 의존하지 않음)
+    // Determine premium status based on URL parameters (not dependent on data structure)
     setIsPremium(type === "premium");
     setNameStyle(style as NameStyleOption);
     setGender(genderParam as GenderOption);
@@ -102,11 +102,11 @@ function ResultContent() {
       try {
         const parsedData = JSON.parse(decodeURIComponent(dataString));
 
-        // 파싱된 데이터가 올바른 형식인지 검증
+        // Validate if parsed data has the correct format
         if (parsedData && parsedData.original_name) {
-          // 무료 사용자의 경우 데이터 필터링 (URL 파라미터 기준)
+          // Filter data for free users (based on URL parameter)
           if (type !== "premium") {
-            // 무료 티어에도 syllables 정보를 포함시켜 유료와 같은 UI 구성 가능하게 함
+            // Include syllables information in free tier to enable similar UI structure as premium
             const freeData: UpgradedFreeKoreanNameData = {
               original_name: parsedData.original_name,
               original_name_analysis: {
@@ -117,7 +117,7 @@ function ResultContent() {
               korean_name_suggestion: {
                 full_name: parsedData.korean_name_suggestion?.full_name || "",
                 rationale: parsedData.korean_name_suggestion?.rationale || "",
-                // 서버에서 온 syllables 정보가 있으면 그대로 사용
+                // Use syllables information from server if available
                 syllables: parsedData.korean_name_suggestion?.syllables || [],
               },
               korean_name_impression:
@@ -132,7 +132,7 @@ function ResultContent() {
             };
             setResultData(freeData as ResultData);
           } else {
-            // 프리미엄 사용자는 전체 데이터 제공
+            // Provide full data for premium users
             setResultData(parsedData);
           }
         } else {
@@ -140,14 +140,12 @@ function ResultContent() {
         }
       } catch (e) {
         console.error("Failed to parse result data:", e);
-        setError(
-          "결과 데이터를 불러오는 데 실패했습니다. 형식이 올바르지 않을 수 있습니다."
-        );
+        setError("Failed to load result data. The format may be invalid.");
       }
     } else {
-      // 데이터가 없는 경우, 예를 들어 직접 /result로 접근한 경우
+      // Case where there is no data, for example, direct access to /result
       setError(
-        "표시할 결과 데이터가 없습니다. 홈으로 돌아가 다시 시도해주세요."
+        "No result data to display. Please return to the home page and try again."
       );
     }
   }, [searchParams]);
@@ -155,20 +153,20 @@ function ResultContent() {
   if (error) {
     return (
       <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-        <h3 className="font-semibold mb-1">오류 발생:</h3>
+        <h3 className="font-semibold mb-1">Error:</h3>
         <p>{error}</p>
         <Link
           href="/"
           className="mt-2 inline-block text-blue-600 hover:underline"
           onClick={() => trackButtonClick("return_to_home", "from_error")}
         >
-          홈으로 돌아가기
+          Return to Home
         </Link>
       </div>
     );
   }
 
-  // 개선된 ImprovedResultDisplay 컴포넌트 사용
+  // Use improved ImprovedResultDisplay component
   return (
     <>
       <ImprovedResultDisplay
@@ -191,21 +189,6 @@ function ResultContent() {
                 Generate Another Name
               </Link>
             </Button>
-            {!isPremium && (
-              <Button
-                className="w-full text-sm md:text-base text-center bg-indigo-600 hover:bg-indigo-700"
-                asChild
-              >
-                <Link
-                  href="/"
-                  onClick={() =>
-                    trackButtonClick("upgrade_to_premium", "from_result_page")
-                  }
-                >
-                  Upgrade to Premium
-                </Link>
-              </Button>
-            )}
           </div>
         </CardFooter>
       )}
@@ -216,13 +199,13 @@ function ResultContent() {
 export default function ResultPage() {
   const searchParams = useSearchParams();
 
-  // 페이지 로드 시 이벤트 추적
+  // Track event on page load
   React.useEffect(() => {
     const type = searchParams.get("type") || "free";
     const nameStyle = searchParams.get("nameStyle") || "hanja";
     const gender = searchParams.get("gender") || "neutral";
 
-    // 결과 페이지 조회 이벤트 추적
+    // Track result page view event
     trackPageView(
       "/result",
       `Result Page - ${
@@ -238,7 +221,7 @@ export default function ResultPage() {
           <React.Suspense
             fallback={
               <p className="text-center text-muted-foreground">
-                결과를 불러오는 중...
+                Loading results...
               </p>
             }
           >

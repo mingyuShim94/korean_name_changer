@@ -6,41 +6,41 @@ import {
 } from "../../lib/geminiAPI";
 import { GenderOption, NameStyleOption } from "../../lib/krNameSystemPrompts";
 
-// Cloudflare Pages에서는 Edge Runtime이 필수입니다
+// Edge Runtime is required for Cloudflare Pages
 export const runtime = "edge";
 
-// 허용할 도메인 목록 (프로덕션 환경에서는 실제 도메인으로 교체)
+// List of allowed domains (replace with actual domains in production)
 const allowedOrigins = [
   "https://korean-name-changer.pages.dev",
   "https://mykoreanname.me",
   "http://localhost:3000",
 ];
 
-// 처리된 요청을 저장하는 맵 (메모리 캐시)
-// 실제 프로덕션에서는 Redis나 외부 캐시 서비스 사용 권장
+// Map to store processed requests (memory cache)
+// For production, using Redis or external cache service is recommended
 const processedRequests = new Map<string, KoreanNameData>();
 
-// API 키 검증
+// API key validation
 if (!process.env.GEMINI_API_KEY_FREE || !process.env.GEMINI_API_KEY_PAID) {
   console.error(
     "CRITICAL: One or more Gemini API keys are not set in environment variables."
   );
-  // 프로덕션 환경에서는 여기서 애플리케이션을 중단하거나, 기능을 비활성화할 수 있습니다.
+  // In production environment, you may disable functionality or halt the application here
 }
 
-// JWT 비밀키 검증
+// JWT secret key validation
 if (!process.env.JWT_SECRET) {
   console.error("CRITICAL: JWT_SECRET is not set in environment variables.");
 }
 
 export async function POST(request: NextRequest) {
-  console.log("API 요청이 시작되었습니다 (Edge Runtime)");
+  console.log("API request started (Edge Runtime)");
 
-  // 요청 Origin 확인
+  // Check request Origin
   const origin = request.headers.get("origin") || "";
-  console.log("요청 Origin:", origin);
+  console.log("Request Origin:", origin);
 
-  // CORS 설정을 위한 헤더
+  // Headers for CORS configuration
   const corsHeaders: HeadersInit = {
     "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
       ? origin
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     "Access-Control-Max-Age": "86400",
   };
 
-  // OPTIONS 요청에 대한 처리 (preflight)
+  // Handle OPTIONS request (preflight)
   if (request.method === "OPTIONS") {
     return new NextResponse(null, {
       status: 204,
@@ -59,28 +59,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Edge Runtime에서 안정적으로 실행되도록 요청 처리 최적화
+    // Optimize request processing for reliable execution in Edge Runtime
     const body = await request.json().catch((e) => {
-      console.error("요청 JSON 파싱 오류:", e);
+      console.error("Request JSON parsing error:", e);
       return {};
     });
 
-    console.log("API 요청 본문:", JSON.stringify(body));
+    console.log("API request body:", JSON.stringify(body));
 
-    // JWT 토큰 검증
+    // JWT token validation
     const token = body?.token;
     if (!token) {
       return NextResponse.json(
-        { error: "인증 토큰이 필요합니다." },
+        { error: "Authentication token required." },
         { status: 401, headers: corsHeaders }
       );
     }
 
     try {
-      // JWT 토큰 해독 및 검증
+      // Decode and validate JWT token
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) {
-        throw new Error("JWT_SECRET 환경 변수가 설정되지 않았습니다.");
+        throw new Error("JWT_SECRET environment variable is not set.");
       }
 
       const { payload } = await jwtVerify(
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         new TextEncoder().encode(jwtSecret)
       );
 
-      // 필수 필드 확인
+      // Check required fields
       const name = payload.name as string;
       const gender = payload.gender as GenderOption;
       const nameStyle = payload.nameStyle as NameStyleOption;
@@ -97,19 +97,21 @@ export async function POST(request: NextRequest) {
 
       if (!name || !gender || !nameStyle || !requestId) {
         return NextResponse.json(
-          { error: "토큰에 필요한 정보가 누락되었습니다." },
+          { error: "Required information missing in token." },
           { status: 400, headers: corsHeaders }
         );
       }
 
-      console.log("토큰 검증 완료:", { requestId });
+      console.log("Token validation completed:", { requestId });
 
-      // 이미 처리된 요청인지 확인 (중복 요청 방지)
+      // Check if request has already been processed (prevent duplicate requests)
       if (processedRequests.has(requestId)) {
-        console.log(`중복 요청 감지: ${requestId}, 캐시된 결과 반환`);
+        console.log(
+          `Duplicate request detected: ${requestId}, returning cached result`
+        );
         const cachedData = processedRequests.get(requestId);
 
-        // 캐시된 데이터에 토큰 정보 추가
+        // Add token information to cached data
         const responseData = {
           ...cachedData,
           isPremium,
@@ -123,10 +125,10 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(
-        `API 요청 파라미터: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
+        `API request parameters: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
       );
 
-      // 공통 함수를 사용하여 이름 생성
+      // Generate name using common function
       const result = await generateKoreanNameWithGemini({
         name,
         gender,
@@ -142,11 +144,11 @@ export async function POST(request: NextRequest) {
       }
 
       if (result.data) {
-        // 결과 캐싱 (1시간)
+        // Cache results (1 hour)
         processedRequests.set(requestId, result.data);
-        setTimeout(() => processedRequests.delete(requestId), 3600000); // 1시간 후 삭제
+        setTimeout(() => processedRequests.delete(requestId), 3600000); // Delete after 1 hour
 
-        // JWT 토큰에서 추출한 정보를 응답에 추가
+        // Add information extracted from JWT token to the response
         const responseData = {
           ...result.data,
           isPremium,
@@ -162,25 +164,25 @@ export async function POST(request: NextRequest) {
         { status: 500, headers: corsHeaders }
       );
     } catch (tokenError) {
-      console.error("토큰 검증 오류:", tokenError);
+      console.error("Token validation error:", tokenError);
       return NextResponse.json(
-        { error: "유효하지 않거나 만료된 토큰입니다." },
+        { error: "Invalid or expired token." },
         { status: 401, headers: corsHeaders }
       );
     }
   } catch (error) {
-    // error 타입을 Error 또는 unknown으로 변경
+    // Change error type to Error or unknown
     let errorMessage =
       "An unexpected error occurred while processing your request.";
     const errorDetails = error instanceof Error ? error.message : String(error);
-    const statusCode = 500; // 기본 상태 코드를 500으로 설정
+    const statusCode = 500; // Set default status code to 500
 
-    // 콘솔에 더 자세한 오류 정보 로깅
+    // Log more detailed error information to console
     console.error(
       `Error in POST /api/generate-name:`,
       errorDetails,
-      error instanceof Error ? error.stack : "No stack trace available", // 에러 스택 로깅
-      error // 전체 에러 객체 로깅
+      error instanceof Error ? error.stack : "No stack trace available", // Log error stack
+      error // Log entire error object
     );
 
     if (error instanceof Error) {
@@ -189,7 +191,7 @@ export async function POST(request: NextRequest) {
       } else if (error.message?.includes("API_RESPONSE_MALFORMED")) {
         errorMessage = "Received malformed data from Gemini API.";
       } else if (error.name === "SyntaxError") {
-        // JSON.parse 오류
+        // JSON.parse error
         errorMessage =
           "Failed to parse response from Gemini API. Response was not valid JSON.";
       }

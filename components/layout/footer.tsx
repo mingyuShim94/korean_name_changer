@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-gray-100 py-3 md:py-4 mt-auto">
@@ -5,6 +7,14 @@ export default function Footer() {
         <p>
           &copy; {new Date().getFullYear()} MyKoreanName. All rights reserved.
         </p>
+        <div className="mt-2 flex justify-center space-x-4">
+          <Link href="/pricing" className="hover:underline">
+            Pricing
+          </Link>
+          <Link href="/terms" className="hover:underline">
+            Terms & Policies
+          </Link>
+        </div>
       </div>
     </footer>
   );

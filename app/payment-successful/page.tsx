@@ -10,89 +10,130 @@ export default function PaymentSuccessfulPage() {
   const [isProcessing, setIsProcessing] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [redirecting, setRedirecting] = React.useState(false);
-  const requestSentRef = React.useRef(false); // useRef를 사용하여 요청 상태 추적
+  const requestSentRef = React.useRef(false); // Track request status using useRef
+
+  // API call function separated
+  const generateName = async (token: string) => {
+    try {
+      console.log("API request started - Korean name generation");
+      const res = await fetch("/api/generate-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        // 429 error (request limit exceeded) handling
+        if (res.status === 429) {
+          console.log("429 error occurred: Request limit exceeded");
+          throw new Error(
+            "Service is currently limited due to high traffic. Please try again later."
+          );
+        }
+        throw new Error(data.error || `API request failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      setRedirecting(true);
+
+      // Extract necessary information from response data
+      const type = data.isPremium ? "premium" : "free";
+      const gender = data.gender || "neutral";
+      const nameStyle = data.nameStyle || "hanja";
+
+      // Redirect to result page
+      router.push(
+        `/result?data=${encodeURIComponent(
+          JSON.stringify(data)
+        )}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
+      );
+    } catch (err: unknown) {
+      console.error("API call error:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "An error occurred while generating the name.";
+      setError(errorMessage);
+      setIsProcessing(false);
+      // Reset flag to allow retry after error
+      requestSentRef.current = false;
+    }
+  };
 
   React.useEffect(() => {
-    // 이미 요청을 보냈으면 중복 실행 방지
+    // Prevent duplicate execution if request already sent
     if (requestSentRef.current) return;
 
-    // JWT 토큰 확인
+    // Check JWT token
     const token = searchParams.get("token");
 
     if (!token) {
-      setError("유효하지 않은 접근입니다. 인증 토큰이 필요합니다.");
+      setError("Invalid access. Authentication token required.");
       setIsProcessing(false);
       return;
     }
 
-    // 요청 상태 표시
+    // Mark request status
     requestSentRef.current = true;
-    console.log("API 요청 시작 - 중복 방지 플래그 설정");
+    console.log("API request started - Duplicate prevention flag set");
 
-    // API 호출
-    fetch("/api/generate-name", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then((data) => {
-            throw new Error(data.error || `API 요청 실패 (${res.status})`);
-          });
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setRedirecting(true);
-
-        // 응답 데이터에서 필요한 정보 추출
-        const type = data.isPremium ? "premium" : "free";
-        const gender = data.gender || "neutral";
-        const nameStyle = data.nameStyle || "hanja";
-
-        // 결과 페이지로 리다이렉션
-        router.push(
-          `/result?data=${encodeURIComponent(
-            JSON.stringify(data)
-          )}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
-        );
-      })
-      .catch((err) => {
-        console.error("API 호출 오류:", err);
-        setError(err.message || "이름 생성 중 오류가 발생했습니다.");
-        setIsProcessing(false);
-        // 오류 발생 시 재시도 가능하도록 플래그 초기화
-        requestSentRef.current = false;
-      });
-  }, [searchParams, router]); // hasProcessed 의존성 제거
+    // Use separated API call function
+    generateName(token);
+  }, [searchParams, router]);
 
   if (isProcessing || redirecting) {
-    // 로딩 메시지 표시
-    return <FullScreenLoader message="한국어 이름 생성 중..." />;
+    // Display loading message
+    return <FullScreenLoader message="Generating Korean name..." />;
   }
 
   if (error) {
+    const isRateLimitError =
+      error.includes("Service is currently limited") ||
+      error.includes("Too Many Requests");
+
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-red-500">
-          <h1 className="text-2xl font-bold">오류가 발생했습니다</h1>
-          <p>{error}</p>
-          <button
-            onClick={() => {
-              // 홈으로 돌아갈 때 플래그 초기화
-              requestSentRef.current = false;
-              router.push("/");
-            }}
-            className="mt-4 p-2 bg-blue-500 text-white rounded"
-          >
-            처음으로 돌아가기
-          </button>
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
+          <h1 className="text-2xl font-bold text-red-500 mb-4">
+            {isRateLimitError ? "Service Limitation" : "An Error Occurred"}
+          </h1>
+
+          {isRateLimitError ? (
+            <p className="mb-6 text-gray-700">
+              Service is currently limited due to high traffic. Please try again
+              later.
+            </p>
+          ) : (
+            <p className="mb-6 text-gray-700">{error}</p>
+          )}
+
+          {isRateLimitError && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-sm">
+              <p>Free mode may have temporary API usage limitations.</p>
+              <p className="mt-1">
+                For more reliable service, please consider using the premium
+                mode.
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                requestSentRef.current = false;
+                router.push("/");
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            >
+              Return to Home
+            </button>
+          </div>
         </div>
       </main>
     );
   }
 
   // This should never be shown now, but keeping as a fallback
-  return <FullScreenLoader message="결과 페이지로 이동 중..." />;
+  return <FullScreenLoader message="Redirecting to results page..." />;
 }
