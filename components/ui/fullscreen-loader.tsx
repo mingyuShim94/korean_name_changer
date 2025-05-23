@@ -9,7 +9,7 @@ interface FullScreenLoaderProps {
 
 export function FullScreenLoader({
   message = "Processing your request. This may take a little while...",
-  duration = 10,
+  duration = 15,
 }: FullScreenLoaderProps) {
   const [timeLeft, setTimeLeft] = React.useState(duration > 0 ? duration : 0);
   const [tipIndex, setTipIndex] = React.useState(0);

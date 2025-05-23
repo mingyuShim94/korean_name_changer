@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import {
   GenderOption,
   NameStyleOption,
@@ -188,10 +188,96 @@ export async function generateKoreanNameWithGemini(
       contents: [{ role: "user", parts: userMessageParts }],
       config: {
         responseMimeType: "application/json",
-        systemInstruction: [{ text: enhancedSystemInstruction }],
-        thinkingConfig: {
-          thinkingBudget: 0,
+        responseSchema: {
+          type: Type.OBJECT,
+          required: [
+            "original_name_analysis",
+            "korean_name_suggestion",
+            "korean_name_impression",
+            "social_share_content",
+          ],
+          properties: {
+            original_name_analysis: {
+              type: Type.OBJECT,
+              required: ["letters", "summary"],
+              properties: {
+                letters: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["letter", "meaning"],
+                    properties: {
+                      letter: {
+                        type: Type.STRING,
+                      },
+                      meaning: {
+                        type: Type.STRING,
+                      },
+                    },
+                  },
+                },
+                summary: {
+                  type: Type.STRING,
+                },
+              },
+            },
+            korean_name_suggestion: {
+              type: Type.OBJECT,
+              required: ["full_name", "syllables", "rationale", "life_values"],
+              properties: {
+                full_name: {
+                  type: Type.STRING,
+                },
+                syllables: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["syllable", "romanization", "hanja", "meaning"],
+                    properties: {
+                      syllable: {
+                        type: Type.STRING,
+                      },
+                      romanization: {
+                        type: Type.STRING,
+                      },
+                      hanja: {
+                        type: Type.STRING,
+                      },
+                      meaning: {
+                        type: Type.STRING,
+                      },
+                    },
+                  },
+                },
+                rationale: {
+                  type: Type.STRING,
+                },
+                life_values: {
+                  type: Type.STRING,
+                },
+              },
+            },
+            korean_name_impression: {
+              type: Type.STRING,
+            },
+            social_share_content: {
+              type: Type.OBJECT,
+              required: ["formatted", "summary"],
+              properties: {
+                formatted: {
+                  type: Type.STRING,
+                },
+                summary: {
+                  type: Type.STRING,
+                },
+              },
+            },
+          },
         },
+        systemInstruction: [{ text: enhancedSystemInstruction }],
+        // thinkingConfig: {
+        //   thinkingBudget: 0,
+        // },
       },
       ...generationParams,
     });

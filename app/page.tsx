@@ -10,18 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
-import { generateKoreanNameAction } from "./actions";
+// import { FullScreenLoader } from "@/components/ui/fullscreen-loader"; // 더 이상 사용하지 않음
+// import { generateKoreanNameAction } from "./actions"; // 더 이상 사용하지 않음
+import { createNameGenerationToken } from "./actions"; // JWT 토큰 생성 액션 추가
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
-// import { initializePaddle } from "@paddle/paddle-js"; // Paddle 잠시 비활성화
-
-// window에 커스텀 속성 타입 선언
-declare global {
-  interface Window {
-    __paddleInitialized?: boolean;
-  }
-}
+import { initializePaddle } from "@paddle/paddle-js";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
@@ -35,7 +29,7 @@ type NameStyleOption = "hanja" | "pureKorean";
 
 export default function Home() {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  // const [isPending, startTransition] = React.useTransition(); // 더 이상 사용하지 않음
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
@@ -49,7 +43,7 @@ export default function Home() {
     trackPageView("/", "Home Page - Korean Name Generator");
   }, []);
 
-  const handleFreeNameSubmit = (
+  const handleFreeNameSubmit = async (
     name: string,
     gender: GenderOption,
     nameStyle: NameStyleOption
@@ -58,38 +52,91 @@ export default function Home() {
     trackButtonClick("generate_korean_name", `free_${gender}_${nameStyle}`);
 
     setError(null);
-    startTransition(async () => {
-      console.log(
-        "Submitting FREE with Server Action: Name:",
-        name,
-        "Gender:",
-        gender,
-        "Style:",
-        nameStyle
-      );
-      const result = await generateKoreanNameAction({
+    console.log(
+      "Submitting FREE: Name:",
+      name,
+      "Gender:",
+      gender,
+      "Style:",
+      nameStyle
+    );
+
+    try {
+      // JWT 토큰 생성
+      const { token } = await createNameGenerationToken({
         name,
         gender,
         nameStyle,
         isPremium: false,
       });
 
-      if (result.error) {
-        setError(result.error);
-        console.error("Server Action Error (Free):", result.error);
-      } else if (result.data) {
-        router.push(
-          `/result?data=${encodeURIComponent(
-            JSON.stringify(result.data)
-          )}&nameStyle=${nameStyle}&type=free&gender=${gender}`
-        );
-      } else {
-        setError("An unexpected issue occurred. No data or error returned.");
-      }
+      // 토큰과 함께 리다이렉션
+      router.push(`/payment-successful?token=${token}`);
+    } catch (error) {
+      console.error("토큰 생성 오류:", error);
+      setError("이름 생성 요청 준비 중 오류가 발생했습니다.");
+    }
+
+    /* 기존 직접 처리 코드는 payment-successful 페이지로 이동
+    const result = await generateKoreanNameAction({
+      name,
+      gender,
+      nameStyle,
+      isPremium: false,
     });
+
+    if (result.error) {
+      setError(result.error);
+      console.error("Server Action Error (Free):", result.error);
+    } else if (result.data) {
+      router.push(
+        `/result?data=${encodeURIComponent(
+          JSON.stringify(result.data)
+        )}&nameStyle=${nameStyle}&type=free&gender=${gender}`
+      );
+    } else {
+      setError("An unexpected issue occurred. No data or error returned.");
+    }
+    */
   };
 
-  const handlePremiumNameSubmit = (
+  //test card number: 4242424242424242
+  //test card cvv: 100
+  //test card expiration date: 12/2025
+
+  const initializePaddlePayment = async (token: string) => {
+    const paddleToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    if (paddleToken) {
+      initializePaddle({
+        environment: "sandbox",
+        token: paddleToken,
+        debug: true,
+      }).then((instance) => {
+        if (instance) {
+          instance.Checkout.open({
+            items: [
+              {
+                priceId: "pri_01jvhrsyghp4mdpphn24tb3sqw",
+                quantity: 1,
+              },
+            ],
+            settings: {
+              successUrl: `${
+                window.location.origin
+              }/payment-successful?token=${encodeURIComponent(token)}`,
+            },
+          });
+        } else {
+          console.warn("instance is not initialized", instance);
+        }
+      });
+    } else {
+      console.error("Paddle client token is not defined");
+      setError("결제 시스템 초기화에 실패했습니다. 관리자에게 문의하세요.");
+    }
+  };
+
+  const handlePremiumNameSubmit = async (
     name: string,
     gender: GenderOption,
     nameStyle: NameStyleOption
@@ -98,57 +145,55 @@ export default function Home() {
     trackButtonClick("generate_korean_name", `premium_${gender}_${nameStyle}`);
 
     setError(null);
-    startTransition(async () => {
-      // Paddle.js 초기화 부분 주석 처리 (결제 비활성화)
-      /* 
-      if (typeof window !== "undefined" && !window.__paddleInitialized) {
-        try {
-          const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "";
-          if (!token) {
-            setError("Paddle 클라이언트 토큰이 설정되지 않았습니다.");
-            return;
-          }
-          await initializePaddle({ token });
-          window.__paddleInitialized = true;
-          console.log("Paddle.js 초기화 완료");
-        } catch (e) {
-          setError("Paddle.js 초기화 중 오류 발생: " + (e as Error).message);
-          return;
-        }
-      }
-      */
+    console.log(
+      "Submitting PREMIUM: Name:",
+      name,
+      "Gender:",
+      gender,
+      "Style:",
+      nameStyle
+    );
 
-      console.log(
-        "Submitting PREMIUM: Name:",
-        name,
-        "Gender:",
-        gender,
-        "Style:",
-        nameStyle
-      );
-
-      const result = await generateKoreanNameAction({
+    try {
+      // JWT 토큰 생성
+      const { token } = await createNameGenerationToken({
         name,
         gender,
         nameStyle,
         isPremium: true,
       });
 
-      if (result.error) {
-        setError(result.error);
-        console.error("Server Action Error (Premium):", result.error);
-      } else if (result.data) {
-        router.push(
-          `/result?data=${encodeURIComponent(
-            JSON.stringify(result.data)
-          )}&nameStyle=${nameStyle}&type=premium&gender=${gender}`
-        );
-      } else {
-        setError(
-          "An unexpected issue occurred (Premium). No data or error returned."
-        );
-      }
+      // Paddle 결제 시스템 초기화 (토큰 전달)
+      initializePaddlePayment(token);
+    } catch (error) {
+      console.error("토큰 생성 오류:", error);
+      setError("이름 생성 요청 준비 중 오류가 발생했습니다.");
+    }
+
+    // 결과 페이지로 리다이렉트하는 코드는 주석 처리
+    /*
+    const result = await generateKoreanNameAction({
+      name,
+      gender,
+      nameStyle,
+      isPremium: true,
     });
+
+    if (result.error) {
+      setError(result.error);
+      console.error("Server Action Error (Premium):", result.error);
+    } else if (result.data) {
+      router.push(
+        `/result?data=${encodeURIComponent(
+          JSON.stringify(result.data)
+        )}&nameStyle=${nameStyle}&type=premium&gender=${gender}`
+      );
+    } else {
+      setError(
+        "An unexpected issue occurred (Premium). No data or error returned."
+      );
+    }
+    */
   };
 
   // Tab 전환 시 이벤트 추적
@@ -156,12 +201,6 @@ export default function Home() {
     trackButtonClick("tab_switch", value);
     setActiveTab(value as "free" | "premium");
   };
-
-  if (isPending) {
-    return (
-      <FullScreenLoader message="AI is creating a Korean name. Please wait a moment..." />
-    );
-  }
 
   return (
     <main className="flex min-h-fit sm:min-h-screen flex-col items-center justify-center bg-transparent">
@@ -192,7 +231,7 @@ export default function Home() {
                 onSubmit={(name) =>
                   handleFreeNameSubmit(name, selectedGender, selectedNameStyle)
                 }
-                isLoading={isPending}
+                isLoading={false}
                 selectedGender={selectedGender}
                 onGenderChange={(gender) => setSelectedGender(gender)}
                 selectedNameStyle={selectedNameStyle}
@@ -225,7 +264,7 @@ export default function Home() {
                     selectedNameStyle
                   )
                 }
-                isLoading={isPending}
+                isLoading={false}
                 selectedGender={selectedGender}
                 onGenderChange={(gender) => setSelectedGender(gender)}
                 selectedNameStyle={selectedNameStyle}
