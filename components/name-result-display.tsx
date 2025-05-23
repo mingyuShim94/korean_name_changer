@@ -46,13 +46,6 @@ export function NameResultDisplay({
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
 
-  // 데이터가 변경되면 음성 생성
-  React.useEffect(() => {
-    if (data && !loading) {
-      generateNameAudio();
-    }
-  }, [data, loading]);
-
   // 한국어 이름을 추출 (괄호 부분 제외)
   const extractKoreanName = (koreanNameText: string): string => {
     // "이아름 (李아름, Lee Ah-reum)" 형식에서 "이아름" 부분만 추출
@@ -72,8 +65,8 @@ export function NameResultDisplay({
     return URL.createObjectURL(audioBlob);
   };
 
-  // 음성 생성 함수
-  const generateNameAudio = async () => {
+  // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
+  const generateNameAudio = React.useCallback(async () => {
     if (!data) return;
 
     try {
@@ -94,7 +87,14 @@ export function NameResultDisplay({
     } finally {
       setAudioLoading(false);
     }
-  };
+  }, [data, extractKoreanName, fetchAudioFromGoogleTTS]);
+
+  // 데이터가 변경되면 음성 생성
+  React.useEffect(() => {
+    if (data && !loading) {
+      generateNameAudio();
+    }
+  }, [data, loading, generateNameAudio]);
 
   if (loading) {
     return (

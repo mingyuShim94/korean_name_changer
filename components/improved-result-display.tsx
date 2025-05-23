@@ -118,13 +118,6 @@ export function ImprovedResultDisplay({
     );
   };
 
-  // 데이터가 변경되면 음성 생성 (프리미엄 유저만)
-  React.useEffect(() => {
-    if (data && !loading && isPremium) {
-      generateNameAudio();
-    }
-  }, [data, loading, isPremium]);
-
   // Google TTS API를 호출하여 음성 생성
   const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
     const response = await fetch("/api/generate-audio", {
@@ -137,8 +130,8 @@ export function ImprovedResultDisplay({
     return URL.createObjectURL(audioBlob);
   };
 
-  // 음성 생성 함수
-  const generateNameAudio = async () => {
+  // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
+  const generateNameAudio = React.useCallback(async () => {
     if (!data || !isPremium) return;
 
     try {
@@ -156,7 +149,14 @@ export function ImprovedResultDisplay({
     } finally {
       setAudioLoading(false);
     }
-  };
+  }, [data, isPremium, fetchAudioFromGoogleTTS]);
+
+  // 데이터가 변경되면 음성 생성 (프리미엄 유저만)
+  React.useEffect(() => {
+    if (data && !loading && isPremium) {
+      generateNameAudio();
+    }
+  }, [data, loading, isPremium, generateNameAudio]);
 
   // 클립보드에 텍스트를 복사하는 함수
   const copyToClipboard = (formatted: string, summary: string) => {

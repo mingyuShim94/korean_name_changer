@@ -55,13 +55,6 @@ export function PremiumResultDisplay({
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
 
-  // 데이터가 변경되면 음성 생성
-  React.useEffect(() => {
-    if (data && !loading) {
-      generateNameAudio();
-    }
-  }, [data, loading]);
-
   // Google TTS API를 호출하여 음성 생성
   const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
     const response = await fetch("/api/generate-audio", {
@@ -74,8 +67,8 @@ export function PremiumResultDisplay({
     return URL.createObjectURL(audioBlob);
   };
 
-  // 음성 생성 함수
-  const generateNameAudio = async () => {
+  // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
+  const generateNameAudio = React.useCallback(async () => {
     if (!data) return;
 
     try {
@@ -96,7 +89,14 @@ export function PremiumResultDisplay({
     } finally {
       setAudioLoading(false);
     }
-  };
+  }, [data, fetchAudioFromGoogleTTS]);
+
+  // 데이터가 변경되면 음성 생성
+  React.useEffect(() => {
+    if (data && !loading) {
+      generateNameAudio();
+    }
+  }, [data, loading, generateNameAudio]);
 
   if (loading) {
     return (

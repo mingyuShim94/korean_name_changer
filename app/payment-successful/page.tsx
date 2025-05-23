@@ -80,7 +80,7 @@ export default function PaymentSuccessfulPage() {
 
     // Use separated API call function
     generateName(token);
-  }, [searchParams, router]);
+  }, [searchParams, router, generateName]);
 
   if (isProcessing || redirecting) {
     // Display loading message
