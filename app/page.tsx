@@ -73,8 +73,10 @@ export default function Home() {
       // 토큰과 함께 리다이렉션
       router.push(`/payment-successful?token=${token}`);
     } catch (error) {
-      console.error("토큰 생성 오류:", error);
-      setError("이름 생성 요청 준비 중 오류가 발생했습니다.");
+      console.error("Token generation error:", error);
+      setError(
+        "An error occurred while preparing the name generation request."
+      );
     }
 
     /* 기존 직접 처리 코드는 payment-successful 페이지로 이동
@@ -132,7 +134,9 @@ export default function Home() {
       });
     } else {
       console.error("Paddle client token is not defined");
-      setError("결제 시스템 초기화에 실패했습니다. 관리자에게 문의하세요.");
+      setError(
+        "Failed to initialize payment system. Please contact administrator."
+      );
     }
   };
 
@@ -166,8 +170,10 @@ export default function Home() {
       // Paddle 결제 시스템 초기화 (토큰 전달)
       initializePaddlePayment(token);
     } catch (error) {
-      console.error("토큰 생성 오류:", error);
-      setError("이름 생성 요청 준비 중 오류가 발생했습니다.");
+      console.error("Token generation error:", error);
+      setError(
+        "An error occurred while preparing the name generation request."
+      );
     }
 
     // 결과 페이지로 리다이렉트하는 코드는 주석 처리
@@ -278,7 +284,7 @@ export default function Home() {
 
           {error && (
             <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-              <h3 className="font-semibold mb-1">오류 발생:</h3>
+              <h3 className="font-semibold mb-1">Error:</h3>
               <p>{error}</p>
             </div>
           )}
