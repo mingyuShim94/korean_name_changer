@@ -15,7 +15,8 @@ import {
 import { createNameGenerationToken } from "./actions"; // JWT 토큰 생성 액션 추가
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
-import { initializePaddle } from "@paddle/paddle-js";
+
+// import { initializePaddle } from "@paddle/paddle-js";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
@@ -106,39 +107,39 @@ export default function Home() {
   //test card cvv: 100
   //test card expiration date: 12/2025
 
-  const initializePaddlePayment = async (token: string) => {
-    const paddleToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-    if (paddleToken) {
-      initializePaddle({
-        environment: "production",
-        token: paddleToken,
-        debug: false,
-      }).then((instance) => {
-        if (instance) {
-          instance.Checkout.open({
-            items: [
-              {
-                priceId: "pri_01jvyxzq6j0spngbb4f26t5ava",
-                quantity: 1,
-              },
-            ],
-            settings: {
-              successUrl: `${
-                window.location.origin
-              }/payment-successful?token=${encodeURIComponent(token)}`,
-            },
-          });
-        } else {
-          console.warn("instance is not initialized", instance);
-        }
-      });
-    } else {
-      console.error("Paddle client token is not defined");
-      setError(
-        "Failed to initialize payment system. Please contact administrator."
-      );
-    }
-  };
+  // const initializePaddlePayment = async (token: string) => {
+  //   const paddleToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+  //   if (paddleToken) {
+  //     initializePaddle({
+  //       environment: "production",
+  //       token: paddleToken,
+  //       debug: false,
+  //     }).then((instance) => {
+  //       if (instance) {
+  //         instance.Checkout.open({
+  //           items: [
+  //             {
+  //               priceId: "pri_01jvyxzq6j0spngbb4f26t5ava",
+  //               quantity: 1,
+  //             },
+  //           ],
+  //           settings: {
+  //             successUrl: `${
+  //               window.location.origin
+  //             }/payment-successful?token=${encodeURIComponent(token)}`,
+  //           },
+  //         });
+  //       } else {
+  //         console.warn("instance is not initialized", instance);
+  //       }
+  //     });
+  //   } else {
+  //     console.error("Paddle client token is not defined");
+  //     setError(
+  //       "Failed to initialize payment system. Please contact administrator."
+  //     );
+  //   }
+  // };
 
   const handlePremiumNameSubmit = async (
     name: string,
@@ -167,8 +168,11 @@ export default function Home() {
         isPremium: true,
       });
 
-      // Paddle 결제 시스템 초기화 (토큰 전달)
-      initializePaddlePayment(token);
+      // 결제 기능 비활성화하고 바로 payment-successful 페이지로 이동
+      router.push(`/payment-successful?token=${token}`);
+
+      // Paddle 결제 시스템 초기화 코드 임시 비활성화
+      // initializePaddlePayment(token);
     } catch (error) {
       console.error("Token generation error:", error);
       setError(

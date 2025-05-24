@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Loader2 } from "lucide-react";
-import { AudioPlayer } from "@/components/audio-player";
 import { Button } from "@/components/ui/button";
 import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
 import { useRouter } from "next/navigation";
@@ -89,8 +88,6 @@ export function ImprovedResultDisplay({
   isPremium,
   gender = "neutral",
 }: ImprovedResultDisplayProps) {
-  const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
-  const [audioLoading, setAudioLoading] = React.useState(false);
   const [showOriginalAnalysis, setShowOriginalAnalysis] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [showBetaPopup, setShowBetaPopup] = React.useState(false);
@@ -132,30 +129,18 @@ export function ImprovedResultDisplay({
 
   // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
   const generateNameAudio = React.useCallback(async () => {
-    if (!data || !isPremium) return;
-
-    try {
-      setAudioLoading(true);
-
-      // 한국어 이름 추출 (새 데이터 구조에 맞게 변경)
-      const koreanName = data.korean_name_suggestion.full_name.split(" ")[0]; // 성과 이름만 추출 (괄호 없이)
-
-      // 음성 생성
-      const audioUrl = await fetchAudioFromGoogleTTS(koreanName);
-      setAudioUrl(audioUrl);
-    } catch (error) {
-      console.error("음성 생성 중 오류가 발생했습니다:", error);
-      setAudioUrl(null);
-    } finally {
-      setAudioLoading(false);
-    }
+    // 임시로 음성 생성 기능 비활성화
+    return;
   }, [data, isPremium, fetchAudioFromGoogleTTS]);
 
   // 데이터가 변경되면 음성 생성 (프리미엄 유저만)
   React.useEffect(() => {
+    // 임시로 오디오 생성 기능 비활성화
+    /*
     if (data && !loading && isPremium) {
       generateNameAudio();
     }
+    */
   }, [data, loading, isPremium, generateNameAudio]);
 
   // 클립보드에 텍스트를 복사하는 함수
@@ -353,7 +338,7 @@ export function ImprovedResultDisplay({
                 Audio Pronunciation
               </h4>
               <p className="text-sm text-gray-600">
-                Hear how your name sounds.
+                <s>Hear how your name sounds.</s> (temporarily unavailable)
               </p>
             </div>
           </div>
@@ -450,8 +435,15 @@ export function ImprovedResultDisplay({
                 return `${koreanName} (${fullRomanization})`;
               })()}
             </h3>
-            {isPremium && (
+            {/* 오디오 플레이어를 임시로 렌더링하지 않음 */}
+            {/* {isPremium && (
               <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
+            )} */}
+            {/* 오디오 플레이어 대신 메시지 표시 */}
+            {isPremium && (
+              <div className="text-amber-600 text-sm mt-1 bg-amber-50 px-3 py-1 rounded-md border border-amber-200">
+                음성 발음 기능이 일시적으로 비활성화되었습니다
+              </div>
             )}
           </div>
 
