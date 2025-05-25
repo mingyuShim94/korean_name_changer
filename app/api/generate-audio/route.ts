@@ -12,10 +12,10 @@ export async function POST(request: NextRequest) {
   console.log("오디오 생성 API 요청이 시작되었습니다 (Edge Runtime)");
 
   // 환경 변수에서 API 키 가져오기
-  const API_KEY = process.env.GOOGLE_TTS_API_KEY;
+  const API_KEY = process.env.ELEVENLABS_API_KEY;
 
   if (!API_KEY) {
-    console.error("Google Cloud API 키가 없습니다.");
+    console.error("ElevenLabs API 키가 없습니다.");
     return NextResponse.json(
       { error: "Server configuration error. API key is missing." },
       { status: 500 }
@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { text } = body as TextToSpeechRequest;
 
+    console.log("변환활 텍스트=", text);
+
     if (!text || typeof text !== "string" || text.trim() === "") {
       return NextResponse.json(
         { error: "Text parameter is required and must be a non-empty string." },
@@ -34,51 +36,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Google Cloud Text-to-Speech API 호출
-    const googleTTSResponse = await fetch(
-      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`,
+    const VOICE_ID = "xi3rF0t7dg7uN2M0WUhr";
+    // ElevenLabs API 직접 호출
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "xi-api-key": API_KEY,
         },
         body: JSON.stringify({
-          input: {
-            text: text,
-          },
-          voice: {
-            languageCode: "ko-KR",
-            name: "ko-KR-Chirp3-HD-Callirrhoe", // HD 음성으로 변경
-            ssmlGender: "FEMALE",
-          },
-          audioConfig: {
-            audioEncoding: "MP3",
-            pitch: 0,
-            speakingRate: 1.0,
+          text: text,
+          model_id: "eleven_flash_v2_5",
+          voice_settings: {
+            stability: 1,
+            similarity_boost: 1,
+            speaking_rate: 0.9,
           },
         }),
       }
     );
 
-    if (!googleTTSResponse.ok) {
-      const errorText = await googleTTSResponse.text();
-      throw new Error(
-        `Google Cloud TTS API error: ${googleTTSResponse.status} - ${errorText}`
-      );
+    if (!response.ok) {
+      throw new Error(`ElevenLabs API 오류: ${response.status}`);
     }
 
-    // 응답 데이터 가져오기 (base64로 인코딩된 오디오)
-    const responseData = await googleTTSResponse.json();
+    // 오디오 데이터를 바이너리로 받아옴
+    const audioData = await response.arrayBuffer();
 
-    // base64 디코딩하여 오디오 데이터로 변환
-    const audioContent = responseData.audioContent;
-    const audioBuffer = Buffer.from(audioContent, "base64");
-
-    // 바이너리 데이터를 그대로 클라이언트에 전달
-    return new NextResponse(audioBuffer, {
+    // Edge Runtime에서 지원하는 Response 형식으로 반환
+    return new NextResponse(audioData, {
       headers: {
         "Content-Type": "audio/mpeg",
-        "Cache-Control": "public, max-age=31536000", // 1년간 캐싱 (재사용 가능)
+        "Cache-Control": "public, max-age=31536000", // 1년간 캐싱
       },
     });
   } catch (error) {

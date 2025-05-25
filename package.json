@@ -13,6 +13,7 @@
     "pages:preview": "npx wrangler pages dev .vercel/output/static"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.1.0",
     "@google/genai": "^0.13.0",
     "@paddle/paddle-js": "^1.4.1",
     "@paddle/paddle-node-sdk": "^2.7.2",

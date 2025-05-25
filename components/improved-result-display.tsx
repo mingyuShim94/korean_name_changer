@@ -1,10 +1,69 @@
 "use client";
 
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Play, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
 import { useRouter } from "next/navigation";
+
+// AudioPlayer 컴포넌트 수정
+interface AudioPlayerProps {
+  koreanName: string;
+  audioUrl: string | null;
+  loading: boolean;
+  isPlaying: boolean;
+  onPlay: () => void;
+}
+
+function AudioPlayer({
+  koreanName,
+  audioUrl,
+  loading,
+  isPlaying,
+  onPlay,
+}: AudioPlayerProps) {
+  if (loading) {
+    return (
+      <Button
+        variant="outline"
+        disabled
+        className="mt-3 w-full max-w-xs text-sm md:text-base"
+      >
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Generating Audio...
+      </Button>
+    );
+  }
+
+  if (!audioUrl) {
+    return (
+      <Button
+        variant="outline"
+        disabled
+        className="mt-3 w-full max-w-xs text-sm md:text-base"
+      >
+        <Volume2 className="mr-2 h-4 w-4" />
+        Listen to {koreanName} (Unavailable)
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      onClick={onPlay}
+      disabled={isPlaying}
+      className="mt-3 w-full max-w-xs text-sm md:text-base"
+    >
+      {isPlaying ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Play className="mr-2 h-4 w-4" />
+      )}
+      {isPlaying ? "Playing..." : `Listen to ${koreanName}`}
+    </Button>
+  );
+}
 
 // 새로운 인터페이스 정의 - 무료 버전
 interface FreeKoreanNameData {
@@ -91,6 +150,10 @@ export function ImprovedResultDisplay({
   const [showOriginalAnalysis, setShowOriginalAnalysis] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [showBetaPopup, setShowBetaPopup] = React.useState(false);
+  const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = React.useState(false);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
   // 데이터 타입 확인 함수
@@ -115,33 +178,113 @@ export function ImprovedResultDisplay({
     );
   };
 
-  // Google TTS API를 호출하여 음성 생성
-  const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
-    const response = await fetch("/api/generate-audio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (!response.ok) throw new Error("음성 생성 실패");
-    const audioBlob = await response.blob();
-    return URL.createObjectURL(audioBlob);
-  };
-
-  // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
+  // 음성 생성 함수
   const generateNameAudio = React.useCallback(async () => {
-    // 임시로 음성 생성 기능 비활성화
-    return;
-  }, [data, isPremium, fetchAudioFromGoogleTTS]);
+    if (!data?.korean_name_suggestion?.syllables) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+
+    try {
+      const koreanName = data.korean_name_suggestion.syllables
+        .map((syllable) => syllable.syllable)
+        .join("");
+
+      const cachedAudioKey = `audio_${koreanName}`;
+      const cachedTimestampKey = `audio_timestamp_${koreanName}`;
+      const cachedAudio = localStorage.getItem(cachedAudioKey);
+      const cachedTimestamp = localStorage.getItem(cachedTimestampKey);
+
+      if (cachedAudio && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp);
+        const now = Date.now();
+        const cacheAge = now - timestamp;
+        const cacheDuration = 24 * 60 * 60 * 1000;
+
+        if (cacheAge < cacheDuration) {
+          setAudioUrl(cachedAudio);
+          return;
+        }
+      }
+      setAudioLoading(true);
+      const response = await fetch("/api/generate-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: koreanName }),
+      });
+
+      if (!response.ok) {
+        setAudioUrl(null);
+        throw new Error("음성 생성 실패");
+      }
+
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+
+      localStorage.setItem(cachedAudioKey, url);
+      localStorage.setItem(cachedTimestampKey, Date.now().toString());
+
+      setAudioUrl(url);
+    } catch (error) {
+      console.error("음성 생성 중 오류 발생:", error);
+      setAudioUrl(null);
+    } finally {
+      setAudioLoading(false);
+    }
+  }, [data]);
+
+  // 오디오 재생 함수 (일시정지 없음)
+  const handlePlay = () => {
+    if (!audioUrl || isPlaying) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    const newAudio = new Audio(audioUrl);
+    audioRef.current = newAudio;
+    newAudio.play();
+    setIsPlaying(true);
+
+    newAudio.onended = () => {
+      setIsPlaying(false);
+    };
+    newAudio.onerror = () => {
+      console.error("오디오 재생 오류");
+      setIsPlaying(false);
+      setAudioUrl(null);
+    };
+  };
 
   // 데이터가 변경되면 음성 생성 (프리미엄 유저만)
   React.useEffect(() => {
-    // 임시로 오디오 생성 기능 비활성화
-    /*
     if (data && !loading && isPremium) {
       generateNameAudio();
     }
-    */
   }, [data, loading, isPremium, generateNameAudio]);
+
+  // 컴포넌트가 언마운트될 때 오디오 URL 정리
+  React.useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (audioUrl) {
+        const koreanName = data?.korean_name_suggestion?.syllables
+          ?.map((syllable) => syllable.syllable)
+          .join("");
+        const cachedAudioKey = `audio_${koreanName}`;
+        const cachedAudio = localStorage.getItem(cachedAudioKey);
+
+        if (audioUrl !== cachedAudio) {
+          URL.revokeObjectURL(audioUrl);
+        }
+      }
+    };
+  }, [audioUrl, data]);
 
   // 클립보드에 텍스트를 복사하는 함수
   const copyToClipboard = (formatted: string, summary: string) => {
@@ -422,28 +565,25 @@ export function ImprovedResultDisplay({
           <div className="text-center mb-5 flex flex-col items-center">
             <h3 className="text-3xl font-bold text-gray-800 mb-2">
               {(() => {
-                // full_name에서 한자 부분을 제거하고 영어 발음 추가
                 const koreanName =
-                  data.korean_name_suggestion.full_name.split(" ")[0]; // 한글 이름만 추출
-
-                // 로마자로 된 발음 수집
+                  data.korean_name_suggestion.full_name.split(" ")[0];
                 const romanizations = data.korean_name_suggestion.syllables.map(
                   (item) => item.romanization
                 );
                 const fullRomanization = romanizations.join(" ");
-
                 return `${koreanName} (${fullRomanization})`;
               })()}
             </h3>
-            {/* 오디오 플레이어를 임시로 렌더링하지 않음 */}
-            {/* {isPremium && (
-              <AudioPlayer audioUrl={audioUrl} loading={audioLoading} />
-            )} */}
-            {/* 오디오 플레이어 대신 메시지 표시 */}
             {isPremium && (
-              <div className="text-amber-600 text-sm mt-1 bg-amber-50 px-3 py-1 rounded-md border border-amber-200">
-                음성 발음 기능이 일시적으로 비활성화되었습니다
-              </div>
+              <AudioPlayer
+                koreanName={data.korean_name_suggestion.syllables
+                  .map((s) => s.syllable)
+                  .join("")}
+                audioUrl={audioUrl}
+                loading={audioLoading}
+                isPlaying={isPlaying}
+                onPlay={handlePlay}
+              />
             )}
           </div>
 
