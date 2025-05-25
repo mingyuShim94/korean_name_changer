@@ -202,13 +202,23 @@ export function ImprovedResultDisplay({
         const timestamp = parseInt(cachedTimestamp);
         const now = Date.now();
         const cacheAge = now - timestamp;
-        const cacheDuration = 24 * 60 * 60 * 1000;
+        const cacheDuration = 24 * 60 * 60 * 1000; // 24시간
 
         if (cacheAge < cacheDuration) {
-          setAudioUrl(cachedAudio);
+          // Base64 데이터를 Blob으로 변환
+          const binaryData = atob(cachedAudio);
+          const arrayBuffer = new ArrayBuffer(binaryData.length);
+          const uint8Array = new Uint8Array(arrayBuffer);
+          for (let i = 0; i < binaryData.length; i++) {
+            uint8Array[i] = binaryData.charCodeAt(i);
+          }
+          const audioBlob = new Blob([arrayBuffer], { type: "audio/mpeg" });
+          const url = URL.createObjectURL(audioBlob);
+          setAudioUrl(url);
           return;
         }
       }
+
       setAudioLoading(true);
       const response = await fetch("/api/generate-audio", {
         method: "POST",
@@ -222,11 +232,18 @@ export function ImprovedResultDisplay({
       }
 
       const audioBlob = await response.blob();
+
+      // Blob을 Base64로 변환하여 저장
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        const base64Audio = base64data.split(",")[1]; // Remove data URL prefix
+        localStorage.setItem(cachedAudioKey, base64Audio);
+        localStorage.setItem(cachedTimestampKey, Date.now().toString());
+      };
+
       const url = URL.createObjectURL(audioBlob);
-
-      localStorage.setItem(cachedAudioKey, url);
-      localStorage.setItem(cachedTimestampKey, Date.now().toString());
-
       setAudioUrl(url);
     } catch (error) {
       console.error("음성 생성 중 오류 발생:", error);
@@ -272,19 +289,10 @@ export function ImprovedResultDisplay({
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      if (audioUrl) {
-        const koreanName = data?.korean_name_suggestion?.syllables
-          ?.map((syllable) => syllable.syllable)
-          .join("");
-        const cachedAudioKey = `audio_${koreanName}`;
-        const cachedAudio = localStorage.getItem(cachedAudioKey);
-
-        if (audioUrl !== cachedAudio) {
-          URL.revokeObjectURL(audioUrl);
-        }
-      }
+      // 페이지 새로고침이나 이동 시에는 URL을 해제하지 않음
+      // URL은 다음 세션에서 새로 생성됨
     };
-  }, [audioUrl, data]);
+  }, []);
 
   // 클립보드에 텍스트를 복사하는 함수
   const copyToClipboard = (formatted: string, summary: string) => {
