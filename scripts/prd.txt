@@ -1,6 +1,6 @@
 # Overview
 
-## Project Name: MyKoreanName (Korean Name Generator)
+## Project Name: NameToKorean (Korean Name Generator)
 
 **Description:** A poetic naming web service that meaningfully reinterprets foreign names into Korean names. This service aims to help users with foreign names explore a new identity by connecting the meaning and sentiment of their names with the beauty of Korean culture. When a user enters their foreign name, the service analyzes the etymology, symbolism, and feel of that name to generate a beautiful Korean name (including surname) that embodies Korean sensibility and tradition, along with its meaning and poetic interpretation.
 

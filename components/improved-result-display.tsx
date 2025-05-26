@@ -297,7 +297,7 @@ export function ImprovedResultDisplay({
   // 클립보드에 텍스트를 복사하는 함수
   const copyToClipboard = (formatted: string, summary: string) => {
     // formatted, summary와 해시태그를 합쳐서 복사할 텍스트 생성
-    const textToCopy = `${formatted}\n\n${summary}\n\n#KoreanNameEmoji #mykoreanname`;
+    const textToCopy = `${formatted}\n\n${summary}\n\n#KoreanNameEmoji #nameToKorean`;
 
     navigator.clipboard.writeText(textToCopy).then(
       () => {
@@ -403,7 +403,7 @@ export function ImprovedResultDisplay({
               {data.social_share_content.formatted}
             </p>
             <p className="text-indigo-500 text-sm mt-4">
-              #KoreanNameEmoji #mykoreanname
+              #KoreanNameEmoji #nameToKorean
             </p>
 
             <div className="flex justify-center mt-4">
@@ -489,7 +489,7 @@ export function ImprovedResultDisplay({
                 Audio Pronunciation
               </h4>
               <p className="text-sm text-gray-600">
-                <s>Hear how your name sounds.</s> (temporarily unavailable)
+                Hear how your name sounds.
               </p>
             </div>
           </div>
@@ -653,7 +653,7 @@ export function ImprovedResultDisplay({
               {data.social_share_content.summary}
             </p>
             <p className="text-indigo-500 text-sm">
-              #KoreanNameEmoji #mykoreanname
+              #KoreanNameEmoji #nameToKorean
             </p>
 
             <div className="flex justify-center mt-4">

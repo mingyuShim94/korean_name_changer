@@ -14,7 +14,7 @@ export default function Header() {
               height={32}
               className="mr-2"
             />
-            My Korean Name
+            Name To Korean
           </Link>
         </h1>
         <nav>

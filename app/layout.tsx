@@ -21,18 +21,18 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "MyKoreanName - Convert Your Name to a Korean Name",
+  title: "NameToKorean - Convert Your Name to a Korean Name",
   description:
-    "Convert your name to a beautiful Korean name with MyKoreanName. Choose between masculine, feminine, or neutral styles, and pick either Hanja (Chinese character) or pure Korean name formats. Currently free during beta test. Discover a new cultural identity with a meaningful Korean name interpretation.",
+    "Convert your name to a beautiful Korean name with NameToKorean. Choose between masculine, feminine, or neutral styles, and pick either Hanja (Chinese character) or pure Korean name formats. Currently free during beta test. Discover a new cultural identity with a meaningful Korean name interpretation.",
   keywords:
     "korean name, name translator, hanja name, pure korean name, name converter, korean culture",
   authors: [
     {
-      name: "MyKoreanName Team",
+      name: "NameToKorean Team",
     },
   ],
   openGraph: {
-    title: "MyKoreanName - Get Your Korean Name",
+    title: "NameToKorean - Get Your Korean Name",
     description:
       "Transform your name into a beautiful Korean name with deep cultural meaning. Free service available in Hanja or Pure Korean style.",
     images: [
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
         url: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "MyKoreanName",
+        alt: "NameToKorean",
       },
     ],
     type: "website",

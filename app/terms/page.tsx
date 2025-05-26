@@ -54,7 +54,7 @@ export default function TermsPage() {
                 <section className="space-y-2">
                   <h3 className="text-xl font-medium">1. Introduction</h3>
                   <p>
-                    Welcome to MyKoreanName (&quot;we,&quot; &quot;our,&quot; or
+                    Welcome to NameToKorean (&quot;we,&quot; &quot;our,&quot; or
                     &quot;us&quot;). These Terms of Service govern your access
                     to and use of our website, services, and applications
                     (collectively, the &quot;Service&quot;).
@@ -71,7 +71,7 @@ export default function TermsPage() {
                     2. Description of Service
                   </h3>
                   <p>
-                    MyKoreanName is a web service that generates Korean names
+                    NameToKorean is a web service that generates Korean names
                     based on users&apos; foreign names. We offer both free and
                     premium services. The free service provides basic features
                     while the premium service offers enhanced features for a
