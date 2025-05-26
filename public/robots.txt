@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Block access to API routes
+Disallow: /api/
+
+# Block access to admin routes
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://nametokorean.com/sitemap.xml 

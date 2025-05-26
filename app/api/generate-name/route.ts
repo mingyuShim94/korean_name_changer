@@ -12,7 +12,7 @@ export const runtime = "edge";
 // List of allowed domains (replace with actual domains in production)
 const allowedOrigins = [
   "https://korean-name-changer.pages.dev",
-  "https://mykoreanname.me",
+  "https://nametokorean.com",
   "http://localhost:3000",
 ];
 
