@@ -169,6 +169,17 @@ function ResultContent() {
   // Use improved ImprovedResultDisplay component
   return (
     <>
+      <div className="text-center space-y-4 mb-6">
+        <h1 className="flex flex-col gap-2 text-3xl font-bold tracking-tighter sm:text-4xl">
+          <span className="text-primary">Your Korean Name</span>
+          <span>Meaning & Translation</span>
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 max-w-[600px] mx-auto">
+          Explore the deep meaning and cultural significance of your
+          personalized Korean name, complete with Hanja characters and
+          pronunciation guide.
+        </p>
+      </div>
       <ImprovedResultDisplay
         data={resultData}
         loading={false}
@@ -216,19 +227,33 @@ export default function ResultPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 bg-muted/40">
-      <Card className="w-full max-w-lg shadow-lg relative">
-        <CardContent className="p-6 sm:p-8">
-          <React.Suspense
-            fallback={
-              <p className="text-center text-muted-foreground">
-                Loading results...
-              </p>
-            }
-          >
-            <ResultContent />
-          </React.Suspense>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-4xl mx-auto px-4 flex flex-col items-center space-y-8">
+        <div className="text-center space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl w-full">
+          <h1 className="flex flex-col gap-2 text-3xl font-bold tracking-tighter sm:text-4xl text-gray-900 dark:text-white">
+            <span className="text-primary">Your Korean Name</span>
+            <span>Meaning & Translation</span>
+          </h1>
+          <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-lg">
+            Explore the deep meaning and cultural significance of your
+            personalized Korean name, complete with Hanja characters and
+            pronunciation guide.
+          </p>
+        </div>
+
+        <Card className="w-full max-w-lg shadow-xl rounded-2xl border-t-4 border-primary relative">
+          <CardContent className="p-6 sm:p-8">
+            <React.Suspense
+              fallback={
+                <p className="text-center text-muted-foreground">
+                  Loading results...
+                </p>
+              }
+            >
+              <ResultContent />
+            </React.Suspense>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }

@@ -17,13 +17,12 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
   title: "NameToKorean - Convert Your Name to a Korean Name",
   description:
-    "Convert your name to a beautiful Korean name with NameToKorean. Choose between masculine, feminine, or neutral styles, and pick either Hanja (Chinese character) or pure Korean name formats. Currently free during beta test. Discover a new cultural identity with a meaningful Korean name interpretation.",
+    "Transform your name into a meaningful Korean name. Choose masculine, feminine, or neutral styles in Hanja or pure Korean format. Free during beta.",
   keywords:
     "korean name, name translator, hanja name, pure korean name, name converter, korean culture",
   authors: [
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NameToKorean - Get Your Korean Name",
     description:
-      "Transform your name into a beautiful Korean name with deep cultural meaning. Free service available in Hanja or Pure Korean style.",
+      "Transform your name into a meaningful Korean name. Choose masculine, feminine, or neutral styles in Hanja or pure Korean format. Free during beta.",
     images: [
       {
         url: `${BASE_URL}/og-image.png`,
@@ -44,6 +43,13 @@ export const metadata: Metadata = {
       },
     ],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NameToKorean - Get Your Korean Name",
+    description:
+      "Transform your name into a beautiful Korean name with deep cultural meaning.",
+    images: [`${BASE_URL}/og-image.png`],
   },
   icons: {
     icon: "/favicon.ico",
@@ -58,7 +64,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="h-full">
+    <html lang="en" className="h-full">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "NameToKorean",
+              description:
+                "Convert your name to a beautiful Korean name with cultural meaning",
+              applicationCategory: "UtilityApplication",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="flex flex-col h-full">
         <GoogleAnalytics />
         <Header />

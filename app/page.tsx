@@ -6,7 +6,6 @@ import { NameInputForm } from "@/components/name-input-form";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   CardFooter,
@@ -224,18 +223,21 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-fit flex-col items-center justify-center bg-transparent py-12 px-4">
-      <Card className="w-full max-w-md shadow-lg mb-16">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl sm:text-4xl font-bold">
-            Convert Your Name to a Korean Name!
-          </CardTitle>
-          <CardDescription className="text-lg sm:text-xl text-muted-foreground pt-2">
-            Enter a name in any language and discover a beautiful Korean name.
-            Choose the nuance and style.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <div className="flex flex-col items-center space-y-8 max-w-4xl mx-auto px-4">
+      <div className="text-center space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl w-full mt-8">
+        <h1 className="flex flex-col gap-3 text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-gray-900 dark:text-white">
+          <span className="text-primary">NameToKorean</span>
+          <span>Find Your Perfect Korean Name</span>
+        </h1>
+        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-lg">
+          Discover the meaning behind your personalized Korean name. Our name
+          translator combines traditional Hanja characters and modern pure
+          Korean to create names that reflect your identity.
+        </p>
+      </div>
+
+      <Card className="w-full max-w-md shadow-xl rounded-2xl border-t-4 border-primary">
+        <CardContent className="p-8 space-y-6">
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
@@ -539,6 +541,6 @@ export default function Home() {
           </Card>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
