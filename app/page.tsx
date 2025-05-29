@@ -10,28 +10,18 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-// import { FullScreenLoader } from "@/components/ui/fullscreen-loader"; // 더 이상 사용하지 않음
-// import { generateKoreanNameAction } from "./actions"; // 더 이상 사용하지 않음
 import { createNameGenerationToken } from "./actions"; // JWT 토큰 생성 액션 추가
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
-
-// import { initializePaddle } from "@paddle/paddle-js";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
 // 이름 스타일 옵션 정의 추가
 type NameStyleOption = "hanja" | "pureKorean";
 
-// PremiumRequestData 인터페이스가 비었으므로 제거 또는 주석 처리
-// interface PremiumRequestData {
-//   preferredSyllables?: string;
-// }
-
 export default function Home() {
   const router = useRouter();
-  // const [isPending, startTransition] = React.useTransition(); // 더 이상 사용하지 않음
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
@@ -81,67 +71,7 @@ export default function Home() {
         "An error occurred while preparing the name generation request."
       );
     }
-
-    /* 기존 직접 처리 코드는 payment-successful 페이지로 이동
-    const result = await generateKoreanNameAction({
-      name,
-      gender,
-      nameStyle,
-      isPremium: false,
-    });
-
-    if (result.error) {
-      setError(result.error);
-      console.error("Server Action Error (Free):", result.error);
-    } else if (result.data) {
-      router.push(
-        `/result?data=${encodeURIComponent(
-          JSON.stringify(result.data)
-        )}&nameStyle=${nameStyle}&type=free&gender=${gender}`
-      );
-    } else {
-      setError("An unexpected issue occurred. No data or error returned.");
-    }
-    */
   };
-
-  //test card number: 4242424242424242
-  //test card cvv: 100
-  //test card expiration date: 12/2025
-
-  // const initializePaddlePayment = async (token: string) => {
-  //   const paddleToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-  //   if (paddleToken) {
-  //     initializePaddle({
-  //       environment: "production",
-  //       token: paddleToken,
-  //       debug: false,
-  //     }).then((instance) => {
-  //       if (instance) {
-  //         instance.Checkout.open({
-  //           items: [
-  //             {
-  //               priceId: "pri_01jvyxzq6j0spngbb4f26t5ava",
-  //               quantity: 1,
-  //             },
-  //           ],
-  //           settings: {
-  //             successUrl: `${
-  //               window.location.origin
-  //             }/payment-successful?token=${encodeURIComponent(token)}`,
-  //           },
-  //         });
-  //       } else {
-  //         console.warn("instance is not initialized", instance);
-  //       }
-  //     });
-  //   } else {
-  //     console.error("Paddle client token is not defined");
-  //     setError(
-  //       "Failed to initialize payment system. Please contact administrator."
-  //     );
-  //   }
-  // };
 
   const handlePremiumNameSubmit = async (
     name: string,
@@ -172,40 +102,12 @@ export default function Home() {
 
       // 결제 기능 비활성화하고 바로 payment-successful 페이지로 이동
       router.push(`/payment-successful?token=${token}`);
-
-      // Paddle 결제 시스템 초기화 코드 임시 비활성화
-      // initializePaddlePayment(token);
     } catch (error) {
       console.error("Token generation error:", error);
       setError(
         "An error occurred while preparing the name generation request."
       );
     }
-
-    // 결과 페이지로 리다이렉트하는 코드는 주석 처리
-    /*
-    const result = await generateKoreanNameAction({
-      name,
-      gender,
-      nameStyle,
-      isPremium: true,
-    });
-
-    if (result.error) {
-      setError(result.error);
-      console.error("Server Action Error (Premium):", result.error);
-    } else if (result.data) {
-      router.push(
-        `/result?data=${encodeURIComponent(
-          JSON.stringify(result.data)
-        )}&nameStyle=${nameStyle}&type=premium&gender=${gender}`
-      );
-    } else {
-      setError(
-        "An unexpected issue occurred (Premium). No data or error returned."
-      );
-    }
-    */
   };
 
   // Tab 전환 시 이벤트 추적
