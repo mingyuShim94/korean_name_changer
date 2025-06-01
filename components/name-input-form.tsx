@@ -19,6 +19,7 @@ interface NameInputFormProps {
   isPremium?: boolean;
   inputName?: string;
   onNameChange?: (name: string) => void;
+  hasPremiumCredit?: boolean;
 }
 
 export function NameInputForm({
@@ -28,8 +29,10 @@ export function NameInputForm({
   onGenderChange,
   selectedNameStyle,
   onNameStyleChange,
+  isPremium = false,
   inputName = "",
   onNameChange,
+  hasPremiumCredit = false,
 }: NameInputFormProps) {
   const [name, setName] = React.useState(inputName);
   const [error, setError] = React.useState<string | null>(null);
@@ -84,7 +87,7 @@ export function NameInputForm({
       : "e.g. Hailey Morgan, さくら 田中, ليلى الفاروق";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 relative">
       <div className="space-y-1 md:space-y-1.5">
         <Label htmlFor="foreign-name" className="text-sm md:text-base">
           Your Name
@@ -203,6 +206,9 @@ export function NameInputForm({
       >
         {isLoading ? "Generating..." : "Generate Korean Name"}
       </Button>
+      {isPremium && !hasPremiumCredit && (
+        <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 z-10" />
+      )}
     </form>
   );
 }

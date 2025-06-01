@@ -5,6 +5,9 @@ import {
   KoreanNameData,
 } from "../../lib/geminiAPI";
 import { GenderOption, NameStyleOption } from "../../lib/krNameSystemPrompts";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import type { Database } from "@/types/supabase";
 
 // Edge Runtime is required for Cloudflare Pages
 export const runtime = "edge";
@@ -124,6 +127,56 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // 프리미엄 요청인 경우 이용권 확인 및 사용
+      if (isPremium) {
+        const cookieStore = cookies();
+        const supabase = createRouteHandlerClient<Database>({
+          cookies: () => cookieStore,
+        });
+
+        // 현재 사용자 확인
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          return NextResponse.json(
+            { error: "Authentication required for premium features." },
+            { status: 401, headers: corsHeaders }
+          );
+        }
+
+        // 사용 가능한 프리미엄 이용권 확인
+        const { data: credit, error: creditError } = await supabase
+          .from("premium_credits")
+          .select("id, user_id, payment_id, used_at, created_at")
+          .eq("user_id", user.id)
+          .is("used_at", null)
+          .single();
+
+        if (creditError || !credit) {
+          return NextResponse.json(
+            { error: "No available premium credits." },
+            { status: 402, headers: corsHeaders }
+          );
+        }
+
+        // 이용권 사용 처리
+        const { error: updateError } = await supabase
+          .from("premium_credits")
+          .update({ used_at: new Date().toISOString() })
+          .eq("id", credit.id);
+
+        if (updateError) {
+          console.error("Failed to update premium credit:", updateError);
+          return NextResponse.json(
+            { error: "Failed to process premium credit." },
+            { status: 500, headers: corsHeaders }
+          );
+        }
+      }
+
       console.log(
         `API request parameters: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
       );
@@ -171,35 +224,15 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    // Change error type to Error or unknown
-    let errorMessage =
-      "An unexpected error occurred while processing your request.";
-    const errorDetails = error instanceof Error ? error.message : String(error);
-    const statusCode = 500; // Set default status code to 500
-
-    // Log more detailed error information to console
-    console.error(
-      `Error in POST /api/generate-name:`,
-      errorDetails,
-      error instanceof Error ? error.stack : "No stack trace available", // Log error stack
-      error // Log entire error object
-    );
-
-    if (error instanceof Error) {
-      if (error.message?.includes("API_RESPONSE_EMPTY")) {
-        errorMessage = "Gemini API returned an empty response.";
-      } else if (error.message?.includes("API_RESPONSE_MALFORMED")) {
-        errorMessage = "Received malformed data from Gemini API.";
-      } else if (error.name === "SyntaxError") {
-        // JSON.parse error
-        errorMessage =
-          "Failed to parse response from Gemini API. Response was not valid JSON.";
-      }
-    }
-
+    console.error("\n[에러] 이름 생성 중 오류 발생:", error);
     return NextResponse.json(
-      { error: errorMessage, details: errorDetails },
-      { status: statusCode, headers: corsHeaders }
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while processing your request.",
+      },
+      { status: 500, headers: corsHeaders }
     );
   }
 }

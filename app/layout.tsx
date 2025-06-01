@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import SupabaseProvider from "./providers";
 
 // Cloudflare Pages를 위한 Edge Runtime 설정
 export const runtime = "edge";
@@ -87,11 +88,13 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col h-full">
         <GoogleAnalytics />
-        <Header />
-        <main className="flex-grow container mx-auto py-6 px-4 md:py-10 md:px-6 max-w-4xl">
-          {children}
-        </main>
-        <Footer />
+        <SupabaseProvider>
+          <Header />
+          <main className="flex-grow container mx-auto py-6 px-4 md:py-10 md:px-6 max-w-4xl">
+            {children}
+          </main>
+          <Footer />
+        </SupabaseProvider>
       </body>
     </html>
   );

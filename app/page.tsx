@@ -14,6 +14,9 @@ import { createNameGenerationToken } from "./actions"; // JWT 토큰 생성 액�
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { useSupabase } from "./providers";
+import { checkPremiumCredit } from "@/lib/premium";
+import { PaymentPendingDialog } from "@/components/ui/payment-pending-dialog";
 
 // 성별 느낌 옵션 정의 수정
 type GenderOption = "masculine" | "feminine" | "neutral";
@@ -22,6 +25,7 @@ type NameStyleOption = "hanja" | "pureKorean";
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useSupabase();
   const [error, setError] = React.useState<string | null>(null);
   const [selectedGender, setSelectedGender] =
     React.useState<GenderOption>("masculine");
@@ -30,11 +34,30 @@ export default function Home() {
   const [activeTab, setActiveTab] = React.useState<"free" | "premium">("free");
   const [inputName, setInputName] = React.useState<string>("");
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
+  const [hasPremiumCredit, setHasPremiumCredit] = React.useState(false);
 
   // 페이지 로드 시 페이지 조회 이벤트 추적
   React.useEffect(() => {
     trackPageView("/", "Home Page - Korean Name Generator");
   }, []);
+
+  // 프리미엄 크레딧 상태 체크
+  React.useEffect(() => {
+    const checkCredit = async () => {
+      if (user) {
+        const credit = await checkPremiumCredit();
+        setHasPremiumCredit(!!credit);
+      }
+    };
+    checkCredit();
+  }, [user]);
+
+  const handleTabChange = (value: string) => {
+    trackButtonClick("tab_switch", value);
+    setActiveTab(value as "free" | "premium");
+  };
 
   const handleFreeNameSubmit = async (
     name: string,
@@ -55,6 +78,8 @@ export default function Home() {
     );
 
     try {
+      setIsLoading(true);
+
       // JWT 토큰 생성
       const { token } = await createNameGenerationToken({
         name,
@@ -66,10 +91,14 @@ export default function Home() {
       // 토큰과 함께 리다이렉션
       router.push(`/payment-successful?token=${token}`);
     } catch (error) {
-      console.error("Token generation error:", error);
+      console.error("Error generating name:", error);
       setError(
-        "An error occurred while preparing the name generation request."
+        error instanceof Error
+          ? error.message
+          : "An error occurred while generating the name."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,39 +110,58 @@ export default function Home() {
     // Google Analytics 이벤트 추적
     trackButtonClick("generate_korean_name", `premium_${gender}_${nameStyle}`);
 
-    setError(null);
-    console.log(
-      "Submitting PREMIUM: Name:",
-      name,
-      "Gender:",
-      gender,
-      "Style:",
-      nameStyle
-    );
-
     try {
-      // JWT 토큰 생성
+      setIsLoading(true);
       const { token } = await createNameGenerationToken({
         name,
         gender,
         nameStyle,
         isPremium: true,
       });
-
-      // 결제 기능 비활성화하고 바로 payment-successful 페이지로 이동
       router.push(`/payment-successful?token=${token}`);
     } catch (error) {
-      console.error("Token generation error:", error);
+      console.error("Error handling premium name generation:", error);
       setError(
-        "An error occurred while preparing the name generation request."
+        error instanceof Error
+          ? error.message
+          : "An error occurred while processing your request."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Tab 전환 시 이벤트 추적
-  const handleTabChange = (value: string) => {
-    trackButtonClick("tab_switch", value);
-    setActiveTab(value as "free" | "premium");
+  const handlePurchaseClick = () => {
+    // 로그인 확인
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+
+    // URL에 사용자 정보를 custom_fields로 추가
+    const customFields = encodeURIComponent(
+      JSON.stringify({
+        name: inputName,
+        gender: selectedGender,
+        nameStyle: selectedNameStyle,
+      })
+    );
+
+    const productId = "oauri";
+    // Gumroad URL 생성 및 새 창에서 열기
+    const gumroadUrl = `https://gumroad.com/l/${productId}?wanted=true&custom_fields=${customFields}`;
+
+    // 결제 대기 팝업 표시
+    setShowPaymentDialog(true);
+
+    // Gumroad 결제 페이지 열기
+    window.open(gumroadUrl.toString(), "_blank");
+  };
+
+  const handlePaymentComplete = async () => {
+    setShowPaymentDialog(false);
+    // 결제가 완료되면 새로고침하여 프리미엄 이용권을 다시 확인
+    router.refresh();
   };
 
   const handlePlayAudio = () => {
@@ -156,7 +204,7 @@ export default function Home() {
                 onSubmit={(name) =>
                   handleFreeNameSubmit(name, selectedGender, selectedNameStyle)
                 }
-                isLoading={false}
+                isLoading={isLoading}
                 selectedGender={selectedGender}
                 onGenderChange={(gender) => setSelectedGender(gender)}
                 selectedNameStyle={selectedNameStyle}
@@ -176,11 +224,16 @@ export default function Home() {
                   interpretation of the generated names. Discover the cultural
                   meanings, pronunciation characteristics, and deep meanings of
                   the hanja contained in the names.
-                  <br />
-                  🎉 During the beta test, this premium service is available for
-                  free!
                 </p>
               </div>
+              {!hasPremiumCredit && (
+                <Button
+                  onClick={handlePurchaseClick}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                >
+                  ✨ Purchase Premium Access
+                </Button>
+              )}
               <NameInputForm
                 onSubmit={(name) =>
                   handlePremiumNameSubmit(
@@ -189,7 +242,7 @@ export default function Home() {
                     selectedNameStyle
                   )
                 }
-                isLoading={false}
+                isLoading={isLoading}
                 selectedGender={selectedGender}
                 onGenderChange={(gender) => setSelectedGender(gender)}
                 selectedNameStyle={selectedNameStyle}
@@ -197,6 +250,7 @@ export default function Home() {
                 isPremium={true}
                 inputName={inputName}
                 onNameChange={setInputName}
+                hasPremiumCredit={hasPremiumCredit}
               />
             </TabsContent>
           </Tabs>
@@ -443,6 +497,16 @@ export default function Home() {
           </Card>
         </div>
       </section>
+
+      {showPaymentDialog && (
+        <PaymentPendingDialog
+          onPaymentComplete={handlePaymentComplete}
+          onClose={() => setShowPaymentDialog(false)}
+          name={inputName}
+          gender={selectedGender}
+          nameStyle={selectedNameStyle}
+        />
+      )}
     </div>
   );
 }
