@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
+  // 요청 URL의 origin을 사용하여 리디렉션 URL 생성
+  const origin = requestUrl.origin;
+  console.log("Auth callback redirecting to origin:", origin);
+
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL("/", request.url));
+  return NextResponse.redirect(new URL("/", origin));
 }

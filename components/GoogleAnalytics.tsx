@@ -6,12 +6,21 @@ import { getCookie, setCookie } from "cookies-next";
 
 export default function GoogleAnalytics() {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-0H6KXZD065";
-  const [consentGiven, setConsentGiven] = useState<boolean | null>(null);
+  // 초기값을 undefined로 설정하여 아직 확인 중임을 표시
+  const [consentGiven, setConsentGiven] = useState<boolean | null | undefined>(
+    undefined
+  );
 
   // 쿠키 동의 상태 확인
   useEffect(() => {
     const cookieConsent = getCookie("analytics-consent");
-    setConsentGiven(cookieConsent === "true");
+    setConsentGiven(
+      cookieConsent === "true"
+        ? true
+        : cookieConsent === undefined
+        ? null
+        : false
+    );
   }, []);
 
   // 동의 설정 함수
@@ -31,27 +40,32 @@ export default function GoogleAnalytics() {
     }
   };
 
+  // 아직 쿠키 확인 중이면 아무것도 렌더링하지 않음
+  if (consentGiven === undefined) {
+    return null;
+  }
+
   // 쿠키 동의 배너가 필요한 경우 표시
   if (consentGiven === null) {
     return (
       <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 z-50 text-sm">
         <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>
-            이 웹사이트는 사용자 경험 개선을 위해 쿠키를 사용합니다. 분석 쿠키
-            사용에 동의하시겠습니까?
+            This website uses cookies to improve your experience. Do you consent
+            to our analytics cookies?
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setConsent(true)}
               className="px-4 py-1 bg-blue-500 hover:bg-blue-600 rounded"
             >
-              동의
+              Accept
             </button>
             <button
               onClick={() => setConsent(false)}
               className="px-4 py-1 bg-gray-600 hover:bg-gray-700 rounded"
             >
-              거부
+              Decline
             </button>
           </div>
         </div>

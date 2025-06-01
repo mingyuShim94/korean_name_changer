@@ -12,33 +12,54 @@ export interface Database {
       payments: {
         Row: {
           id: string;
-          user_id: string;
-          sale_id: string;
-          amount: number;
-          status: string;
+          user_id: string | null;
+          payment_id: string;
+          order_number: string | null;
+          product_id: string;
+          product_name: string | null;
+          amount: number | null;
+          currency: string | null;
+          payment_status: string;
           custom_fields: Json | null;
-          created_at: string | null;
-          updated_at: string | null;
+          request_id: string | null;
+          webhook_data: Json | null;
+          created_at: string;
+          updated_at: string;
+          email: string | null;
         };
         Insert: {
           id?: string;
-          user_id: string;
-          sale_id: string;
-          amount: number;
-          status: string;
+          user_id?: string | null;
+          payment_id: string;
+          order_number?: string | null;
+          product_id: string;
+          product_name?: string | null;
+          amount?: number | null;
+          currency?: string | null;
+          payment_status?: string;
           custom_fields?: Json | null;
-          created_at?: string | null;
-          updated_at?: string | null;
+          request_id?: string | null;
+          webhook_data?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+          email?: string | null;
         };
         Update: {
           id?: string;
-          user_id?: string;
-          sale_id?: string;
-          amount?: number;
-          status?: string;
+          user_id?: string | null;
+          payment_id?: string;
+          order_number?: string | null;
+          product_id?: string;
+          product_name?: string | null;
+          amount?: number | null;
+          currency?: string | null;
+          payment_status?: string;
           custom_fields?: Json | null;
-          created_at?: string | null;
-          updated_at?: string | null;
+          request_id?: string | null;
+          webhook_data?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+          email?: string | null;
         };
         Relationships: [
           {
@@ -86,34 +107,97 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          payment_id: string;
-          used_at: string | null;
-          created_at: string | null;
+          credits_remaining: number;
+          credits_used: number;
+          last_purchase_id: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          payment_id: string;
-          used_at?: string | null;
-          created_at?: string | null;
+          credits_remaining?: number;
+          credits_used?: number;
+          last_purchase_id?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          payment_id?: string;
-          used_at?: string | null;
-          created_at?: string | null;
+          credits_remaining?: number;
+          credits_used?: number;
+          last_purchase_id?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "premium_credits_payment_id_fkey";
-            columns: ["payment_id"];
+            foreignKeyName: "premium_credits_last_purchase_id_fkey";
+            columns: ["last_purchase_id"];
             isOneToOne: false;
             referencedRelation: "payments";
             referencedColumns: ["id"];
           },
           {
             foreignKeyName: "premium_credits_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      name_generations: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          original_name: string;
+          korean_name: string | null;
+          gender: string | null;
+          name_style: string | null;
+          is_premium: boolean;
+          premium_credit_used: string | null;
+          generation_data: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          original_name: string;
+          korean_name?: string | null;
+          gender?: string | null;
+          name_style?: string | null;
+          is_premium?: boolean;
+          premium_credit_used?: string | null;
+          generation_data?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          original_name?: string;
+          korean_name?: string | null;
+          gender?: string | null;
+          name_style?: string | null;
+          is_premium?: boolean;
+          premium_credit_used?: string | null;
+          generation_data?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "name_generations_premium_credit_used_fkey";
+            columns: ["premium_credit_used"];
+            isOneToOne: false;
+            referencedRelation: "premium_credits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "name_generations_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -127,39 +211,17 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          payment_id: string;
-          used_at: string | null;
-          created_at: string | null;
+          credits_remaining: number;
+          credits_used: number;
+          last_purchase_id: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
         };
         Relationships: [
           {
-            foreignKeyName: "premium_credits_payment_id_fkey";
-            columns: ["payment_id"];
-            isOneToOne: false;
-            referencedRelation: "payments";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "premium_credits_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      used_premium_credits: {
-        Row: {
-          id: string;
-          user_id: string;
-          payment_id: string;
-          used_at: string | null;
-          created_at: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "premium_credits_payment_id_fkey";
-            columns: ["payment_id"];
+            foreignKeyName: "premium_credits_last_purchase_id_fkey";
+            columns: ["last_purchase_id"];
             isOneToOne: false;
             referencedRelation: "payments";
             referencedColumns: ["id"];

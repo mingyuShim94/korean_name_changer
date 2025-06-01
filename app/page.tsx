@@ -15,7 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "./providers";
-import { checkPremiumCredit } from "@/lib/premium";
+import {
+  checkPremiumCredit,
+  getTotalPremiumCredits,
+  applyPremiumCredit,
+} from "@/lib/premium";
 import { PaymentPendingDialog } from "@/components/ui/payment-pending-dialog";
 
 // 성별 느낌 옵션 정의 수정
@@ -37,6 +41,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
   const [hasPremiumCredit, setHasPremiumCredit] = React.useState(false);
+  const [premiumCredits, setPremiumCredits] = React.useState(0);
 
   // 페이지 로드 시 페이지 조회 이벤트 추적
   React.useEffect(() => {
@@ -47,8 +52,16 @@ export default function Home() {
   React.useEffect(() => {
     const checkCredit = async () => {
       if (user) {
-        const credit = await checkPremiumCredit();
-        setHasPremiumCredit(!!credit);
+        try {
+          const credit = await checkPremiumCredit();
+          setHasPremiumCredit(!!credit);
+
+          // 총 크레딧 수 확인
+          const totalCredits = await getTotalPremiumCredits();
+          setPremiumCredits(totalCredits);
+        } catch (error) {
+          console.error("크레딧 확인 중 오류 발생:", error);
+        }
       }
     };
     checkCredit();
@@ -112,12 +125,31 @@ export default function Home() {
 
     try {
       setIsLoading(true);
+
+      // 프리미엄 크레딧 확인
+      const credit = await checkPremiumCredit();
+      if (!credit || credit.credits_remaining <= 0) {
+        setError(
+          "사용 가능한 프리미엄 크레딧이 없습니다. 먼저 프리미엄 이용권을 구매해주세요."
+        );
+        return;
+      }
+
+      // 크레딧 사용
+      await applyPremiumCredit(credit.id);
+
+      // 토큰 생성
       const { token } = await createNameGenerationToken({
         name,
         gender,
         nameStyle,
         isPremium: true,
       });
+
+      // 크레딧 정보 업데이트
+      const totalCredits = await getTotalPremiumCredits();
+      setPremiumCredits(totalCredits);
+
       router.push(`/payment-successful?token=${token}`);
     } catch (error) {
       console.error("Error handling premium name generation:", error);
@@ -138,12 +170,14 @@ export default function Home() {
       return;
     }
 
-    // URL에 사용자 정보를 custom_fields로 추가
+    // URL에 사용자 정보와 식별 정보를 custom_fields로 추가
+    const requestId = crypto.randomUUID(); // 요청 고유 ID 생성
     const customFields = encodeURIComponent(
       JSON.stringify({
-        name: inputName,
-        gender: selectedGender,
-        nameStyle: selectedNameStyle,
+        userId: user.id, // 사용자 ID 추가
+        email: user.email, // 사용자 이메일 추가
+        timestamp: Date.now(), // 타임스탬프 추가
+        requestId: requestId, // 요청 고유 ID
       })
     );
 
@@ -196,7 +230,10 @@ export default function Home() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="free">Free</TabsTrigger>
               <TabsTrigger value="premium">
-                ✨ Premium(Free during beta test)
+                ✨ Premium
+                {hasPremiumCredit && premiumCredits > 0
+                  ? ` (${premiumCredits}회)`
+                  : "(Free during beta test)"}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="free" className="pt-6">
@@ -502,9 +539,6 @@ export default function Home() {
         <PaymentPendingDialog
           onPaymentComplete={handlePaymentComplete}
           onClose={() => setShowPaymentDialog(false)}
-          name={inputName}
-          gender={selectedGender}
-          nameStyle={selectedNameStyle}
         />
       )}
     </div>

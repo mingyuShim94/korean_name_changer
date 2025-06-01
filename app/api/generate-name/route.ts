@@ -127,52 +127,72 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // 프리미엄 요청인 경우 이용권 확인 및 사용
+      // 프리미엄 요청인 경우에만 이용권 확인 및 사용
       if (isPremium) {
-        const cookieStore = cookies();
-        const supabase = createRouteHandlerClient<Database>({
-          cookies: () => cookieStore,
-        });
+        try {
+          // Supabase 클라이언트 생성 (cookies()를 직접 비동기로 호출하지 않고 함수로 전달)
+          const supabase = createRouteHandlerClient<Database>({ cookies });
 
-        // 현재 사용자 확인
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+          // 현재 사용자 확인
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
 
-        if (userError || !user) {
+          if (userError || !user) {
+            return NextResponse.json(
+              { error: "Authentication required for premium features." },
+              { status: 401, headers: corsHeaders }
+            );
+          }
+
+          // 사용 가능한 프리미엄 이용권 확인
+          const { data: credits, error: creditError } = await supabase
+            .from("premium_credits")
+            .select("*")
+            .eq("user_id", user.id)
+            .gt("credits_remaining", 0)
+            .gte("expires_at", new Date().toISOString())
+            .order("expires_at", { ascending: true })
+            .limit(1);
+
+          if (creditError) {
+            return NextResponse.json(
+              { error: "Failed to check premium credits." },
+              { status: 500, headers: corsHeaders }
+            );
+          }
+
+          if (!credits || credits.length === 0) {
+            return NextResponse.json(
+              { error: "No available premium credits." },
+              { status: 402, headers: corsHeaders }
+            );
+          }
+
+          // 이용권 사용 처리
+          const creditItem = credits[0];
+          const { error: updateError } = await supabase
+            .from("premium_credits")
+            .update({
+              credits_remaining: creditItem.credits_remaining - 1,
+              credits_used: creditItem.credits_used + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", creditItem.id);
+
+          if (updateError) {
+            console.error("Failed to update premium credit:", updateError);
+            return NextResponse.json(
+              { error: "Failed to process premium credit." },
+              { status: 500, headers: corsHeaders }
+            );
+          }
+        } catch (cookieError) {
+          console.error("Cookie processing error:", cookieError);
           return NextResponse.json(
-            { error: "Authentication required for premium features." },
+            { error: "Authentication error for premium features." },
             { status: 401, headers: corsHeaders }
-          );
-        }
-
-        // 사용 가능한 프리미엄 이용권 확인
-        const { data: credit, error: creditError } = await supabase
-          .from("premium_credits")
-          .select("id, user_id, payment_id, used_at, created_at")
-          .eq("user_id", user.id)
-          .is("used_at", null)
-          .single();
-
-        if (creditError || !credit) {
-          return NextResponse.json(
-            { error: "No available premium credits." },
-            { status: 402, headers: corsHeaders }
-          );
-        }
-
-        // 이용권 사용 처리
-        const { error: updateError } = await supabase
-          .from("premium_credits")
-          .update({ used_at: new Date().toISOString() })
-          .eq("id", credit.id);
-
-        if (updateError) {
-          console.error("Failed to update premium credit:", updateError);
-          return NextResponse.json(
-            { error: "Failed to process premium credit." },
-            { status: 500, headers: corsHeaders }
           );
         }
       }

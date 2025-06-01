@@ -3,6 +3,27 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
+import { saveResultDataToStorage } from "@/app/result/page"; // 결과 페이지에서 만든 저장 함수 임포트
+
+// 토큰을 안전하게 저장하는 함수
+const storeTokenSecurely = (token: string): void => {
+  if (typeof window !== "undefined") {
+    // 세션 스토리지에 토큰 저장 (브라우저 세션 동안만 유지)
+    sessionStorage.setItem("korean_name_auth_token", token);
+  }
+};
+
+// 토큰 검증 및 사용 후 삭제하는 함수
+const getAndClearToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+
+  const token = sessionStorage.getItem("korean_name_auth_token");
+  if (token) {
+    // 사용 후 즉시 삭제 (일회용으로 만들기)
+    sessionStorage.removeItem("korean_name_auth_token");
+  }
+  return token;
+};
 
 export default function PaymentSuccessfulPage() {
   const router = useRouter();
@@ -42,11 +63,16 @@ export default function PaymentSuccessfulPage() {
       const gender = data.gender || "neutral";
       const nameStyle = data.nameStyle || "hanja";
 
-      // Redirect to result page
+      // 결과 데이터를 세션 스토리지에 저장하고 ID 받기
+      const resultId = saveResultDataToStorage(data);
+
+      if (!resultId) {
+        throw new Error("Failed to store result data");
+      }
+
+      // 결과 ID만 URL에 포함하여 리다이렉트
       router.push(
-        `/result?data=${encodeURIComponent(
-          JSON.stringify(data)
-        )}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
+        `/result?resultId=${resultId}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
       );
     } catch (err: unknown) {
       console.error("API call error:", err);
@@ -65,22 +91,44 @@ export default function PaymentSuccessfulPage() {
     // Prevent duplicate execution if request already sent
     if (requestSentRef.current) return;
 
-    // Check JWT token
-    const token = searchParams.get("token");
+    // 토큰 처리 로직
+    const handleToken = () => {
+      // 1. URL에서 토큰 확인
+      const urlToken = searchParams.get("token");
 
-    if (!token) {
-      setError("Invalid access. Authentication token required.");
-      setIsProcessing(false);
-      return;
-    }
+      // 2. 세션 스토리지에서 토큰 확인
+      const storedToken = getAndClearToken();
 
-    // Mark request status
-    requestSentRef.current = true;
-    console.log("API request started - Duplicate prevention flag set");
+      // 3. 토큰 우선순위: URL 토큰 > 저장된 토큰
+      const token = urlToken || storedToken;
 
-    // Use separated API call function
-    generateName(token);
-  }, [searchParams, router, generateName]);
+      if (!token) {
+        setError("Invalid access. Authentication token required.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // 4. URL에 토큰이 있었다면 안전하게 저장하고 URL에서 제거
+      if (urlToken && typeof window !== "undefined") {
+        storeTokenSecurely(urlToken);
+
+        // URL에서 토큰 제거 (보안을 위해)
+        const url = new URL(window.location.href);
+        url.searchParams.delete("token");
+        window.history.replaceState({}, "", url.toString());
+      }
+
+      // Mark request status
+      requestSentRef.current = true;
+      console.log("API request started - Duplicate prevention flag set");
+
+      // Use separated API call function
+      generateName(token);
+    };
+
+    // 컴포넌트 마운트 시 토큰 처리
+    handleToken();
+  }, [searchParams, router]);
 
   if (isProcessing || redirecting) {
     // Display loading message

@@ -76,6 +76,39 @@ interface UpgradedFreeKoreanNameData extends FreeKoreanNameData {
   };
 }
 
+// 세션 스토리지에서 데이터를 가져오는 함수
+const getResultDataFromStorage = (resultId: string): ResultData | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const storedData = sessionStorage.getItem(`korean_name_result_${resultId}`);
+    return storedData ? JSON.parse(storedData) : null;
+  } catch (e) {
+    console.error("Failed to retrieve data from session storage:", e);
+    return null;
+  }
+};
+
+// 세션 스토리지에 데이터를 저장하는 함수
+export const saveResultDataToStorage = (data: ResultData): string => {
+  if (typeof window === "undefined") return "";
+
+  try {
+    // 고유 ID 생성 (타임스탬프 + 랜덤 문자열)
+    const resultId = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 10)}`;
+    sessionStorage.setItem(
+      `korean_name_result_${resultId}`,
+      JSON.stringify(data)
+    );
+    return resultId;
+  } catch (e) {
+    console.error("Failed to save data to session storage:", e);
+    return "";
+  }
+};
+
 // Internal component that reads SearchParams and displays results
 function ResultContent() {
   const searchParams = useSearchParams();
@@ -86,7 +119,9 @@ function ResultContent() {
   const [gender, setGender] = React.useState<GenderOption>("neutral");
 
   React.useEffect(() => {
-    const dataString = searchParams.get("data");
+    // 결과 ID 또는 레거시 데이터 문자열 가져오기
+    const resultId = searchParams.get("resultId");
+    const legacyDataString = searchParams.get("data");
 
     // Extract required values from search parameters
     const type = searchParams.get("type") || "free";
@@ -98,9 +133,19 @@ function ResultContent() {
     setNameStyle(style as NameStyleOption);
     setGender(genderParam as GenderOption);
 
-    if (dataString) {
+    // 새 방식: 세션 스토리지에서 데이터 가져오기
+    if (resultId) {
+      const storedData = getResultDataFromStorage(resultId);
+      if (storedData) {
+        setResultData(storedData);
+      } else {
+        setError("결과 데이터를 찾을 수 없습니다. 다시 시도해주세요.");
+      }
+    }
+    // 레거시 방식: URL에서 데이터 가져오기 (이전 버전과의 호환성 유지)
+    else if (legacyDataString) {
       try {
-        const parsedData = JSON.parse(decodeURIComponent(dataString));
+        const parsedData = JSON.parse(decodeURIComponent(legacyDataString));
 
         // Validate if parsed data has the correct format
         if (parsedData && parsedData.original_name) {
@@ -130,9 +175,28 @@ function ResultContent() {
                   }`,
               },
             };
+
+            // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
+            const newResultId = saveResultDataToStorage(freeData);
+            if (newResultId && typeof window !== "undefined") {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("data");
+              url.searchParams.set("resultId", newResultId);
+              window.history.replaceState({}, "", url.toString());
+            }
+
             setResultData(freeData as ResultData);
           } else {
             // Provide full data for premium users
+            // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
+            const newResultId = saveResultDataToStorage(parsedData);
+            if (newResultId && typeof window !== "undefined") {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("data");
+              url.searchParams.set("resultId", newResultId);
+              window.history.replaceState({}, "", url.toString());
+            }
+
             setResultData(parsedData);
           }
         } else {
@@ -140,12 +204,14 @@ function ResultContent() {
         }
       } catch (e) {
         console.error("Failed to parse result data:", e);
-        setError("Failed to load result data. The format may be invalid.");
+        setError(
+          "결과 데이터를 불러오는데 실패했습니다. 형식이 올바르지 않을 수 있습니다."
+        );
       }
     } else {
       // Case where there is no data, for example, direct access to /result
       setError(
-        "No result data to display. Please return to the home page and try again."
+        "표시할 결과 데이터가 없습니다. 홈 페이지로 돌아가서 다시 시도해주세요."
       );
     }
   }, [searchParams]);
@@ -153,14 +219,14 @@ function ResultContent() {
   if (error) {
     return (
       <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-        <h3 className="font-semibold mb-1">Error:</h3>
+        <h3 className="font-semibold mb-1">오류:</h3>
         <p>{error}</p>
         <Link
           href="/"
           className="mt-2 inline-block text-blue-600 hover:underline"
           onClick={() => trackButtonClick("return_to_home", "from_error")}
         >
-          Return to Home
+          홈으로 돌아가기
         </Link>
       </div>
     );
@@ -197,7 +263,7 @@ function ResultContent() {
                   trackButtonClick("generate_another_name", "from_result_page")
                 }
               >
-                Generate Another Name
+                다른 이름 생성하기
               </Link>
             </Button>
           </div>
@@ -245,7 +311,7 @@ export default function ResultPage() {
             <React.Suspense
               fallback={
                 <p className="text-center text-muted-foreground">
-                  Loading results...
+                  결과를 불러오는 중...
                 </p>
               }
             >

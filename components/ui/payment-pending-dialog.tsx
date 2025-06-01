@@ -5,22 +5,16 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import { Loader2, X } from "lucide-react";
 import { Button } from "./button";
-import { createNameGenerationToken } from "@/app/actions";
+import { checkPremiumCredit } from "@/lib/premium";
 
 interface PaymentPendingDialogProps {
   onPaymentComplete: () => void;
   onClose: () => void;
-  name: string;
-  gender: "masculine" | "feminine" | "neutral";
-  nameStyle: "hanja" | "pureKorean";
 }
 
 export function PaymentPendingDialog({
   onPaymentComplete,
   onClose,
-  name,
-  gender,
-  nameStyle,
 }: PaymentPendingDialogProps) {
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,37 +35,55 @@ export function PaymentPendingDialog({
         throw new Error("사용자 인증에 실패했습니다. 다시 로그인해주세요.");
       }
 
-      // available_premium_credits 뷰를 사용하여 사용 가능한 크레딧 확인
-      const { data: availableCredit, error: creditError } = await supabase
-        .from("available_premium_credits")
-        .select()
-        .eq("user_id", user.id)
-        .single();
+      // 프리미엄 크레딧 확인
+      try {
+        const premiumCredit = await checkPremiumCredit();
 
-      if (creditError) {
-        // 결제 내역이 아직 처리되지 않은 경우
-        setError(
-          "결제 내역이 아직 처리 중입니다. 잠시 후 (약 1분 이내) 다시 확인해주세요."
+        if (premiumCredit && premiumCredit.credits_remaining > 0) {
+          // 팝업 닫고 결제 완료 처리
+          onClose();
+          onPaymentComplete();
+
+          // payment-successful 페이지로 자동 이동하지 않음
+          return;
+        }
+      } catch (creditError) {
+        console.error(
+          "[PaymentPendingDialog] Credit check error:",
+          creditError
         );
-        return;
       }
 
-      if (availableCredit) {
-        // 토큰 생성 및 페이지 이동
-        const { token } = await createNameGenerationToken({
-          name,
-          gender,
-          nameStyle,
-          isPremium: true,
-        });
+      // 최근 결제 내역 확인 (백업 확인 방법)
+      const { data: recentPayments, error: paymentError } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("payment_status", "completed")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-        // 팝업 닫고 결제 완료 처리
-        onClose();
-        onPaymentComplete();
+      if (paymentError) {
+        console.error(
+          "[PaymentPendingDialog] Payment check error:",
+          paymentError
+        );
+      }
 
-        // payment-successful 페이지로 이동
-        window.location.href = `/payment-successful?token=${token}`;
-        return;
+      // 최근 결제가 있지만 크레딧이 없는 경우 (웹훅이 아직 처리되지 않은 경우)
+      if (recentPayments && recentPayments.length > 0) {
+        const lastPaymentTime = new Date(recentPayments[0].created_at);
+        const now = new Date();
+        const diffMinutes =
+          (now.getTime() - lastPaymentTime.getTime()) / (1000 * 60);
+
+        if (diffMinutes < 5) {
+          // 5분 이내에 결제한 경우
+          setError(
+            "결제는 확인되었으나 크레딧이 아직 처리 중입니다. 잠시 후 (약 1분 이내) 다시 확인해주세요."
+          );
+          return;
+        }
       }
 
       setError(
