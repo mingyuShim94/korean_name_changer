@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader2, Play, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
+import { GenderOption, NameStyleOption } from "@/app/lib/premiumSystemPrompts";
 import { useRouter } from "next/navigation";
 
 // AudioPlayer 컴포넌트 수정
@@ -295,9 +295,11 @@ export function ImprovedResultDisplay({
   }, []);
 
   // 클립보드에 텍스트를 복사하는 함수
-  const copyToClipboard = (formatted: string, summary: string) => {
+  const copyToClipboard = (formatted: string, summary: string = "") => {
     // formatted, summary와 해시태그를 합쳐서 복사할 텍스트 생성
-    const textToCopy = `${formatted}\n\n${summary}\n\n#KoreanNameEmoji #nameToKorean`;
+    const textToCopy = `${formatted}\n\n${
+      summary || ""
+    }\n\n#KoreanNameEmoji #nameToKorean`;
 
     navigator.clipboard.writeText(textToCopy).then(
       () => {
@@ -402,6 +404,13 @@ export function ImprovedResultDisplay({
             <p className="text-xl font-semibold text-gray-800 mb-2">
               {data.social_share_content.formatted}
             </p>
+            {/* social_share_content.summary가 있으면 표시 */}
+            {"summary" in data.social_share_content &&
+              data.social_share_content.summary && (
+                <p className="text-gray-600 text-sm mt-2 italic">
+                  {data.social_share_content.summary}
+                </p>
+              )}
             <p className="text-indigo-500 text-sm mt-4">
               #KoreanNameEmoji #nameToKorean
             </p>
@@ -411,7 +420,10 @@ export function ImprovedResultDisplay({
                 onClick={() =>
                   copyToClipboard(
                     data.social_share_content.formatted,
-                    data.original_name_analysis.summary
+                    "summary" in data.social_share_content &&
+                      data.social_share_content.summary
+                      ? data.social_share_content.summary
+                      : data.original_name_analysis.summary
                   )
                 }
                 className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
@@ -457,7 +469,7 @@ export function ImprovedResultDisplay({
         </section>
 
         {/* 프리미엄 업그레이드 CTA */}
-        <section className="bg-white rounded-xl shadow p-6 text-center">
+        {/* <section className="bg-white rounded-xl shadow p-6 text-center">
           <h3 className="text-xl font-semibold text-indigo-600 mb-3">
             Unlock Premium Features
           </h3>
@@ -499,7 +511,7 @@ export function ImprovedResultDisplay({
           >
             Upgrade to Premium
           </Button>
-        </section>
+        </section> */}
       </div>
     );
   };
@@ -649,9 +661,13 @@ export function ImprovedResultDisplay({
             <p className="text-xl font-semibold text-gray-800 mb-2">
               {data.social_share_content.formatted}
             </p>
-            <p className="text-gray-600 italic mb-4">
-              {data.social_share_content.summary}
-            </p>
+            {/* social_share_content.summary가 있으면 표시 */}
+            {"summary" in data.social_share_content &&
+              data.social_share_content.summary && (
+                <p className="text-gray-600 text-sm mt-2 italic">
+                  {data.social_share_content.summary}
+                </p>
+              )}
             <p className="text-indigo-500 text-sm">
               #KoreanNameEmoji #nameToKorean
             </p>
@@ -661,7 +677,10 @@ export function ImprovedResultDisplay({
                 onClick={() =>
                   copyToClipboard(
                     data.social_share_content.formatted,
-                    data.social_share_content.summary
+                    "summary" in data.social_share_content &&
+                      data.social_share_content.summary
+                      ? data.social_share_content.summary
+                      : data.original_name_analysis.summary
                   )
                 }
                 className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${

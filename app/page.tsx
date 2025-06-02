@@ -127,7 +127,10 @@ export default function Home() {
       setIsLoading(true);
 
       // 프리미엄 크레딧 확인
+      // console.log("프리미엄 크레딧 확인 시작");
       const credit = await checkPremiumCredit();
+      // console.log("프리미엄 크레딧 확인 결과:", credit);
+
       if (!credit || credit.credits_remaining <= 0) {
         setError(
           "사용 가능한 프리미엄 크레딧이 없습니다. 먼저 프리미엄 이용권을 구매해주세요."
@@ -135,21 +138,31 @@ export default function Home() {
         return;
       }
 
-      // 크레딧 사용
-      await applyPremiumCredit(credit.id);
-
-      // 토큰 생성
+      // 먼저 토큰 생성 (크레딧 차감 전)
       const { token } = await createNameGenerationToken({
         name,
         gender,
         nameStyle,
         isPremium: true,
+        creditApplied: true, // 차감 예정임을 표시
       });
+
+      // 토큰 생성 성공 후 크레딧 차감
+      // console.log("토큰 생성 성공, 크레딧 차감 시작, creditId:", credit.id);
+      try {
+        const result = await applyPremiumCredit(credit.id);
+        console.log("크레딧 차감 결과:", result);
+      } catch (creditError) {
+        console.error("크레딧 차감 중 오류 발생:", creditError);
+        throw creditError;
+      }
 
       // 크레딧 정보 업데이트
       const totalCredits = await getTotalPremiumCredits();
+      console.log("업데이트된 총 크레딧:", totalCredits);
       setPremiumCredits(totalCredits);
 
+      // 토큰과 함께 리다이렉션
       router.push(`/payment-successful?token=${token}`);
     } catch (error) {
       console.error("Error handling premium name generation:", error);
@@ -231,9 +244,9 @@ export default function Home() {
               <TabsTrigger value="free">Free</TabsTrigger>
               <TabsTrigger value="premium">
                 ✨ Premium
-                {hasPremiumCredit && premiumCredits > 0
-                  ? ` (${premiumCredits}회)`
-                  : "(Free during beta test)"}
+                {hasPremiumCredit &&
+                  premiumCredits > 0 &&
+                  ` (${premiumCredits} times)`}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="free" className="pt-6">

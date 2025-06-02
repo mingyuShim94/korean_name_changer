@@ -87,7 +87,7 @@ export function PaymentPendingDialog({
       }
 
       setError(
-        "결제 내역이 아직 처리 중입니다. 잠시 후 (약 1분 이내) 다시 확인해주세요."
+        "Your payment is still being processed. Please check again in a moment (within about 1 minute)."
       );
     } catch (err) {
       console.error("[PaymentPendingDialog] Payment check error:", err);
@@ -107,18 +107,18 @@ export function PaymentPendingDialog({
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
-          aria-label="닫기"
+          aria-label="Close"
         >
           <X className="h-5 w-5" />
         </button>
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            결제 확인
+            Payment Verification
           </h3>
           <div className="space-y-4">
             <p className="text-gray-600 dark:text-gray-300">
-              결제를 완료하셨나요? 아래 버튼을 클릭하여 결제 상태를
-              확인해주세요.
+              Have you completed your payment? Click the button below to check
+              your payment status.
             </p>
             {error && (
               <div className="p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md">
@@ -136,10 +136,10 @@ export function PaymentPendingDialog({
                 {isChecking ? (
                   <div className="flex items-center justify-center">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <span>확인 중...</span>
+                    <span>Checking...</span>
                   </div>
                 ) : (
-                  "결제 완료 확인하기"
+                  "Verify Payment Completion"
                 )}
               </Button>
               <Button
@@ -148,13 +148,13 @@ export function PaymentPendingDialog({
                 className="w-full"
                 disabled={isChecking}
               >
-                닫기
+                Close
               </Button>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              결제 처리에는 최대 1분 정도 소요될 수 있습니다.
+              Payment processing may take up to 1 minute.
               <br />
-              잠시 후 다시 확인해주세요.
+              Please check again shortly.
             </p>
           </div>
         </div>

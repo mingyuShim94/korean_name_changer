@@ -7,7 +7,7 @@ import { ImprovedResultDisplay } from "@/components/improved-result-display";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
-import { GenderOption, NameStyleOption } from "@/app/lib/krNameSystemPrompts";
+import { GenderOption, NameStyleOption } from "@/app/lib/premiumSystemPrompts";
 
 // New interface definition - Free version
 interface FreeKoreanNameData {
@@ -28,6 +28,7 @@ interface FreeKoreanNameData {
   korean_name_impression?: string;
   social_share_content: {
     formatted: string;
+    summary: string;
   };
 }
 
@@ -173,6 +174,7 @@ function ResultContent() {
                   `${parsedData.original_name} : ${
                     parsedData.korean_name_suggestion?.full_name || ""
                   }`,
+                summary: parsedData.social_share_content?.summary || "",
               },
             };
 
@@ -263,7 +265,7 @@ function ResultContent() {
                   trackButtonClick("generate_another_name", "from_result_page")
                 }
               >
-                다른 이름 생성하기
+                Generate Another Name
               </Link>
             </Button>
           </div>

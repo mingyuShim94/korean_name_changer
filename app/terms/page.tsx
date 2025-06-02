@@ -32,7 +32,7 @@ export default function TermsPage() {
             Terms and Policies
           </CardTitle>
           <p className="text-muted-foreground mt-2">
-            Last Updated: {new Date().toLocaleDateString()}
+            Last Updated: June 2, 2025
           </p>
         </CardHeader>
         <CardContent>
@@ -83,9 +83,9 @@ export default function TermsPage() {
                   <h3 className="text-xl font-medium">3. Payment Terms</h3>
                   <p>
                     Premium services are available for a fee. Payment processing
-                    is handled by Paddle, a third-party payment processor. By
+                    is handled by Gumroad, a third-party payment processor. By
                     subscribing to a premium service, you agree to the payment
-                    terms and conditions set by both us and Paddle. All
+                    terms and conditions set by both us and Gumroad. All
                     purchases are final subject to our refund policy.
                   </p>
                 </section>
@@ -185,7 +185,7 @@ export default function TermsPage() {
                   </h3>
                   <p>
                     For payment processing, we may use third-party services like
-                    Paddle. In such cases, the privacy policies of those
+                    Gumroad. In such cases, the privacy policies of those
                     services will apply. We do not access or store information
                     processed by these third-party services.
                   </p>
@@ -220,19 +220,6 @@ export default function TermsPage() {
                   <p>
                     If you have any questions about this Privacy Policy, please
                     contact us at gguggulab@gmail.com.
-                  </p>
-                </section>
-
-                <section className="space-y-2">
-                  <h3 className="text-xl font-medium">
-                    8. Children&apos;s Privacy
-                  </h3>
-                  <p>
-                    Our Service does not address anyone under the age of 13. We
-                    do not knowingly collect personally identifiable information
-                    from children under 13. If you are a parent or guardian and
-                    you are aware that your child has provided us with personal
-                    information, please contact us.
                   </p>
                 </section>
               </div>
@@ -303,13 +290,11 @@ export default function TermsPage() {
                     gguggulab@gmail.com with the following information:
                   </p>
                   <ul className="list-disc pl-6 space-y-1">
-                    <li>Your full name</li>
                     <li>Email address used for the purchase</li>
                     <li>
                       Date and approximate time of purchase (including your
                       timezone)
                     </li>
-                    <li>Transaction ID (if available)</li>
                     <li>Reason for refund request</li>
                   </ul>
                   <p>
@@ -341,10 +326,10 @@ export default function TermsPage() {
                 </section>
 
                 <section className="space-y-2">
-                  <h3 className="text-xl font-medium">7. Contact Us</h3>
+                  <h3 className="text-xl font-medium">7. Contact Me</h3>
                   <p>
                     If you have any questions about this Refund Policy, please
-                    contact us at gguggulab@gmail.com.
+                    contact me at gguggulab@gmail.com.
                   </p>
                 </section>
               </div>

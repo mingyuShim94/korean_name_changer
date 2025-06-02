@@ -60,7 +60,7 @@ export default function PricingPage() {
                     Free ($0)
                   </th>
                   <th className="text-center py-3 px-4 font-medium">
-                    Premium ($1.99)
+                    Premium ($1.90)
                   </th>
                 </tr>
               </thead>
@@ -115,6 +115,11 @@ export default function PricingPage() {
                   <td className="text-center py-3 px-4">❌</td>
                   <td className="text-center py-3 px-4">✅</td>
                 </tr>
+                <tr>
+                  <td className="py-3 px-4">Credits Included</td>
+                  <td className="text-center py-3 px-4">❌</td>
+                  <td className="text-center py-3 px-4">5 times</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -130,7 +135,7 @@ export default function PricingPage() {
               Try Free Tier
             </Button>
             <Button onClick={() => handleButtonClick("premium")}>
-              Get Premium
+              Get Premium ($1.90 for 5 Credits)
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -402,7 +407,7 @@ export default function PricingPage() {
                   className="w-full"
                   variant="default"
                 >
-                  Try Premium Tier
+                  Try Premium ($1.90 for 5 Credits)
                 </Button>
               </CardFooter>
             </Card>

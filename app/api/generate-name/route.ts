@@ -1,13 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import {
-  generateKoreanNameWithGemini,
-  KoreanNameData,
-} from "../../lib/geminiAPI";
-import { GenderOption, NameStyleOption } from "../../lib/krNameSystemPrompts";
+import { generateKoreanNameWithGemini as generatePremiumKoreanName } from "../../lib/premiumGeminiAPI";
+import { generateKoreanNameWithGemini as generateFreeKoreanName } from "../../lib/freeGeminiAPI";
+import { GenderOption, NameStyleOption } from "../../lib/premiumSystemPrompts";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/supabase";
+
+// 결과 데이터를 위한 통합 타입
+type KoreanNameResult = {
+  original_name: string;
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: Array<{
+      syllable: string;
+      romanization: string;
+      hanja: string;
+      meaning: string;
+    }>;
+    rationale: string;
+    life_values?: string;
+  };
+  original_name_analysis?: {
+    letters?: Array<{
+      letter: string;
+      meaning: string;
+    }>;
+    summary?: string;
+  };
+  korean_name_impression?: string;
+  social_share_content: {
+    formatted: string;
+    summary: string;
+  };
+};
 
 // Edge Runtime is required for Cloudflare Pages
 export const runtime = "edge";
@@ -21,7 +47,7 @@ const allowedOrigins = [
 
 // Map to store processed requests (memory cache)
 // For production, using Redis or external cache service is recommended
-const processedRequests = new Map<string, KoreanNameData>();
+const processedRequests = new Map<string, KoreanNameResult>();
 
 // API key validation
 if (!process.env.GEMINI_API_KEY_FREE || !process.env.GEMINI_API_KEY_PAID) {
@@ -97,6 +123,8 @@ export async function POST(request: NextRequest) {
       const nameStyle = payload.nameStyle as NameStyleOption;
       const isPremium = payload.isPremium as boolean;
       const requestId = payload.requestId as string;
+      // 차감 여부를 JWT 토큰에서 확인 (creditApplied 필드)
+      const creditApplied = payload.creditApplied as boolean;
 
       if (!name || !gender || !nameStyle || !requestId) {
         return NextResponse.json(
@@ -105,7 +133,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log("Token validation completed:", { requestId });
+      console.log("Token validation completed:", { requestId, creditApplied });
 
       // Check if request has already been processed (prevent duplicate requests)
       if (processedRequests.has(requestId)) {
@@ -129,71 +157,63 @@ export async function POST(request: NextRequest) {
 
       // 프리미엄 요청인 경우에만 이용권 확인 및 사용
       if (isPremium) {
-        try {
-          // Supabase 클라이언트 생성 (cookies()를 직접 비동기로 호출하지 않고 함수로 전달)
-          const supabase = createRouteHandlerClient<Database>({ cookies });
+        // 클라이언트에서 이미 크레딧을 차감했는지 확인
+        if (creditApplied) {
+          console.log(
+            "Credit already applied on client side, skipping credit check"
+          );
+        } else {
+          // 크레딧이 아직 차감되지 않은 경우에만 확인 로직 실행
+          try {
+            // Supabase 클라이언트 생성
+            const supabase = createRouteHandlerClient<Database>({ cookies });
 
-          // 현재 사용자 확인
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
+            // 현재 사용자 확인
+            const {
+              data: { user },
+              error: userError,
+            } = await supabase.auth.getUser();
 
-          if (userError || !user) {
+            if (userError || !user) {
+              return NextResponse.json(
+                { error: "Authentication required for premium features." },
+                { status: 401, headers: corsHeaders }
+              );
+            }
+
+            // 사용 가능한 프리미엄 이용권 확인
+            const { data: credits, error: creditError } = await supabase
+              .from("premium_credits")
+              .select("*")
+              .eq("user_id", user.id)
+              .gt("credits_remaining", 0)
+              .gte("expires_at", new Date().toISOString())
+              .order("expires_at", { ascending: true })
+              .limit(1);
+
+            if (creditError) {
+              return NextResponse.json(
+                { error: "Failed to check premium credits." },
+                { status: 500, headers: corsHeaders }
+              );
+            }
+
+            if (!credits || credits.length === 0) {
+              return NextResponse.json(
+                { error: "No available premium credits." },
+                { status: 402, headers: corsHeaders }
+              );
+            }
+
+            console.warn("Premium request without credit application flag.");
+            // 로그만 남기고 계속 진행 (이전 버전과의 호환성 유지)
+          } catch (cookieError) {
+            console.error("Cookie processing error:", cookieError);
             return NextResponse.json(
-              { error: "Authentication required for premium features." },
+              { error: "Authentication error for premium features." },
               { status: 401, headers: corsHeaders }
             );
           }
-
-          // 사용 가능한 프리미엄 이용권 확인
-          const { data: credits, error: creditError } = await supabase
-            .from("premium_credits")
-            .select("*")
-            .eq("user_id", user.id)
-            .gt("credits_remaining", 0)
-            .gte("expires_at", new Date().toISOString())
-            .order("expires_at", { ascending: true })
-            .limit(1);
-
-          if (creditError) {
-            return NextResponse.json(
-              { error: "Failed to check premium credits." },
-              { status: 500, headers: corsHeaders }
-            );
-          }
-
-          if (!credits || credits.length === 0) {
-            return NextResponse.json(
-              { error: "No available premium credits." },
-              { status: 402, headers: corsHeaders }
-            );
-          }
-
-          // 이용권 사용 처리
-          const creditItem = credits[0];
-          const { error: updateError } = await supabase
-            .from("premium_credits")
-            .update({
-              credits_remaining: creditItem.credits_remaining - 1,
-              credits_used: creditItem.credits_used + 1,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", creditItem.id);
-
-          if (updateError) {
-            console.error("Failed to update premium credit:", updateError);
-            return NextResponse.json(
-              { error: "Failed to process premium credit." },
-              { status: 500, headers: corsHeaders }
-            );
-          }
-        } catch (cookieError) {
-          console.error("Cookie processing error:", cookieError);
-          return NextResponse.json(
-            { error: "Authentication error for premium features." },
-            { status: 401, headers: corsHeaders }
-          );
         }
       }
 
@@ -201,13 +221,18 @@ export async function POST(request: NextRequest) {
         `API request parameters: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
       );
 
-      // Generate name using common function
-      const result = await generateKoreanNameWithGemini({
-        name,
-        gender,
-        nameStyle,
-        isPremium,
-      });
+      // Generate name using appropriate API based on isPremium flag
+      const result = isPremium
+        ? await generatePremiumKoreanName({
+            name,
+            gender,
+            nameStyle,
+          })
+        : await generateFreeKoreanName({
+            name,
+            gender,
+            nameStyle,
+          });
 
       if (result.error) {
         return NextResponse.json(

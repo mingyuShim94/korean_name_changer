@@ -7,7 +7,7 @@ import {
   KoreanNameSuggestion,
   SocialShareContent,
   generateKoreanNameSystemPrompt,
-} from "./krNameSystemPrompts";
+} from "./premiumSystemPrompts";
 
 // 모델 이름 상수
 export const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
@@ -34,7 +34,6 @@ export interface GenerateNameParams {
   name: string;
   gender: GenderOption;
   nameStyle?: NameStyleOption; // 옵션으로 추가
-  isPremium?: boolean; // 프리미엄 모드 여부
 }
 
 export interface ActionResult {
@@ -42,15 +41,10 @@ export interface ActionResult {
   error?: string;
 }
 
-// isPremium 여부에 따라 다른 API 키 사용
-export function getApiKey(isPremium: boolean): string {
-  const key = isPremium
-    ? process.env.GEMINI_API_KEY_PAID || ""
-    : process.env.GEMINI_API_KEY_FREE || "";
-
-  console.log(
-    `API Key Length (${isPremium ? "Premium" : "Free"}): ${key.length}`
-  );
+// API 키 가져오기
+export function getApiKey(): string {
+  const key = process.env.GEMINI_API_KEY_PAID || "";
+  console.log(`API Key Length (Premium): ${key.length}`);
   return key;
 }
 
@@ -146,7 +140,7 @@ export async function generateKoreanNameWithGemini(
   error?: string;
 }> {
   try {
-    const { name, gender, nameStyle = "hanja", isPremium = false } = params;
+    const { name, gender, nameStyle = "hanja" } = params;
     const userMessageParts = [{ text: name }];
 
     // prompt 옵션 객체 생성
@@ -164,11 +158,11 @@ export async function generateKoreanNameWithGemini(
       dynamicSystemInstruction.substring(0, 200) + "..."
     );
 
-    // isPremium에 따라 적절한 API 키 사용
-    const apiKey = getApiKey(isPremium);
+    // API 키 가져오기
+    const apiKey = getApiKey();
     if (!apiKey) {
       return {
-        error: `API key missing for ${isPremium ? "premium" : "free"} service.`,
+        error: "API key missing for premium service.",
       };
     }
 
