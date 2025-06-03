@@ -178,6 +178,7 @@ export async function generateKoreanNameWithGemini(
       model: MODEL_NAME,
       contents: [{ role: "user", parts: userMessageParts }],
       config: {
+        temperature: 1.5,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
