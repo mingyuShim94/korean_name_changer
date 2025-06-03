@@ -62,10 +62,34 @@ export default function Home() {
         } catch (error) {
           console.error("크레딧 확인 중 오류 발생:", error);
         }
+      } else {
+        // 사용자가 로그인하지 않은 경우 프리미엄 상태 초기화
+        setHasPremiumCredit(false);
+        setPremiumCredits(0);
       }
     };
     checkCredit();
   }, [user]);
+
+  // 로그아웃 이벤트 리스너 추가
+  React.useEffect(() => {
+    // 로그아웃 이벤트 핸들러
+    const handleLogout = () => {
+      // 프리미엄 상태 초기화
+      setHasPremiumCredit(false);
+      setPremiumCredits(0);
+      // 필요시 탭 상태도 free로 변경
+      setActiveTab("free");
+    };
+
+    // 이벤트 리스너 등록
+    window.addEventListener("user-logout", handleLogout);
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      window.removeEventListener("user-logout", handleLogout);
+    };
+  }, []);
 
   const handleTabChange = (value: string) => {
     trackButtonClick("tab_switch", value);

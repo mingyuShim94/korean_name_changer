@@ -13,6 +13,11 @@ export default function Header() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+
+    // 로그아웃 시 프리미엄 상태 초기화를 위한 커스텀 이벤트 발생
+    const logoutEvent = new CustomEvent("user-logout");
+    window.dispatchEvent(logoutEvent);
+
     router.refresh();
   };
 
