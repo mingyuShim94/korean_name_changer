@@ -46,25 +46,6 @@ export function NameResultDisplay({
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
 
-  // 한국어 이름을 추출 (괄호 부분 제외)
-  const extractKoreanName = (koreanNameText: string): string => {
-    // "이아름 (李아름, Lee Ah-reum)" 형식에서 "이아름" 부분만 추출
-    const match = koreanNameText.match(/^([^\(]+)/);
-    return match ? match[1].trim() : koreanNameText;
-  };
-
-  // Google TTS API를 호출하여 음성 생성
-  const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
-    const response = await fetch("/api/generate-audio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (!response.ok) throw new Error("음성 생성 실패");
-    const audioBlob = await response.blob();
-    return URL.createObjectURL(audioBlob);
-  };
-
   // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
   const generateNameAudio = React.useCallback(async () => {
     if (!data) return;
@@ -73,6 +54,24 @@ export function NameResultDisplay({
       setAudioLoading(true);
 
       // 한국어 이름만 추출 (괄호나 영문 표기 없이)
+      const extractKoreanName = (koreanNameText: string): string => {
+        // "이아름 (李아름, Lee Ah-reum)" 형식에서 "이아름" 부분만 추출
+        const match = koreanNameText.match(/^([^\(]+)/);
+        return match ? match[1].trim() : koreanNameText;
+      };
+
+      // Google TTS API를 호출하여 음성 생성
+      const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
+        const response = await fetch("/api/generate-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!response.ok) throw new Error("음성 생성 실패");
+        const audioBlob = await response.blob();
+        return URL.createObjectURL(audioBlob);
+      };
+
       const koreanNameOnly = extractKoreanName(data.korean_name);
 
       // 텍스트 구성 (이름 + 간략한 설명)
@@ -87,7 +86,7 @@ export function NameResultDisplay({
     } finally {
       setAudioLoading(false);
     }
-  }, [data, extractKoreanName, fetchAudioFromGoogleTTS]);
+  }, [data]);
 
   // 데이터가 변경되면 음성 생성
   React.useEffect(() => {
