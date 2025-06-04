@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FullScreenLoader } from "@/components/ui/fullscreen-loader";
-import { saveResultDataToStorage } from "@/app/result/page"; // 결과 페이지에서 만든 저장 함수 임포트
+import { saveResultDataToStorage } from "@/lib/storage-utils"; // 유틸리티 파일에서 함수 임포트
 
 // 토큰을 안전하게 저장하는 함수
 const storeTokenSecurely = (token: string): void => {
@@ -33,59 +33,62 @@ export default function PaymentSuccessfulPage() {
   const [redirecting, setRedirecting] = React.useState(false);
   const requestSentRef = React.useRef(false); // Track request status using useRef
 
-  // API call function separated
-  const generateName = async (token: string) => {
-    try {
-      console.log("API request started - Korean name generation");
-      const res = await fetch("/api/generate-name", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+  // API call function separated and wrapped with useCallback
+  const generateName = React.useCallback(
+    async (token: string) => {
+      try {
+        console.log("API request started - Korean name generation");
+        const res = await fetch("/api/generate-name", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
 
-      if (!res.ok) {
-        const data = await res.json();
-        // 429 error (request limit exceeded) handling
-        if (res.status === 429) {
-          console.log("429 error occurred: Request limit exceeded");
-          throw new Error(
-            "Service is currently limited due to high traffic. Please try again later."
-          );
+        if (!res.ok) {
+          const data = await res.json();
+          // 429 error (request limit exceeded) handling
+          if (res.status === 429) {
+            console.log("429 error occurred: Request limit exceeded");
+            throw new Error(
+              "Service is currently limited due to high traffic. Please try again later."
+            );
+          }
+          throw new Error(data.error || `API request failed (${res.status})`);
         }
-        throw new Error(data.error || `API request failed (${res.status})`);
+
+        const data = await res.json();
+        setRedirecting(true);
+
+        // Extract necessary information from response data
+        const type = data.isPremium ? "premium" : "free";
+        const gender = data.gender || "neutral";
+        const nameStyle = data.nameStyle || "hanja";
+
+        // 결과 데이터를 세션 스토리지에 저장하고 ID 받기
+        const resultId = saveResultDataToStorage(data);
+
+        if (!resultId) {
+          throw new Error("Failed to store result data");
+        }
+
+        // 결과 ID만 URL에 포함하여 리다이렉트
+        router.push(
+          `/result?resultId=${resultId}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
+        );
+      } catch (err: unknown) {
+        console.error("API call error:", err);
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "An error occurred while generating the name.";
+        setError(errorMessage);
+        setIsProcessing(false);
+        // Reset flag to allow retry after error
+        requestSentRef.current = false;
       }
-
-      const data = await res.json();
-      setRedirecting(true);
-
-      // Extract necessary information from response data
-      const type = data.isPremium ? "premium" : "free";
-      const gender = data.gender || "neutral";
-      const nameStyle = data.nameStyle || "hanja";
-
-      // 결과 데이터를 세션 스토리지에 저장하고 ID 받기
-      const resultId = saveResultDataToStorage(data);
-
-      if (!resultId) {
-        throw new Error("Failed to store result data");
-      }
-
-      // 결과 ID만 URL에 포함하여 리다이렉트
-      router.push(
-        `/result?resultId=${resultId}&nameStyle=${nameStyle}&type=${type}&gender=${gender}`
-      );
-    } catch (err: unknown) {
-      console.error("API call error:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "An error occurred while generating the name.";
-      setError(errorMessage);
-      setIsProcessing(false);
-      // Reset flag to allow retry after error
-      requestSentRef.current = false;
-    }
-  };
+    },
+    [router]
+  );
 
   React.useEffect(() => {
     // Prevent duplicate execution if request already sent
@@ -128,7 +131,7 @@ export default function PaymentSuccessfulPage() {
 
     // 컴포넌트 마운트 시 토큰 처리
     handleToken();
-  }, [searchParams, router]);
+  }, [searchParams, router, generateName]);
 
   if (isProcessing || redirecting) {
     // Display loading message

@@ -55,24 +55,24 @@ export function PremiumResultDisplay({
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [audioLoading, setAudioLoading] = React.useState(false);
 
-  // Google TTS API를 호출하여 음성 생성
-  const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
-    const response = await fetch("/api/generate-audio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (!response.ok) throw new Error("음성 생성 실패");
-    const audioBlob = await response.blob();
-    return URL.createObjectURL(audioBlob);
-  };
-
   // 음성 생성 함수 (useCallback으로 감싸서 의존성 문제 해결)
   const generateNameAudio = React.useCallback(async () => {
     if (!data) return;
 
     try {
       setAudioLoading(true);
+
+      // Google TTS API를 호출하여 음성 생성
+      const fetchAudioFromGoogleTTS = async (text: string): Promise<string> => {
+        const response = await fetch("/api/generate-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!response.ok) throw new Error("음성 생성 실패");
+        const audioBlob = await response.blob();
+        return URL.createObjectURL(audioBlob);
+      };
 
       // 한국어 이름 추출
       const koreanName = data.suggested_korean_name.hangul;
@@ -89,7 +89,7 @@ export function PremiumResultDisplay({
     } finally {
       setAudioLoading(false);
     }
-  }, [data, fetchAudioFromGoogleTTS]);
+  }, [data]);
 
   // 데이터가 변경되면 음성 생성
   React.useEffect(() => {

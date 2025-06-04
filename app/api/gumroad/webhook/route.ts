@@ -3,6 +3,9 @@ import { trackPaymentCompleted } from "@/lib/analytics";
 import { createClient } from "@supabase/supabase-js";
 import { Database, Json } from "@/types/supabase";
 
+// Edge Runtime 설정
+export const runtime = "edge";
+
 // Gumroad 웹훅 데이터 타입 정의
 interface GumroadWebhookData {
   seller_id: string;

@@ -8,107 +8,13 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { GenderOption, NameStyleOption } from "@/app/lib/premiumSystemPrompts";
+import {
+  ResultData,
+  getResultDataFromStorage,
+  saveResultDataToStorage,
+} from "@/lib/storage-utils";
 
-// New interface definition - Free version
-interface FreeKoreanNameData {
-  original_name: string;
-  original_name_analysis: {
-    summary: string;
-  };
-  korean_name_suggestion: {
-    full_name: string;
-    rationale?: string;
-    syllables?: {
-      syllable: string;
-      romanization: string;
-      hanja?: string;
-      meaning: string;
-    }[];
-  };
-  korean_name_impression?: string;
-  social_share_content: {
-    formatted: string;
-    summary: string;
-  };
-}
-
-// New interface definition - Premium version
-interface PremiumKoreanNameData {
-  original_name: string;
-  original_name_analysis: {
-    letters: {
-      letter: string;
-      meaning: string;
-    }[];
-    summary: string;
-  };
-  korean_name_suggestion: {
-    full_name: string;
-    syllables: {
-      syllable: string;
-      romanization: string;
-      hanja: string;
-      meaning: string;
-    }[];
-    rationale: string;
-    life_values: string;
-  };
-  korean_name_impression: string;
-  social_share_content: {
-    formatted: string;
-    summary: string;
-  };
-}
-
-// Result data union type
-type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
-
-// Extended free tier data type with syllables information - unified with existing interface
-interface UpgradedFreeKoreanNameData extends FreeKoreanNameData {
-  korean_name_suggestion: {
-    full_name: string;
-    rationale?: string;
-    syllables?: {
-      syllable: string;
-      romanization: string;
-      hanja?: string;
-      meaning: string;
-    }[];
-  };
-}
-
-// 세션 스토리지에서 데이터를 가져오는 함수
-const getResultDataFromStorage = (resultId: string): ResultData | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const storedData = sessionStorage.getItem(`korean_name_result_${resultId}`);
-    return storedData ? JSON.parse(storedData) : null;
-  } catch (e) {
-    console.error("Failed to retrieve data from session storage:", e);
-    return null;
-  }
-};
-
-// 세션 스토리지에 데이터를 저장하는 함수
-export const saveResultDataToStorage = (data: ResultData): string => {
-  if (typeof window === "undefined") return "";
-
-  try {
-    // 고유 ID 생성 (타임스탬프 + 랜덤 문자열)
-    const resultId = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 10)}`;
-    sessionStorage.setItem(
-      `korean_name_result_${resultId}`,
-      JSON.stringify(data)
-    );
-    return resultId;
-  } catch (e) {
-    console.error("Failed to save data to session storage:", e);
-    return "";
-  }
-};
+// 세션 스토리지 함수들은 lib/storage-utils.ts로 이동했습니다
 
 // Internal component that reads SearchParams and displays results
 function ResultContent() {
@@ -153,7 +59,7 @@ function ResultContent() {
           // Filter data for free users (based on URL parameter)
           if (type !== "premium") {
             // Include syllables information in free tier to enable similar UI structure as premium
-            const freeData: UpgradedFreeKoreanNameData = {
+            const freeData = {
               original_name: parsedData.original_name,
               original_name_analysis: {
                 summary:
