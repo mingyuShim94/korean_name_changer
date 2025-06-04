@@ -37,12 +37,17 @@ export function NameInputForm({
   const [name, setName] = React.useState(inputName);
   const [error, setError] = React.useState<string | null>(null);
   const [windowWidth, setWindowWidth] = React.useState(0);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
+    setIsClient(true);
+
+    // 초기 너비 설정 및 리사이즈 이벤트 리스너
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
 
+    // 클라이언트 사이드에서만 window 객체에 접근
     if (typeof window !== "undefined") {
       setWindowWidth(window.innerWidth); // 초기 너비 설정
       window.addEventListener("resize", handleResize);
@@ -81,10 +86,16 @@ export function NameInputForm({
     }
   };
 
-  const placeholderText =
-    windowWidth < 768
-      ? "e.g. Hailey Morgan, さくら 田中"
-      : "e.g. Hailey Morgan, さくら 田中, ليلى الفاروق";
+  // 기본 플레이스홀더 텍스트 (서버 렌더링용)
+  let placeholderText = "e.g. Hailey Morgan, さくら 田中";
+
+  // 클라이언트 사이드에서만 화면 크기에 따라 플레이스홀더 변경
+  if (isClient) {
+    placeholderText =
+      windowWidth < 768
+        ? "e.g. Hailey Morgan, さくら 田中"
+        : "e.g. Hailey Morgan, さくら 田中, ليلى الفاروق";
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 relative">

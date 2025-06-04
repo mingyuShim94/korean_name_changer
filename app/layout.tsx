@@ -20,6 +20,21 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+// JSON-LD 스키마 데이터
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "NameToKorean",
+  description:
+    "Convert your name to a beautiful Korean name with cultural meaning",
+  applicationCategory: "UtilityApplication",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
+
 export const metadata: Metadata = {
   title: "NameToKorean - Convert Your Name to a Korean Name",
   description:
@@ -57,6 +72,10 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
   },
+  // Next.js 메타데이터 API로 JSON-LD 추가
+  other: {
+    "custom-schema": JSON.stringify(jsonLd),
+  },
 };
 
 export default function RootLayout({
@@ -66,26 +85,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              name: "NameToKorean",
-              description:
-                "Convert your name to a beautiful Korean name with cultural meaning",
-              applicationCategory: "UtilityApplication",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD",
-              },
-            }),
-          }}
-        />
-      </head>
       <body className="flex flex-col h-full">
         <GoogleAnalytics />
         <SupabaseProvider>

@@ -20,7 +20,8 @@ export default function Header() {
     const logoutEvent = new CustomEvent("user-logout");
     window.dispatchEvent(logoutEvent);
 
-    router.refresh();
+    // 로그아웃 후 홈 페이지로 리다이렉션
+    router.push("/");
     setIsMenuOpen(false);
   };
 

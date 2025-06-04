@@ -2,26 +2,32 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export async function middleware(request: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+  const supabase = createMiddlewareClient({ req: request, res });
 
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const isLoggedIn = !!session;
+  const path = request.nextUrl.pathname;
+
+  // 루트 경로에 접근했을 때 로그인 상태에 따라 리다이렉션
+  if (path === "/") {
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL("/generate", request.url));
+    }
+  }
+
+  // generate 페이지에 접근했을 때 로그인 상태 확인
+  if (path === "/generate" && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/auth", request.url));
+  }
 
   return res;
 }
 
-// Ensure the middleware is only called for relevant paths
+// 미들웨어가 실행될 경로 지정
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/", "/generate"],
 };

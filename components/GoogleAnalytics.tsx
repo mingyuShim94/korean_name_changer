@@ -10,9 +10,17 @@ export default function GoogleAnalytics() {
   const [consentGiven, setConsentGiven] = useState<boolean | null | undefined>(
     undefined
   );
+  const [isClient, setIsClient] = useState(false);
 
-  // 쿠키 동의 상태 확인
+  // 클라이언트 사이드 렌더링 확인
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // 쿠키 동의 상태 확인 - 클라이언트 사이드에서만 실행
+  useEffect(() => {
+    if (!isClient) return;
+
     const cookieConsent = getCookie("analytics-consent");
     setConsentGiven(
       cookieConsent === "true"
@@ -21,10 +29,12 @@ export default function GoogleAnalytics() {
         ? null
         : false
     );
-  }, []);
+  }, [isClient]);
 
   // 동의 설정 함수
   const setConsent = (consent: boolean) => {
+    if (!isClient) return;
+
     setCookie("analytics-consent", consent.toString(), {
       maxAge: 60 * 60 * 24 * 365, // 1년
       sameSite: "lax",
@@ -40,8 +50,8 @@ export default function GoogleAnalytics() {
     }
   };
 
-  // 아직 쿠키 확인 중이면 아무것도 렌더링하지 않음
-  if (consentGiven === undefined) {
+  // 클라이언트 사이드 렌더링이 아직 완료되지 않았거나 쿠키 확인 중이면 아무것도 렌더링하지 않음
+  if (!isClient || consentGiven === undefined) {
     return null;
   }
 
