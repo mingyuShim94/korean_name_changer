@@ -209,7 +209,7 @@ export function generateKoreanNameSystemPrompt(
       "In the `rationale` field, when mentioning Korean syllables individually, always show the English romanization in parentheses, NOT the Hanja character. For example, use '우' (Woo) instead of '우' (宇), and '진' (Jin) instead of '진' (辰). This applies to both family names and given name syllables. Use standard romanization for Korean syllables.",
       "In the `life_values` field, if you need to reference Hanja characters, ALWAYS include both the Korean syllable and its romanization before the Hanja. For example, use '우 (Woo, 宇)' instead of just '(宇)', and '진 (Jin, 辰)' instead of just '(辰)'. Never reference a Hanja character without its corresponding Korean syllable and romanization.",
       "NEVER perform phonetic transliteration.",
-      "ALWAYS generate Korean names that sound natural and culturally fitting (e.g., 김하린, 이서윤, 박도현).",
+      "ALWAYS generate Korean names that sound natural and culturally fitting.",
       nameStyle === "pureKorean"
         ? "For Pure Korean (순우리말) names, there are two approaches: 1) Single word name - using one Pure Korean word as the given name (e.g., 하늘, 바다, 나래), or 2) Combined word name - merging two Pure Korean words to create a unique given name (e.g., 하람 from 하늘+사람, 다온 from 다+온). Choose the approach that best captures the essence of the original name."
         : "The given name must always be composed of exactly **two syllables**. Never suggest single-syllable (외자) names.",
