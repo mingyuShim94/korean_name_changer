@@ -54,11 +54,6 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link href="/terms" className="text-base hover:underline">
-                Terms & Policies
-              </Link>
-            </li>
-            <li>
               {loading ? (
                 <span className="text-base text-gray-500">Loading...</span>
               ) : user ? (
@@ -114,13 +109,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Pricing
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm hover:underline py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Terms & Policies
             </Link>
           </div>
 
