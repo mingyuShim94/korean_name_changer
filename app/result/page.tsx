@@ -9,10 +9,60 @@ import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { GenderOption, NameStyleOption } from "@/app/lib/premiumSystemPrompts";
 import {
-  ResultData,
   getResultDataFromStorage,
   saveResultDataToStorage,
 } from "@/lib/storage-utils";
+
+// Import ResultData from the component file to ensure type compatibility
+type FreeKoreanNameData = {
+  original_name: string;
+  original_name_analysis: {
+    summary: string;
+  };
+  korean_name_suggestion: {
+    full_name: string;
+    rationale?: string;
+    syllables: {
+      syllable: string;
+      romanization: string;
+      hanja?: string;
+      meaning: string;
+    }[];
+  };
+  korean_name_impression?: string;
+  social_share_content: {
+    formatted: string;
+  };
+};
+
+type PremiumKoreanNameData = {
+  original_name: string;
+  original_name_analysis: {
+    letters: {
+      letter: string;
+      meaning: string;
+    }[];
+    summary: string;
+  };
+  korean_name_suggestion: {
+    full_name: string;
+    syllables: {
+      syllable: string;
+      romanization: string;
+      hanja: string;
+      meaning: string;
+    }[];
+    rationale: string;
+    life_values: string;
+  };
+  korean_name_impression: string;
+  social_share_content: {
+    formatted: string;
+    summary: string;
+  };
+};
+
+type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
 
 // 세션 스토리지 함수들은 lib/storage-utils.ts로 이동했습니다
 
@@ -44,7 +94,7 @@ function ResultContent() {
     if (resultId) {
       const storedData = getResultDataFromStorage(resultId);
       if (storedData) {
-        setResultData(storedData);
+        setResultData(storedData as ResultData);
       } else {
         setError("결과 데이터를 찾을 수 없습니다. 다시 시도해주세요.");
       }
@@ -85,7 +135,9 @@ function ResultContent() {
             };
 
             // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
-            const newResultId = saveResultDataToStorage(freeData);
+            const newResultId = saveResultDataToStorage(
+              freeData as unknown as import("@/lib/storage-utils").ResultData
+            );
             if (newResultId && typeof window !== "undefined") {
               const url = new URL(window.location.href);
               url.searchParams.delete("data");
@@ -97,7 +149,9 @@ function ResultContent() {
           } else {
             // Provide full data for premium users
             // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
-            const newResultId = saveResultDataToStorage(parsedData);
+            const newResultId = saveResultDataToStorage(
+              parsedData as unknown as import("@/lib/storage-utils").ResultData
+            );
             if (newResultId && typeof window !== "undefined") {
               const url = new URL(window.location.href);
               url.searchParams.delete("data");
