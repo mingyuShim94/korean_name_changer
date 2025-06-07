@@ -74,7 +74,7 @@ interface FreeKoreanNameData {
   korean_name_suggestion: {
     full_name: string;
     rationale?: string;
-    syllables?: {
+    syllables: {
       syllable: string;
       romanization: string;
       hanja?: string;
@@ -164,17 +164,6 @@ export function ImprovedResultDisplay({
       data !== null &&
       "social_share_content" in data &&
       "life_values" in data.korean_name_suggestion
-    );
-  };
-
-  // syllables 정보를 가지고 있는지 확인하는 함수
-  const hasSyllables = (data: ResultData | null): boolean => {
-    return (
-      data !== null &&
-      "korean_name_suggestion" in data &&
-      "syllables" in data.korean_name_suggestion &&
-      Array.isArray(data.korean_name_suggestion.syllables) &&
-      data.korean_name_suggestion.syllables.length > 0
     );
   };
 
@@ -337,47 +326,54 @@ export function ImprovedResultDisplay({
 
   // 무료 티어 결과 화면 렌더링
   const renderFreeResult = () => {
-    const showSyllables = hasSyllables(data);
-
     return (
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-8">
         {/* 한국어 이름 제안 (무료 티어 버전) */}
-        <section className="bg-white rounded-xl shadow p-6 text-center">
+        <section className="bg-white rounded-xl shadow p-3 sm:p-6 text-center">
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
             Korean Name Suggestion
           </h2>
 
           <div className="mb-5">
-            <h3 className="text-3xl font-bold text-gray-800 mb-3">
-              {data.korean_name_suggestion.full_name}
+            <h3 className="text-3xl font-bold text-gray-800 mb-2">
+              {(() => {
+                const koreanName =
+                  data.korean_name_suggestion.full_name.split(" ")[0];
+                const romanizations = data.korean_name_suggestion.syllables.map(
+                  (item) => item.romanization
+                );
+                const fullRomanization = romanizations.join(" ");
+                return `${koreanName} (${fullRomanization})`;
+              })()}
             </h3>
           </div>
 
-          {/* syllables 정보가 있는 경우 표시 */}
-          {showSyllables && data.korean_name_suggestion.syllables && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              {data.korean_name_suggestion.syllables.map(
-                (item, index: number) => (
-                  <div
-                    key={index}
-                    className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
-                  >
-                    <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
-                      {item.syllable} ({item.romanization})
-                    </div>
-                    {nameStyle === "hanja" && item.hanja && (
-                      <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-2 py-1 rounded-md mx-auto my-1 inline-block">
-                        {item.hanja}
+          {/* syllables 정보 표시 - 무료/프리미엄 모두 romanization 포함 */}
+          {data.korean_name_suggestion.syllables &&
+            data.korean_name_suggestion.syllables.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+                {data.korean_name_suggestion.syllables.map(
+                  (item, index: number) => (
+                    <div
+                      key={index}
+                      className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-3 sm:p-4 text-center"
+                    >
+                      <div className="text-sm sm:text-lg font-semibold text-indigo-800 dark:text-indigo-300">
+                        {item.syllable} ({item.romanization})
                       </div>
-                    )}
-                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                      {item.meaning}
+                      {nameStyle === "hanja" && item.hanja && (
+                        <div className="text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-1 sm:px-2 py-1 rounded-md mx-auto my-1 inline-block">
+                          {item.hanja}
+                        </div>
+                      )}
+                      <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic">
+                        {item.meaning}
+                      </div>
                     </div>
-                  </div>
-                )
-              )}
-            </div>
-          )}
+                  )
+                )}
+              </div>
+            )}
 
           {/* 이름의 의미 (rationale) */}
           {data.korean_name_suggestion.rationale && (
@@ -395,12 +391,12 @@ export function ImprovedResultDisplay({
         </section>
 
         {/* 공유 가능한 요약 */}
-        <section className="bg-white rounded-xl shadow p-6 text-center">
+        <section className="bg-white rounded-xl shadow p-3 sm:p-6 text-center">
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
             Shareable Summary
           </h2>
 
-          <div className="relative bg-gray-50 p-5 rounded-lg mb-4">
+          <div className="relative bg-gray-50 p-3 sm:p-5 rounded-lg mb-4">
             <p className="text-xl font-semibold text-gray-800 mb-2">
               {data.social_share_content.formatted}
             </p>
@@ -521,12 +517,12 @@ export function ImprovedResultDisplay({
     if (!isPremiumData(data)) return null;
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-8">
         {/* 원본 이름 분석 - 드롭다운 형태 */}
         <section className="bg-white rounded-xl shadow overflow-hidden">
           <button
             onClick={() => setShowOriginalAnalysis(!showOriginalAnalysis)}
-            className="w-full p-6 relative focus:outline-none"
+            className="w-full p-3 sm:p-6 relative focus:outline-none"
           >
             <h2 className="text-2xl font-semibold text-indigo-600 text-center">
               Original Name Analysis
@@ -550,7 +546,7 @@ export function ImprovedResultDisplay({
           </button>
 
           {showOriginalAnalysis && (
-            <div className="p-6 pt-0">
+            <div className="p-3 sm:p-6 pt-0">
               <div className="text-center mb-5">
                 <h3 className="text-3xl font-bold text-gray-800 mb-2">
                   {data.original_name}
@@ -560,7 +556,7 @@ export function ImprovedResultDisplay({
                 {data.original_name_analysis.letters.map((item, index) => (
                   <div
                     key={index}
-                    className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
+                    className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-3 sm:p-4 text-center"
                   >
                     <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
                       {item.letter}
@@ -577,7 +573,7 @@ export function ImprovedResultDisplay({
         </section>
 
         {/* 한국어 이름 제안 */}
-        <section className="bg-white rounded-xl shadow p-6">
+        <section className="bg-white rounded-xl shadow p-3 sm:p-6">
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4 text-center">
             Korean Name Suggestion
           </h2>
@@ -607,21 +603,21 @@ export function ImprovedResultDisplay({
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
             {data.korean_name_suggestion.syllables.map((item, index) => (
               <div
                 key={index}
-                className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-4 text-center"
+                className="bg-indigo-50 dark:bg-indigo-900/10 rounded-lg p-3 sm:p-4 text-center"
               >
-                <div className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
+                <div className="text-sm sm:text-lg font-semibold text-indigo-800 dark:text-indigo-300">
                   {item.syllable} ({item.romanization})
                 </div>
                 {nameStyle === "hanja" && item.hanja && (
-                  <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-2 py-1 rounded-md mx-auto my-1 inline-block">
+                  <div className="text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/20 px-1 sm:px-2 py-1 rounded-md mx-auto my-1 inline-block">
                     {item.hanja}
                   </div>
                 )}
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic">
                   {item.meaning}
                 </div>
               </div>
@@ -652,12 +648,12 @@ export function ImprovedResultDisplay({
         </section>
 
         {/* 공유 가능한 요약 */}
-        <section className="bg-white rounded-xl shadow p-6 text-center">
+        <section className="bg-white rounded-xl shadow p-3 sm:p-6 text-center">
           <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
             Shareable Summary
           </h2>
 
-          <div className="relative bg-gray-50 p-5 rounded-lg mb-4">
+          <div className="relative bg-gray-50 p-3 sm:p-5 rounded-lg mb-4">
             <p className="text-xl font-semibold text-gray-800 mb-2">
               {data.social_share_content.formatted}
             </p>
@@ -732,7 +728,7 @@ export function ImprovedResultDisplay({
   return (
     <div className="w-full">
       {/* 상단 배지 */}
-      <div className="flex justify-center gap-2 mb-6">
+      <div className="flex justify-center gap-2 mb-4 sm:mb-6">
         {isPremium && (
           <span className="inline-flex items-center rounded-md bg-amber-100/80 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20">
             ✨ Premium Analysis ✨
