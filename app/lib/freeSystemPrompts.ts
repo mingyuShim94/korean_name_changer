@@ -21,20 +21,17 @@ export interface KoreanNamePromptOptions {
 // Type definitions for the Korean name prompt structure
 export interface SyllableAnalysis {
   syllable: string;
-  romanization: string;
+  romanized: string;
   hanja: string;
-  meaning: string;
+  keywords: string[];
+  explanation: string;
 }
 
 export interface KoreanNameSuggestion {
-  full_name: string;
+  full: string;
+  romanized: string;
   syllables: SyllableAnalysis[];
-  rationale: string;
-}
-
-export interface SocialShareContent {
-  formatted: string;
-  summary: string;
+  integrated_meaning: string;
 }
 
 // Define a type for the prompt structure
@@ -44,14 +41,11 @@ interface KoreanNamePromptStructure {
   input_rules: string[];
   output_format: {
     structure: {
-      korean_name_suggestion: {
-        full_name: string;
+      korean_name: {
+        full: string;
+        romanized: string;
         syllables: SyllableAnalysis[];
-        rationale: string;
-      };
-      social_share_content: {
-        formatted: string;
-        summary: string;
+        integrated_meaning: string;
       };
     };
   };
@@ -71,10 +65,10 @@ export function generateKoreanNameSystemPrompt(
 
   // 스타일 가이드라인 배열 생성
   const styleGuidelines: string[] = [
-    "For the `rationale` field, provide a single, concise paragraph explaining the name choice. Do not use paragraph breaks in this field. Keep the explanation brief but informative, focusing on the most important aspects of the name selection.",
-    "The `social_share_content.formatted` must include emojis placed together at the end of the full Korean name (e.g., 김서화 🌿🎨💮). Each emoji should symbolically match each syllable (family name + given name) in sequence. Do not insert emojis between the syllables. The emojis should appear as a single cluster after the full name, preserving aesthetic harmony and visual clarity. Each emoji should reflect the symbolic meaning or emotional nuance of that syllable. Do not omit emojis for family names. For Pure Korean names with a single word (e.g., 김하늘), ensure a total of two emojis. For Pure Korean names with combined words (e.g., 박하람) or Hanja names (e.g., 김서화), ensure a total of three emojis. Avoid using generic or repetitive emojis unless strongly justified. Avoid repeating the same emoji unless it clearly matches multiple parts.",
-    "The `social_share_content.summary` must be a poetic, single-sentence summary that distills the essence of the name. It should be written in a style suitable for sharing on social media.",
-    "In the `rationale` field, when mentioning Korean syllables individually, always show the English romanization in parentheses, NOT the Hanja character. For example, use '우' (Woo) instead of '우' (宇), and '진' (Jin) instead of '진' (辰). This applies to both family names and given name syllables. Use standard romanization for Korean syllables.",
+    "For the `integrated_meaning` field, provide a single, poetic sentence that captures the complete Korean name's significance and its connection to the original name.",
+    "In the `korean_name.syllables` array, each syllable must include 2-3 relevant keywords that capture its essence in the `keywords` array.",
+    "The `explanation` for each syllable should be 2-3 sentences, clearly connecting the syllable choice to the original name's meaning or the overall theme.",
+    "When mentioning Korean syllables individually, always show the English romanization in parentheses, NOT the Hanja character. For example, use '우' (Woo) instead of '우' (宇), and '진' (Jin) instead of '진' (辰). This applies to both family names and given name syllables. Use standard romanization for Korean syllables.",
     "NEVER perform phonetic transliteration.",
     "ALWAYS generate Korean names that sound natural and culturally fitting.",
     nameStyle === "pureKorean"
@@ -92,13 +86,6 @@ export function generateKoreanNameSystemPrompt(
       : "Ensure that the two syllables of the given name work *together* to express a cohesive and culturally meaningful reinterpretation of the original given name.",
     "Explain clearly how the family name derives from the original surname, and how the entire Korean given name (as a unit) reflects the meaning of the original given name.",
   ];
-
-  // Pure Korean 스타일에 대한 추가 가이드라인
-  if (nameStyle === "pureKorean") {
-    styleGuidelines.push(
-      "The social_share_content.formatted should include two or three emojis depending on whether the given name is a single word (two syllables total including surname) or combined words (three syllables total including surname). Each emoji should match the meaning of each syllable."
-    );
-  }
 
   // Base system prompt structure
   const prompt: KoreanNamePromptStructure = {
@@ -124,64 +111,68 @@ export function generateKoreanNameSystemPrompt(
 
     output_format: {
       structure: {
-        korean_name_suggestion: {
-          full_name: nameStyle === "pureKorean" ? "박하늘" : "김서화 (金抒華)",
+        korean_name: {
+          full: nameStyle === "pureKorean" ? "박하늘" : "김서화",
+          romanized:
+            nameStyle === "pureKorean" ? "Park Ha-Neul" : "Kim Seo-Hwa",
           syllables:
             nameStyle === "pureKorean"
               ? [
                   {
                     syllable: "박",
-                    romanization: "Park",
+                    romanized: "Park",
                     hanja: "朴",
-                    meaning: "simple, pure, unpretentious",
+                    keywords: ["simple", "authentic"],
+                    explanation:
+                      "Chosen to complement the natural, elemental feeling. 朴 represents simplicity and authenticity, symbolizing someone who remains true to their values.",
                   },
                   {
                     syllable: "하",
-                    romanization: "Ha",
+                    romanized: "Ha",
                     hanja: "",
-                    meaning: "sky, heaven",
+                    keywords: ["sky", "vast"],
+                    explanation:
+                      "The first part of the Pure Korean word '하늘' (sky), representing limitless potential and expansive vision.",
                   },
                   {
                     syllable: "늘",
-                    romanization: "Neul",
+                    romanized: "Neul",
                     hanja: "",
-                    meaning: "always, sky",
+                    keywords: ["always", "eternal"],
+                    explanation:
+                      "Completes the word '하늘' (sky), symbolizing constancy and the eternal nature of wisdom and leadership.",
                   },
                 ]
               : [
                   {
                     syllable: "김",
-                    romanization: "Kim",
+                    romanized: "Kim",
                     hanja: "金",
-                    meaning: "gold, tradition, dignity",
+                    keywords: ["gold", "tradition", "dignity"],
+                    explanation:
+                      "One of the most culturally grounded Korean family names, resonating with nobility and tradition.",
                   },
                   {
                     syllable: "서",
-                    romanization: "Seo",
+                    romanized: "Seo",
                     hanja: "抒",
-                    meaning: "to express, to unfold emotion",
+                    keywords: ["express", "emotion", "unfold"],
+                    explanation:
+                      "Represents the ability to express and unfold emotion, symbolizing depth of wisdom and poetic grace.",
                   },
                   {
                     syllable: "화",
-                    romanization: "Hwa",
+                    romanized: "Hwa",
                     hanja: "華",
-                    meaning: "splendor, elegance, flourishing beauty",
+                    keywords: ["splendor", "elegance", "beauty"],
+                    explanation:
+                      "Embodies flourishing beauty and sophistication, completing the expression of inner beauty with refinement.",
                   },
                 ],
-          rationale:
+          integrated_meaning:
             nameStyle === "pureKorean"
-              ? "The surname 'Park' (박) was chosen to complement the natural, elemental feeling of the given name. The given name 'Haneul' (하늘) is a single Pure Korean word meaning 'sky' in Korean, reflecting the celestial meaning in the original name. This preserves the essence of reaching upward and boundlessness while using a common Korean nature word that is modern and meaningful."
-              : "The surname 'Loren' inspired the use of '김', one of the most culturally grounded Korean family names, resonating with nobility and tradition. The given name '서화' combines '서' (to express emotion) and '화' (elegance and beauty), symbolizing Sophia's depth of wisdom and poetic grace. Together, the three syllables form a name that suggests expressing inner beauty with sophistication—mirroring the emotional and symbolic essence of the original name.",
-        },
-        social_share_content: {
-          formatted:
-            nameStyle === "pureKorean"
-              ? "Sophia Loren : 박하늘 🌳🌌"
-              : "Sophia Loren : 김서화 🌿🎨💮",
-          summary:
-            nameStyle === "pureKorean"
-              ? "A name as vast as the sky itself, representing limitless vision and brightness of spirit."
-              : "A name that elegantly expresses emotion, symbolizing a life where wisdom and beauty exist in harmony.",
+              ? "Park Ha-Neul symbolizes 'an authentic leader with boundless vision and eternal wisdom.' The name preserves the essence of reaching upward and boundlessness while using a natural Korean word that is modern and meaningful."
+              : "Kim Seo-Hwa symbolizes 'expressing inner beauty with sophistication.' The name suggests a person who embodies emotional depth and poetic grace, mirroring the essence of wisdom and elegance.",
         },
       },
     },
@@ -189,7 +180,7 @@ export function generateKoreanNameSystemPrompt(
     style_guidelines: styleGuidelines,
 
     closing_instruction:
-      "Act as a warm, insightful name interpreter who creates emotionally meaningful Korean names. IMPORTANT: Return ONLY a valid JSON object with the exact structure of output_format. Do not include any text, commentary, or explanation outside the JSON object.",
+      "Act as a warm, insightful name interpreter who creates emotionally meaningful Korean names. IMPORTANT: Return ONLY a valid JSON object with the exact structure shown in output_format. Do not include any text, commentary, or explanation outside the JSON object.",
   };
 
   return JSON.stringify(prompt, null, 2);

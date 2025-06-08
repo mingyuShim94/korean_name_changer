@@ -7,17 +7,68 @@ import { ImprovedResultDisplay } from "@/components/improved-result-display";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
-import { GenderOption, NameStyleOption } from "@/app/lib/premiumSystemPrompts";
+import { GenderOption, NameStyleOption } from "@/app/lib/freeSystemPrompts";
 import {
   getResultDataFromStorage,
   saveResultDataToStorage,
 } from "@/lib/storage-utils";
 
-// Import ResultData from the component file to ensure type compatibility
-type FreeKoreanNameData = {
-  original_name: string;
-  original_name_analysis: {
+// 새로운 간소화된 데이터 구조 (Free/Premium 통합)
+type NewKoreanNameData = {
+  korean_name: {
+    full: string;
+    romanized: string;
+    syllables: {
+      syllable: string;
+      romanized: string;
+      hanja: string;
+      keywords: string[];
+      explanation: string;
+    }[];
+    integrated_meaning: string;
+  };
+};
+
+// 새로운 프리미엄 데이터 구조
+type NewPremiumKoreanNameData = {
+  original_name: {
+    full: string;
+    components: {
+      name: string;
+      meanings: string[];
+      symbols: string[];
+    }[];
     summary: string;
+  };
+  korean_name: {
+    full: string;
+    romanized: string;
+    syllables: {
+      syllable: string;
+      romanized: string;
+      hanja: string;
+      keywords: string[];
+      explanation: string;
+    }[];
+    integrated_meaning: string;
+  };
+  life_values: {
+    text: string;
+  };
+  cultural_impression: {
+    text: string;
+  };
+};
+
+// 레거시 타입 (기존 호환성용)
+type LegacyKoreanNameData = {
+  original_name: string;
+  original_name_analysis?: {
+    summary?: string;
+    letters?: {
+      letter: string;
+      meaning: string;
+    }[];
   };
   korean_name_suggestion: {
     full_name: string;
@@ -28,41 +79,19 @@ type FreeKoreanNameData = {
       hanja?: string;
       meaning: string;
     }[];
+    life_values?: string;
   };
   korean_name_impression?: string;
-  social_share_content: {
+  social_share_content?: {
     formatted: string;
+    summary?: string;
   };
 };
 
-type PremiumKoreanNameData = {
-  original_name: string;
-  original_name_analysis: {
-    letters: {
-      letter: string;
-      meaning: string;
-    }[];
-    summary: string;
-  };
-  korean_name_suggestion: {
-    full_name: string;
-    syllables: {
-      syllable: string;
-      romanization: string;
-      hanja: string;
-      meaning: string;
-    }[];
-    rationale: string;
-    life_values: string;
-  };
-  korean_name_impression: string;
-  social_share_content: {
-    formatted: string;
-    summary: string;
-  };
-};
-
-type ResultData = FreeKoreanNameData | PremiumKoreanNameData;
+type ResultData =
+  | NewKoreanNameData
+  | NewPremiumKoreanNameData
+  | LegacyKoreanNameData;
 
 // 세션 스토리지 함수들은 lib/storage-utils.ts로 이동했습니다
 
@@ -96,7 +125,7 @@ function ResultContent() {
       if (storedData) {
         setResultData(storedData as ResultData);
       } else {
-        setError("결과 데이터를 찾을 수 없습니다. 다시 시도해주세요.");
+        setError("Result data not found. Please try again.");
       }
     }
     // 레거시 방식: URL에서 데이터 가져오기 (이전 버전과의 호환성 유지)
@@ -135,9 +164,7 @@ function ResultContent() {
             };
 
             // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
-            const newResultId = saveResultDataToStorage(
-              freeData as unknown as import("@/lib/storage-utils").ResultData
-            );
+            const newResultId = saveResultDataToStorage(freeData);
             if (newResultId && typeof window !== "undefined") {
               const url = new URL(window.location.href);
               url.searchParams.delete("data");
@@ -149,9 +176,7 @@ function ResultContent() {
           } else {
             // Provide full data for premium users
             // 데이터를 세션 스토리지에 저장하고 URL 업데이트 (다음 새로고침을 위해)
-            const newResultId = saveResultDataToStorage(
-              parsedData as unknown as import("@/lib/storage-utils").ResultData
-            );
+            const newResultId = saveResultDataToStorage(parsedData);
             if (newResultId && typeof window !== "undefined") {
               const url = new URL(window.location.href);
               url.searchParams.delete("data");
@@ -166,14 +191,12 @@ function ResultContent() {
         }
       } catch (e) {
         console.error("Failed to parse result data:", e);
-        setError(
-          "결과 데이터를 불러오는데 실패했습니다. 형식이 올바르지 않을 수 있습니다."
-        );
+        setError("Failed to load result data. The format may be incorrect.");
       }
     } else {
       // Case where there is no data, for example, direct access to /result
       setError(
-        "표시할 결과 데이터가 없습니다. 홈 페이지로 돌아가서 다시 시도해주세요."
+        "No result data to display. Please return to the home page and try again."
       );
     }
   }, [searchParams]);
@@ -181,14 +204,14 @@ function ResultContent() {
   if (error) {
     return (
       <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-        <h3 className="font-semibold mb-1">오류:</h3>
+        <h3 className="font-semibold mb-1">Error:</h3>
         <p>{error}</p>
         <Link
           href="/"
           className="mt-2 inline-block text-blue-600 hover:underline"
           onClick={() => trackButtonClick("return_to_home", "from_error")}
         >
-          홈으로 돌아가기
+          Return to Home
         </Link>
       </div>
     );
@@ -250,7 +273,7 @@ export default function ResultPage() {
             <React.Suspense
               fallback={
                 <p className="text-center text-muted-foreground">
-                  결과를 불러오는 중...
+                  Loading results...
                 </p>
               }
             >

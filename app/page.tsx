@@ -2,13 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "./providers";
@@ -115,122 +109,29 @@ export default function Home() {
 
       <section className="w-full max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-4">
-          Free vs Premium Results Example
+          Korean Name Translation Example
         </h2>
         <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-          See how our premium tier offers deeper insights into your Korean name
+          See how our AI transforms your name into a meaningful Korean identity
         </p>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card className="shadow-md">
-            <CardHeader className="bg-slate-50 dark:bg-slate-800/20">
-              <CardTitle className="flex items-center gap-2">
-                <span>Free Tier Example</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <span className="inline-flex items-center rounded-md bg-green-100/80 px-2 py-1 text-xs font-medium text-green-800 ring-1 ring-inset ring-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
-                    Neutral Name
-                  </span>
-                  <span className="inline-flex items-center rounded-md bg-purple-100/80 px-2 py-1 text-xs font-medium text-purple-800 ring-1 ring-inset ring-purple-500/30 dark:bg-purple-500/10 dark:text-purple-400 dark:ring-purple-500/20">
-                    Hanja Style
-                  </span>
-                </div>
-
-                <div className="border-b pb-4">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Name Translation for
-                  </p>
-                  <p className="font-semibold">Emily Watson</p>
-                  <h3 className="text-2xl font-bold text-primary mt-2">
-                    김예린
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Kim Ye-rin</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">
-                      Syllable Meanings:
-                    </h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-lg text-center">
-                        <div className="font-semibold">김 (Kim)</div>
-                        <div className="text-sm text-muted-foreground">
-                          Gold, tradition
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-lg text-center">
-                        <div className="font-semibold">예 (Ye)</div>
-                        <div className="text-sm text-muted-foreground">
-                          Art, skill
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-lg text-center">
-                        <div className="font-semibold">린 (Rin)</div>
-                        <div className="text-sm text-muted-foreground">
-                          Clear, pure
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">
-                      Name Rationale:
-                    </h4>
-                    <p className="text-sm whitespace-normal break-keep hyphens-auto">
-                      The surname &ldquo;김&rdquo; (Kim) was chosen to reflect
-                      the traditional strength in Watson. The given name
-                      &ldquo;예린&rdquo; (Ye-rin) captures Emily&apos;s essence,
-                      combining artistic grace with pure clarity.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t">
-                  <h4 className="text-lg font-semibold mb-2">
-                    Shareable Content:
-                  </h4>
-                  <div className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-lg">
-                    <p className="font-medium">Emily Watson : 김예린 🌟💖💧</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-primary shadow-md">
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-2 border-primary shadow-lg">
             <CardHeader className="bg-primary/5">
               <CardTitle className="flex items-center gap-2">
-                <span>Premium Tier Example</span>
+                <span>✨ Translation Result</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-6">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <span className="inline-flex items-center rounded-md bg-amber-100/80 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20">
-                    ✨ Premium Analysis ✨
-                  </span>
-                  <span className="inline-flex items-center rounded-md bg-green-100/80 px-2 py-1 text-xs font-medium text-green-800 ring-1 ring-inset ring-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
-                    Neutral Name
-                  </span>
-                  <span className="inline-flex items-center rounded-md bg-purple-100/80 px-2 py-1 text-xs font-medium text-purple-800 ring-1 ring-inset ring-purple-500/30 dark:bg-purple-500/10 dark:text-purple-400 dark:ring-purple-500/20">
-                    Hanja Style
-                  </span>
-                </div>
-
                 <div className="border-b pb-4">
                   <h4 className="text-lg font-semibold mb-2">
                     Original Name Analysis:
                   </h4>
                   <p className="text-sm whitespace-normal break-keep hyphens-auto">
-                    Rooted in English and Germanic traditions, this name
-                    reflects a legacy of diligence and strength. It subtly
-                    suggests a refined individual with a quietly powerful
-                    character.
+                    Harry Porter conveys the essence of a leader who is also a
+                    steadfast guardian or bearer of responsibility, protecting
+                    and guiding with strength and quiet devotion.
                   </p>
                 </div>
 
@@ -238,12 +139,12 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-1">
                     Name Translation for
                   </p>
-                  <p className="font-semibold">Emily Watson</p>
-                  <h3 className="text-2xl font-bold text-primary mt-2">
-                    김예린
+                  <p className="font-semibold">Harry Porter</p>
+                  <h3 className="text-3xl font-bold text-primary mt-2">
+                    박도현
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Kim Ye-rin (金藝潾)
+                    Park Do-Hyun (朴道賢)
                   </p>
                   <div className="mt-3">
                     <Button
@@ -263,86 +164,84 @@ export default function Home() {
                   </h4>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="bg-primary/5 p-3 rounded-lg text-center">
-                      <div className="font-semibold">김 (Kim)</div>
+                      <div className="font-semibold">박 (Park)</div>
                       <div className="text-xs bg-primary/10 px-1 py-0.5 rounded my-1 inline-block">
-                        金
+                        朴
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Gold, tradition, dignity, strength
+                        Grounded, authentic, steadfast
                       </div>
                     </div>
                     <div className="bg-primary/5 p-3 rounded-lg text-center">
-                      <div className="font-semibold">예 (Ye)</div>
+                      <div className="font-semibold">도 (Do)</div>
                       <div className="text-xs bg-primary/10 px-1 py-0.5 rounded my-1 inline-block">
-                        藝
+                        道
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Art, skill, talent, cultivation
+                        Principled, directional, ethical
                       </div>
                     </div>
                     <div className="bg-primary/5 p-3 rounded-lg text-center">
-                      <div className="font-semibold">린 (Rin)</div>
+                      <div className="font-semibold">현 (Hyun)</div>
                       <div className="text-xs bg-primary/10 px-1 py-0.5 rounded my-1 inline-block">
-                        潾
+                        賢
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Clear water, pure, graceful, tranquil
+                        Wise, virtuous, capable
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t pt-4">
                   <h4 className="text-lg font-semibold mb-2">
-                    Name Rationale:
+                    Integrated Meaning:
                   </h4>
                   <p className="text-sm whitespace-normal break-keep hyphens-auto">
-                    A spirit that finds beauty in diligence and cultivates inner
-                    purity. This person approaches life with clear intentions,
-                    artistic sensibility, and a gentle grace.
+                    Park Do-Hyun symbolizes &lsquo;a wise and principled leader
+                    who walks the right path and protects with integrity,&rsquo;
+                    reinterpreting Harry Porter&apos;s core leadership and
+                    guardian-like qualities through a culturally resonant Korean
+                    identity.
                   </p>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t pt-4">
                   <h4 className="text-lg font-semibold mb-2">Life Values:</h4>
                   <p className="text-sm whitespace-normal break-keep hyphens-auto">
-                    A spirit that finds beauty in diligence and cultivates inner
-                    purity. This person approaches life with clear intentions,
-                    artistic sensibility, and a gentle grace.
+                    This name embodies someone who is steady and grounded,
+                    leading by example and unwavering principles. They inspire
+                    trust and respect through their quiet strength, wisdom, and
+                    responsible actions, always striving for what is right.
                   </p>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t pt-4">
                   <h4 className="text-lg font-semibold mb-2">
                     Cultural Impression:
                   </h4>
                   <p className="text-sm whitespace-normal break-keep hyphens-auto">
-                    The name &ldquo;예린&rdquo; (Ye-rin) is perceived as elegant
-                    and modern in Korean society. It evokes an image of someone
-                    gentle, intelligent, and artistically inclined.
+                    The name &lsquo;Do-Hyun&rsquo; conveys an image of
+                    intelligence, integrity, and strong character in Korean
+                    society. It is seen as modern and respectable, suitable for
+                    individuals in professional or leadership roles.
                   </p>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t pt-4">
                   <h4 className="text-lg font-semibold mb-2">
                     Shareable Content:
                   </h4>
                   <div className="bg-primary/5 p-3 rounded-lg">
-                    <p className="font-medium">Emily Watson : 김예린 🌟💖💧</p>
+                    <p className="font-medium">Harry Porter : 박도현 🏛️⚖️🌟</p>
                     <p className="text-sm text-muted-foreground mt-2 whitespace-normal break-keep hyphens-auto">
-                      A name that expresses diligent grace and clear beauty,
-                      embodying a harmonious and refined spirit.
+                      A wise and principled leader who walks the right path with
+                      integrity
                     </p>
                   </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="bg-primary/5">
-              <p className="text-xs text-muted-foreground whitespace-normal break-keep hyphens-auto">
-                ✨ Premium features include detailed analysis, cultural context,
-                life values, and audio pronunciation
-              </p>
-            </CardFooter>
           </Card>
         </div>
       </section>

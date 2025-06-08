@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { generateKoreanNameWithGemini as generatePremiumKoreanName } from "../../lib/premiumGeminiAPI";
-import { generateKoreanNameWithGemini as generateFreeKoreanName } from "../../lib/freeGeminiAPI";
+import {
+  generateKoreanNameWithGemini as generateFreeKoreanName,
+  KoreanNameData,
+} from "../../lib/freeGeminiAPI";
+import { generateSimplifiedKoreanNameWithGemini } from "../../lib/premiumGeminiAPI";
 import { GenderOption, NameStyleOption } from "../../lib/premiumSystemPrompts";
+import { SimplifiedKoreanNameData } from "../../lib/premiumGeminiAPI";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/supabase";
 
-// 결과 데이터를 위한 통합 타입
-type KoreanNameResult = {
+// 기존 결과 데이터를 위한 타입 (하위 호환성)
+type LegacyKoreanNameResult = {
   original_name: string;
   korean_name_suggestion: {
     full_name: string;
@@ -34,6 +38,15 @@ type KoreanNameResult = {
     summary: string;
   };
 };
+
+// 새로운 간소화된 결과 데이터 타입
+type SimplifiedKoreanNameResult = SimplifiedKoreanNameData;
+
+// 통합 결과 타입 (세 구조 모두 지원)
+type KoreanNameResult =
+  | LegacyKoreanNameResult
+  | SimplifiedKoreanNameResult
+  | KoreanNameData;
 
 // Edge Runtime is required for Cloudflare Pages
 export const runtime = "edge";
@@ -125,6 +138,8 @@ export async function POST(request: NextRequest) {
       const requestId = payload.requestId as string;
       // 차감 여부를 JWT 토큰에서 확인 (creditApplied 필드)
       const creditApplied = payload.creditApplied as boolean;
+      // 새로운 간소화된 API 사용 여부 확인
+      const useSimplifiedAPI = payload.useSimplifiedAPI as boolean;
 
       if (!name || !gender || !nameStyle || !requestId) {
         return NextResponse.json(
@@ -133,7 +148,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log("Token validation completed:", { requestId, creditApplied });
+      console.log("Token validation completed:", {
+        requestId,
+        creditApplied,
+        useSimplifiedAPI,
+      });
 
       // Check if request has already been processed (prevent duplicate requests)
       if (processedRequests.has(requestId)) {
@@ -148,6 +167,7 @@ export async function POST(request: NextRequest) {
           isPremium,
           gender,
           nameStyle,
+          useSimplifiedAPI: useSimplifiedAPI || false,
         };
 
         return NextResponse.json(responseData, {
@@ -218,21 +238,26 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(
-        `API request parameters: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}`
+        `API request parameters: name=${name}, gender=${gender}, nameStyle=${nameStyle}, isPremium=${isPremium}, useSimplifiedAPI=${useSimplifiedAPI}`
       );
 
-      // Generate name using appropriate API based on isPremium flag
-      const result = isPremium
-        ? await generatePremiumKoreanName({
-            name,
-            gender,
-            nameStyle,
-          })
-        : await generateFreeKoreanName({
-            name,
-            gender,
-            nameStyle,
-          });
+      // Generate name using appropriate API based on flags
+      let result;
+      if (useSimplifiedAPI || isPremium) {
+        // 새로운 간소화된 API 사용 (프리미엄 또는 간소화 API 요청)
+        result = await generateSimplifiedKoreanNameWithGemini({
+          name,
+          gender,
+          nameStyle,
+        });
+      } else {
+        // 기존 무료 API 사용
+        result = await generateFreeKoreanName({
+          name,
+          gender,
+          nameStyle,
+        });
+      }
 
       if (result.error) {
         return NextResponse.json(
@@ -252,6 +277,7 @@ export async function POST(request: NextRequest) {
           isPremium,
           gender,
           nameStyle,
+          useSimplifiedAPI: useSimplifiedAPI || false, // 새로운 API 사용 여부 추가
         };
 
         return NextResponse.json(responseData, { headers: corsHeaders });

@@ -2,11 +2,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import {
   GenderOption,
   NameStyleOption,
-  KoreanNamePromptOptions,
-  OriginalNameAnalysis,
-  KoreanNameSuggestion,
-  SocialShareContent,
-  generateKoreanNameSystemPrompt,
+  SimplifiedKoreanNamePromptOptions,
+  OriginalName,
+  KoreanName,
+  LifeValues,
+  CulturalImpression,
+  generateSimplifiedKoreanNameSystemPrompt,
 } from "./premiumSystemPrompts";
 
 // 모델 이름 상수
@@ -20,31 +21,30 @@ export const generationParams = {
   maxOutputTokens: 8192,
 };
 
-// 응답 데이터 타입 정의 (프리미엄 타입으로 통일)
-export interface KoreanNameData {
-  original_name: string;
-  original_name_analysis: OriginalNameAnalysis;
-  korean_name_suggestion: KoreanNameSuggestion;
-  korean_name_impression: string;
-  social_share_content: SocialShareContent;
+// 간소화된 응답 데이터 타입 정의
+export interface SimplifiedKoreanNameData {
+  original_name: OriginalName;
+  korean_name: KoreanName;
+  life_values: LifeValues;
+  cultural_impression: CulturalImpression;
 }
 
 // 파라미터 타입
-export interface GenerateNameParams {
+export interface GenerateSimplifiedNameParams {
   name: string;
   gender: GenderOption;
   nameStyle?: NameStyleOption; // 옵션으로 추가
 }
 
-export interface ActionResult {
-  data?: KoreanNameData;
+export interface SimplifiedActionResult {
+  data?: SimplifiedKoreanNameData;
   error?: string;
 }
 
 // API 키 가져오기
 export function getApiKey(): string {
   const key = process.env.GEMINI_API_KEY_PAID || "";
-  console.log(`API Key Length (Premium): ${key.length}`);
+  console.log(`API Key Length (Simplified): ${key.length}`);
   return key;
 }
 
@@ -132,29 +132,26 @@ export function extractJsonFromText(text: string): string {
   }
 }
 
-// Gemini API를 사용하여 한국 이름 생성하는 공통 함수
-export async function generateKoreanNameWithGemini(
-  params: GenerateNameParams
-): Promise<{
-  data?: KoreanNameData;
-  error?: string;
-}> {
+// Gemini API를 사용하여 간소화된 한국 이름 생성하는 함수
+export async function generateSimplifiedKoreanNameWithGemini(
+  params: GenerateSimplifiedNameParams
+): Promise<SimplifiedActionResult> {
   try {
     const { name, gender, nameStyle = "hanja" } = params;
     const userMessageParts = [{ text: name }];
 
     // prompt 옵션 객체 생성
-    const promptOptions: KoreanNamePromptOptions = {
+    const promptOptions: SimplifiedKoreanNamePromptOptions = {
       gender,
       nameStyle,
     };
 
     // 동적 시스템 프롬프트 생성
     const dynamicSystemInstruction =
-      generateKoreanNameSystemPrompt(promptOptions);
+      generateSimplifiedKoreanNameSystemPrompt(promptOptions);
 
     console.log(
-      "Selected System Prompt String (일부):",
+      "Selected Simplified System Prompt String (일부):",
       dynamicSystemInstruction.substring(0, 200) + "..."
     );
 
@@ -162,7 +159,7 @@ export async function generateKoreanNameWithGemini(
     const apiKey = getApiKey();
     if (!apiKey) {
       return {
-        error: "API key missing for premium service.",
+        error: "API key missing for simplified service.",
       };
     }
 
@@ -175,7 +172,7 @@ export async function generateKoreanNameWithGemini(
       dynamicSystemInstruction + "\n\n" + explicitJsonInstruction;
 
     // 스트림 모드로 API 호출
-    console.log("스트림 모드로 Gemini API 호출...");
+    console.log("스트림 모드로 Simplified Gemini API 호출...");
 
     const streamResponse = await genAI.models.generateContentStream({
       model: MODEL_NAME,
@@ -185,27 +182,39 @@ export async function generateKoreanNameWithGemini(
         responseSchema: {
           type: Type.OBJECT,
           required: [
-            "original_name_analysis",
-            "korean_name_suggestion",
-            "korean_name_impression",
-            "social_share_content",
+            "original_name",
+            "korean_name",
+            "life_values",
+            "cultural_impression",
           ],
           properties: {
-            original_name_analysis: {
+            original_name: {
               type: Type.OBJECT,
-              required: ["letters", "summary"],
+              required: ["full", "components", "summary"],
               properties: {
-                letters: {
+                full: {
+                  type: Type.STRING,
+                },
+                components: {
                   type: Type.ARRAY,
                   items: {
                     type: Type.OBJECT,
-                    required: ["letter", "meaning"],
+                    required: ["name", "meanings", "symbols"],
                     properties: {
-                      letter: {
+                      name: {
                         type: Type.STRING,
                       },
-                      meaning: {
-                        type: Type.STRING,
+                      meanings: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.STRING,
+                        },
+                      },
+                      symbols: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.STRING,
+                        },
                       },
                     },
                   },
@@ -215,53 +224,73 @@ export async function generateKoreanNameWithGemini(
                 },
               },
             },
-            korean_name_suggestion: {
+            korean_name: {
               type: Type.OBJECT,
-              required: ["full_name", "syllables", "rationale", "life_values"],
+              required: [
+                "full",
+                "romanized",
+                "syllables",
+                "integrated_meaning",
+              ],
               properties: {
-                full_name: {
+                full: {
+                  type: Type.STRING,
+                },
+                romanized: {
                   type: Type.STRING,
                 },
                 syllables: {
                   type: Type.ARRAY,
                   items: {
                     type: Type.OBJECT,
-                    required: ["syllable", "romanization", "hanja", "meaning"],
+                    required: [
+                      "syllable",
+                      "romanized",
+                      "hanja",
+                      "keywords",
+                      "explanation",
+                    ],
                     properties: {
                       syllable: {
                         type: Type.STRING,
                       },
-                      romanization: {
+                      romanized: {
                         type: Type.STRING,
                       },
                       hanja: {
                         type: Type.STRING,
                       },
-                      meaning: {
+                      keywords: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.STRING,
+                        },
+                      },
+                      explanation: {
                         type: Type.STRING,
                       },
                     },
                   },
                 },
-                rationale: {
-                  type: Type.STRING,
-                },
-                life_values: {
+                integrated_meaning: {
                   type: Type.STRING,
                 },
               },
             },
-            korean_name_impression: {
-              type: Type.STRING,
-            },
-            social_share_content: {
+            life_values: {
               type: Type.OBJECT,
-              required: ["formatted", "summary"],
+              required: ["text"],
               properties: {
-                formatted: {
+                text: {
                   type: Type.STRING,
                 },
-                summary: {
+              },
+            },
+            cultural_impression: {
+              type: Type.OBJECT,
+              required: ["text"],
+              properties: {
+                text: {
                   type: Type.STRING,
                 },
               },
@@ -281,7 +310,7 @@ export async function generateKoreanNameWithGemini(
       fullResponse += chunk.text || "";
     }
 
-    console.log("스트림 응답 길이:", fullResponse.length);
+    console.log("간소화된 스트림 응답 길이:", fullResponse.length);
     console.log("전체 응답:", fullResponse);
 
     // 받은 텍스트에서 JSON 추출
@@ -292,29 +321,27 @@ export async function generateKoreanNameWithGemini(
       const parsedJsonText = JSON.parse(jsonText);
       // 변환된 JSON 문자열로 작업
       const jsonData = parsedJsonText;
-      console.log("JSON 구문 분석 성공, 데이터 구조 검증 중...");
+      console.log("JSON 구문 분석 성공, 간소화된 데이터 구조 검증 중...");
 
-      // API 응답에 original_name 필드 추가 (요구 사항)
-      jsonData.original_name = name;
-
-      // 공통 데이터 구조 검증
+      // 간소화된 데이터 구조 검증
       if (
-        jsonData.original_name_analysis &&
-        jsonData.korean_name_suggestion &&
-        jsonData.social_share_content
+        jsonData.original_name &&
+        jsonData.korean_name &&
+        jsonData.life_values &&
+        jsonData.cultural_impression
       ) {
-        console.log("데이터 구조 검증 성공");
+        console.log("간소화된 데이터 구조 검증 성공");
 
-        // 데이터 타입을 KoreanNameData로 통일
-        const koreanNameData = jsonData as KoreanNameData;
-        return { data: koreanNameData };
+        // 데이터 타입을 SimplifiedKoreanNameData로 캐스팅
+        const simplifiedKoreanNameData = jsonData as SimplifiedKoreanNameData;
+        return { data: simplifiedKoreanNameData };
       } else {
         console.error(
-          "응답 데이터 구조 검증 실패:",
+          "간소화된 응답 데이터 구조 검증 실패:",
           JSON.stringify(jsonData, null, 2).substring(0, 200) + "..."
         );
         return {
-          error: "Invalid response format from AI service",
+          error: "Invalid response format from simplified AI service",
         };
       }
     } catch (parseError) {
@@ -329,10 +356,12 @@ export async function generateKoreanNameWithGemini(
       };
     }
   } catch (err) {
-    console.error("이름 생성 중 오류 발생:", err);
+    console.error("간소화된 이름 생성 중 오류 발생:", err);
     if (err instanceof Error) {
       return { error: err.message };
     }
-    return { error: "An unknown error occurred during name generation." };
+    return {
+      error: "An unknown error occurred during simplified name generation.",
+    };
   }
 }

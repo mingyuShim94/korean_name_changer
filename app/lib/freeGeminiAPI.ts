@@ -4,7 +4,6 @@ import {
   NameStyleOption,
   KoreanNamePromptOptions,
   KoreanNameSuggestion,
-  SocialShareContent,
   generateKoreanNameSystemPrompt,
 } from "./freeSystemPrompts";
 
@@ -21,9 +20,7 @@ export const generationParams = {
 
 // 응답 데이터 타입 정의 (무료 버전)
 export interface KoreanNameData {
-  original_name: string;
-  korean_name_suggestion: KoreanNameSuggestion;
-  social_share_content: SocialShareContent;
+  korean_name: KoreanNameSuggestion;
 }
 
 // 파라미터 타입
@@ -182,49 +179,57 @@ export async function generateKoreanNameWithGemini(
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
-          required: ["korean_name_suggestion", "social_share_content"],
+          required: ["korean_name"],
           properties: {
-            korean_name_suggestion: {
+            korean_name: {
               type: Type.OBJECT,
-              required: ["full_name", "syllables", "rationale"],
+              required: [
+                "full",
+                "romanized",
+                "syllables",
+                "integrated_meaning",
+              ],
               properties: {
-                full_name: {
+                full: {
+                  type: Type.STRING,
+                },
+                romanized: {
                   type: Type.STRING,
                 },
                 syllables: {
                   type: Type.ARRAY,
                   items: {
                     type: Type.OBJECT,
-                    required: ["syllable", "romanization", "hanja", "meaning"],
+                    required: [
+                      "syllable",
+                      "romanized",
+                      "hanja",
+                      "keywords",
+                      "explanation",
+                    ],
                     properties: {
                       syllable: {
                         type: Type.STRING,
                       },
-                      romanization: {
+                      romanized: {
                         type: Type.STRING,
                       },
                       hanja: {
                         type: Type.STRING,
                       },
-                      meaning: {
+                      keywords: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.STRING,
+                        },
+                      },
+                      explanation: {
                         type: Type.STRING,
                       },
                     },
                   },
                 },
-                rationale: {
-                  type: Type.STRING,
-                },
-              },
-            },
-            social_share_content: {
-              type: Type.OBJECT,
-              required: ["formatted", "summary"],
-              properties: {
-                formatted: {
-                  type: Type.STRING,
-                },
-                summary: {
+                integrated_meaning: {
                   type: Type.STRING,
                 },
               },
@@ -254,11 +259,8 @@ export async function generateKoreanNameWithGemini(
       const jsonData = parsedJsonText;
       console.log("JSON 구문 분석 성공, 데이터 구조 검증 중...");
 
-      // API 응답에 original_name 필드 추가 (요구 사항)
-      jsonData.original_name = name;
-
       // 공통 데이터 구조 검증
-      if (jsonData.korean_name_suggestion && jsonData.social_share_content) {
+      if (jsonData.korean_name) {
         console.log("데이터 구조 검증 성공");
 
         // 데이터 타입을 KoreanNameData로 통일
