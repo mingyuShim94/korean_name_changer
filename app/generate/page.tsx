@@ -277,20 +277,20 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 max-w-4xl mx-auto px-4">
-      <div className="text-center space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl w-full">
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-gray-900 dark:text-white whitespace-normal">
+    <div className="flex flex-col items-center space-y-4 sm:space-y-8 max-w-4xl mx-auto px-2 sm:px-4">
+      <div className="text-center space-y-3 sm:space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-gray-900 dark:text-white whitespace-normal">
           <span className="inline-block">Generate Your</span>{" "}
           <span className="inline-block">Korean Name</span>
         </h1>
-        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-base md:text-lg whitespace-normal break-keep">
+        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-sm sm:text-base md:text-lg whitespace-normal break-keep">
           Enter your name and select options to create a personalized Korean
           name that reflects your identity
         </p>
       </div>
 
-      <Card className="w-full max-w-md shadow-xl rounded-2xl border-t-4 border-primary">
-        <CardContent className="p-8 space-y-6">
+      <Card className="w-full max-w-lg sm:max-w-md shadow-xl rounded-2xl border-t-4 border-primary">
+        <CardContent className="p-4 sm:p-8 space-y-4 sm:space-y-6">
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}

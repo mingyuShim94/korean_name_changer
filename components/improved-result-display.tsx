@@ -390,7 +390,7 @@ export function ImprovedResultDisplay({
   );
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6">
       {/* 상단 배지 */}
       <div className="flex justify-center gap-2 mb-4">
         {isPremium && (
@@ -420,13 +420,13 @@ export function ImprovedResultDisplay({
       </div>
 
       {/* 요약 카드: 한국식 이름 제안 */}
-      <section className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-indigo-100">
+      <section className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-4 sm:p-6 border border-indigo-100">
         <div className="text-center">
           <h2 className="text-sm font-medium text-indigo-600 mb-2">
             Korean Name Suggestion
           </h2>
           <div className="flex items-center justify-center gap-3 mb-4">
-            <h3 className="text-3xl font-bold text-gray-800">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">
               👤 {koreanInfo.full} ({koreanInfo.romanized})
             </h3>
             {isPremium && (
@@ -440,17 +440,17 @@ export function ImprovedResultDisplay({
           </div>
 
           {/* 음절 구성 요약 */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-4">
             {koreanInfo.syllables.map((syllable, index) => (
               <div
                 key={index}
-                className="bg-white/70 rounded-lg p-3 text-center border border-indigo-200"
+                className="bg-white/70 rounded-lg p-2 sm:p-3 text-center border border-indigo-200"
               >
-                <div className="text-lg font-semibold text-indigo-800">
+                <div className="text-base sm:text-lg font-semibold text-indigo-800">
                   [{syllable.syllable}] {syllable.romanized}
                 </div>
                 {nameStyle === "hanja" && syllable.hanja && (
-                  <div className="text-sm font-medium text-indigo-600 mt-1">
+                  <div className="text-xs sm:text-sm font-medium text-indigo-600 mt-1">
                     {syllable.hanja}
                   </div>
                 )}
