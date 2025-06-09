@@ -12,6 +12,13 @@ export async function middleware(request: NextRequest) {
   const isLoggedIn = !!session;
   const path = request.nextUrl.pathname;
 
+  // Trailing slash 처리 - 루트 경로가 아닌 경우 trailing slash 제거
+  if (path !== "/" && path.endsWith("/")) {
+    const newUrl = new URL(request.url);
+    newUrl.pathname = path.slice(0, -1);
+    return NextResponse.redirect(newUrl, 301);
+  }
+
   // 루트 경로에 접근했을 때 로그인 상태에 따라 리다이렉션
   if (path === "/") {
     if (isLoggedIn) {
@@ -29,5 +36,9 @@ export async function middleware(request: NextRequest) {
 
 // 미들웨어가 실행될 경로 지정
 export const config = {
-  matcher: ["/", "/generate"],
+  matcher: [
+    "/",
+    "/generate",
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
 };
