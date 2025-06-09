@@ -7,5 +7,10 @@ Disallow: /api/
 # Block access to admin routes
 Disallow: /admin/
 
+# Block URLs with special characters that might cause issues
+Disallow: /*$
+Disallow: /*%
+Disallow: /*#
+
 # Sitemap location
 Sitemap: https://nametokorean.com/sitemap.xml 
