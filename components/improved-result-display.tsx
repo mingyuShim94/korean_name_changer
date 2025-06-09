@@ -1,8 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Play, Volume2, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  Volume2,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackButtonClick } from "@/lib/analytics";
 import { GenderOption, NameStyleOption } from "@/app/lib/freeSystemPrompts";
 
 // AudioPlayer 컴포넌트
@@ -389,6 +398,71 @@ export function ImprovedResultDisplay({
     </button>
   );
 
+  /**
+   * 한국이름에서 성을 제외한 이름 부분만 추출하는 함수
+   * @param koreanName - 전체 한국이름 (예: "김서연")
+   * @returns 성을 제외한 이름 부분 (예: "서연")
+   */
+  function extractGivenName(koreanName: string): string {
+    if (!koreanName || koreanName.length < 2) return koreanName;
+
+    // 한국어 이름에서 첫 번째 글자는 성(family name), 나머지는 이름(given name)
+    return koreanName.slice(1);
+  }
+
+  /**
+   * 한국이름의 Google 이미지 검색 URL을 생성하는 함수
+   * @param koreanName - 전체 한국이름
+   * @returns Google 이미지 검색 URL
+   */
+  function createGoogleImageSearchUrl(koreanName: string): string {
+    const givenName = extractGivenName(koreanName);
+    const searchQuery = encodeURIComponent(`${givenName}`);
+    return `https://www.google.com/search?q=${searchQuery}&tbm=isch`;
+  }
+
+  // Google 이미지 검색 버튼 컴포넌트
+  interface GoogleImageSearchProps {
+    koreanName: string;
+  }
+
+  function GoogleImageSearch({ koreanName }: GoogleImageSearchProps) {
+    const givenName = extractGivenName(koreanName);
+    const searchUrl = createGoogleImageSearchUrl(koreanName);
+
+    const handleSearchClick = () => {
+      trackButtonClick("google_image_search", `korean_name_${givenName}`);
+      window.open(searchUrl, "_blank", "noopener,noreferrer");
+    };
+
+    return (
+      <div className="bg-white/80 rounded-xl p-4 border border-blue-200 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h4 className="text-sm font-semibold text-blue-700 mb-1">
+              📷 See Cultural Impression
+            </h4>
+            <p className="text-xs text-gray-600">
+              Discover the vibe of &apos;{givenName}&apos; by seeing real people
+              who have this name
+            </p>
+          </div>
+          <Search className="h-5 w-5 text-blue-500" />
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSearchClick}
+          className="w-full text-sm border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700"
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          See people named &apos;{givenName}&apos;
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-4 sm:space-y-6">
       {/* 상단 배지 */}
@@ -475,6 +549,9 @@ export function ImprovedResultDisplay({
           )}
         </div>
       </section>
+
+      {/* Google 이미지 검색 섹션 */}
+      <GoogleImageSearch koreanName={koreanInfo.full} />
 
       {/* 상세 구성 패널 (아코디언) */}
       {showDetailedStructure && (
