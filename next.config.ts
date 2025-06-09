@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Trailing slash 설정 추가 - URL 끝의 슬래시를 허용
+  trailingSlash: true,
   // 환경 변수가 빌드 시점이나 런타임에서 사용될 수 있도록 설정
   env: {
     GEMINI_API_KEY_FREE: process.env.GEMINI_API_KEY_FREE || "",
