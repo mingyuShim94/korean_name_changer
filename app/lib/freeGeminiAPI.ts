@@ -12,7 +12,7 @@ export const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 
 // Generation parameters
 export const generationParams = {
-  temperature: 0.8,
+  temperature: 0.7,
   topK: 32,
   topP: 1,
   maxOutputTokens: 8192,
