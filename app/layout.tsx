@@ -89,7 +89,7 @@ export default function RootLayout({
         <GoogleAnalytics />
         <SupabaseProvider>
           <Header />
-          <main className="flex-grow container mx-auto py-6 px-0 md:py-10 md:px-6 max-w-4xl">
+          <main className="flex-grow container mx-auto py-3 px-1 md:py-10 md:px-6 max-w-4xl">
             {children}
           </main>
           <Footer />

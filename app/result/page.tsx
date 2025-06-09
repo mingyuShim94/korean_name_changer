@@ -266,7 +266,7 @@ export default function ResultPage() {
   }, [searchParams]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-0 sm:p-6 md:p-12 bg-muted/40">
+    <main className="flex flex-col items-center justify-start pt-16 pb-8 sm:pt-8 sm:pb-4 bg-muted/40">
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 flex flex-col items-center space-y-4 sm:space-y-8">
         <Card className="w-full max-w-6xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl shadow-xl rounded-2xl border-t-4 border-primary relative">
           <CardContent className="p-3 sm:p-6 md:p-8">
