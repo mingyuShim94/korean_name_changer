@@ -54,6 +54,11 @@ export default function Header() {
               </Link>
             </li>
             <li>
+              <Link href="/contact" className="text-base hover:underline">
+                Contact
+              </Link>
+            </li>
+            <li>
               {loading ? (
                 <span className="text-base text-gray-500">Loading...</span>
               ) : user ? (
@@ -109,6 +114,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Pricing
+            </Link>
+            <Link
+              href="/contact"
+              className="text-sm hover:underline py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
             </Link>
           </div>
 
