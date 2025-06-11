@@ -4,18 +4,86 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick, trackPageView } from "@/lib/analytics";
+import { useSupabase } from "../providers";
+import { PaymentPendingDialog } from "@/components/ui/payment-pending-dialog";
 
 export default function PricingPage() {
   const router = useRouter();
+  const { user } = useSupabase();
+  const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
+
+  // 클라이언트 사이드 렌더링 확인
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Track page view on component mount
   React.useEffect(() => {
-    trackPageView("/pricing", "Pricing Page");
-  }, []);
+    if (isClient) {
+      trackPageView("/pricing", "Pricing Page");
+    }
+  }, [isClient]);
 
   const handleButtonClick = (tier: string) => {
+    if (!isClient) return;
+
     trackButtonClick(`select_${tier}_tier`, "from_pricing_page");
-    router.push(`/?tier=${tier}`);
+
+    if (tier === "free") {
+      router.push("/");
+    } else if (tier === "premium") {
+      // 로그인 확인
+      if (!user) {
+        // 로그인되지 않은 사용자는 로그인 페이지로 리다이렉션
+        router.push("/auth");
+        return;
+      }
+      // 로그인된 사용자는 결제 진행
+      handlePurchaseClick();
+    }
+  };
+
+  const handlePurchaseClick = () => {
+    if (!isClient || !user) return;
+
+    // 결제 분석 이벤트 추적
+    trackButtonClick("purchase_premium", "from_pricing_page");
+
+    // URL에 사용자 정보와 식별 정보를 custom_fields로 추가
+    let requestId = "";
+    let timestamp = 0;
+
+    // 브라우저 API 사용은 클라이언트 사이드에서만 실행
+    requestId = crypto.randomUUID(); // 요청 고유 ID 생성
+    timestamp = Date.now(); // 현재 시간
+
+    const customFields = encodeURIComponent(
+      JSON.stringify({
+        userId: user?.id, // 사용자 ID 추가
+        email: user?.email, // 사용자 이메일 추가
+        timestamp: timestamp,
+        requestId: requestId,
+      })
+    );
+
+    const productId = "oauri";
+    // Gumroad URL 생성 및 새 창에서 열기
+    const gumroadUrl = `https://gumroad.com/l/${productId}?wanted=true&custom_fields=${customFields}`;
+
+    // 결제 대기 팝업 표시
+    setShowPaymentDialog(true);
+
+    // Gumroad 결제 페이지 열기
+    window.open(gumroadUrl.toString(), "_blank");
+  };
+
+  const handlePaymentComplete = async () => {
+    if (!isClient) return;
+
+    setShowPaymentDialog(false);
+    // 결제가 완료되면 generate 페이지로 이동
+    router.push("/generate");
   };
 
   return (
@@ -137,6 +205,14 @@ export default function PricingPage() {
           </p>
         </div>
       </div>
+
+      {/* 결제 대기 팝업 */}
+      {showPaymentDialog && (
+        <PaymentPendingDialog
+          onPaymentComplete={handlePaymentComplete}
+          onClose={() => setShowPaymentDialog(false)}
+        />
+      )}
     </main>
   );
 }

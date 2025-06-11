@@ -95,6 +95,145 @@ type ResultData =
 
 // 세션 스토리지 함수들은 lib/storage-utils.ts로 이동했습니다
 
+// 프리미엄 업셀 카드 컴포넌트
+function PremiumUpsellCard({ koreanName }: { koreanName: string }) {
+  const handlePremiumClick = () => {
+    trackButtonClick("premium_upsell", "from_result_preview");
+    // 결제 페이지로 이동
+    window.location.href = "/pricing";
+  };
+
+  return (
+    <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 relative overflow-hidden">
+      {/* 상단 헤더 */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">✨</span>
+          <h3 className="text-lg font-semibold text-amber-800">
+            Premium Features
+          </h3>
+        </div>
+        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+          Only $1.90
+        </span>
+      </div>
+
+      {/* 프리미엄 기능 미리보기 - 흐림 처리 */}
+      <div className="space-y-4 relative">
+        {/* 오디오 발음 미리보기 */}
+        <div className="bg-white/80 rounded-lg p-4 border border-amber-200 relative">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-blue-600">🔊</span>
+            <h4 className="font-medium text-gray-800">Audio Pronunciation</h4>
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
+              NEW
+            </span>
+          </div>
+          <div className="flex items-center gap-2 filter blur-sm">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm">▶</span>
+            </div>
+            <span className="text-sm text-gray-600">
+              Listen to &quot;{koreanName}&quot; pronunciation
+            </span>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        </div>
+
+        {/* 원본 이름 분석 미리보기 */}
+        <div className="bg-white/80 rounded-lg p-4 border border-amber-200 relative">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-green-600">🔍</span>
+            <h4 className="font-medium text-gray-800">
+              Original Name Deep Analysis
+            </h4>
+          </div>
+          <div className="filter blur-sm">
+            <p className="text-sm text-gray-600 mb-2">
+              Your name has fascinating etymology and cultural significance...
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-green-50 p-2 rounded">
+                <span className="text-xs font-medium">Name Component</span>
+                <p className="text-xs text-gray-600">
+                  Meaning & symbols revealed...
+                </p>
+              </div>
+              <div className="bg-green-50 p-2 rounded">
+                <span className="text-xs font-medium">Historical Origin</span>
+                <p className="text-xs text-gray-600">
+                  Cultural background details...
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        </div>
+
+        {/* 인생 가치관 미리보기 */}
+        <div className="bg-white/80 rounded-lg p-4 border border-amber-200 relative">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-purple-600">💎</span>
+            <h4 className="font-medium text-gray-800">Life Values & Destiny</h4>
+          </div>
+          <div className="filter blur-sm">
+            <p className="text-sm text-gray-600">
+              Based on your Korean name, your life path suggests qualities of
+              wisdom, creativity, and harmony. People with this name often excel
+              in...
+            </p>
+            <div className="mt-2 flex gap-2">
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                Leadership
+              </span>
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                Creativity
+              </span>
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                Harmony
+              </span>
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        </div>
+
+        {/* 문화적 인상 미리보기 */}
+        <div className="bg-white/80 rounded-lg p-4 border border-amber-200 relative">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-red-600">🌸</span>
+            <h4 className="font-medium text-gray-800">Cultural Impression</h4>
+          </div>
+          <div className="filter blur-sm">
+            <p className="text-sm text-gray-600">
+              In Korean culture, people with your name are often perceived as
+              elegant, intelligent, and trustworthy. The name carries
+              associations with...
+            </p>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        </div>
+
+        {/* 오버레이 그라데이션 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent pointer-events-none"></div>
+      </div>
+
+      {/* CTA 버튼 */}
+      <div className="mt-6 text-center">
+        <Button
+          onClick={handlePremiumClick}
+          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+        >
+          ✨ Unlock Full Analysis - $1.90
+        </Button>
+        <p className="text-xs text-amber-700 mt-2">
+          Get 5 premium generations • Audio pronunciation • Deep cultural
+          insights
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // Internal component that reads SearchParams and displays results
 function ResultContent() {
   const searchParams = useSearchParams();
@@ -201,6 +340,34 @@ function ResultContent() {
     }
   }, [searchParams]);
 
+  // 한국어 이름 정보 추출 함수
+  const getKoreanNameInfo = () => {
+    if (!resultData) return null;
+
+    // 새로운 데이터 구조
+    if ("korean_name" in resultData && resultData.korean_name) {
+      return {
+        full: resultData.korean_name.full,
+        romanized: resultData.korean_name.romanized,
+      };
+    }
+
+    // 레거시 데이터 구조
+    if (
+      "korean_name_suggestion" in resultData &&
+      resultData.korean_name_suggestion
+    ) {
+      return {
+        full: resultData.korean_name_suggestion.full_name,
+        romanized: resultData.korean_name_suggestion.syllables
+          .map((s) => s.romanization)
+          .join(" "),
+      };
+    }
+
+    return null;
+  };
+
   if (error) {
     return (
       <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
@@ -217,6 +384,8 @@ function ResultContent() {
     );
   }
 
+  const koreanInfo = getKoreanNameInfo();
+
   // Use improved ImprovedResultDisplay component
   return (
     <>
@@ -227,6 +396,14 @@ function ResultContent() {
         isPremium={isPremium}
         gender={gender}
       />
+
+      {/* 무료 사용자에게만 업셀 컴포넌트 표시 */}
+      {!isPremium && resultData && koreanInfo && (
+        <>
+          <PremiumUpsellCard koreanName={koreanInfo.full} />
+        </>
+      )}
+
       {resultData && (
         <CardFooter className="flex p-3 pt-0 sm:p-6 sm:pt-0 md:p-8 md:pt-0">
           <div className="flex flex-col w-full gap-3">
