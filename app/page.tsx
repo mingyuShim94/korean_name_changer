@@ -37,59 +37,22 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center space-y-8 max-w-4xl mx-auto px-4">
-      <div className="text-center space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl w-full mt-4 md:mt-8">
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-gray-900 dark:text-white whitespace-normal">
-          <span className="inline-block">Find the Korean Name</span>{" "}
-          <span className="inline-block">That Reflects You</span>
+      <div className="text-center space-y-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl w-full mt-4 md:mt-8">
+        <h1 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl lg:text-5xl text-gray-900 dark:text-white leading-tight px-2">
+          <span className="block sm:inline">What&apos;s Your Korean Name?</span>
+          <br className="hidden sm:block" />
+          <span className="block sm:inline">Find Out Instantly! 🇰🇷</span>
         </h1>
-        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-base md:text-lg whitespace-normal break-keep">
-          <span className="hidden md:inline whitespace-nowrap">
-            Start with your name → Let AI explore its essence → Welcome your
-            Korean name
+        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-base md:text-lg whitespace-normal break-words px-4">
+          <span className="hidden md:block text-center leading-relaxed">
+            🎯 Free AI-powered Korean name generator with cultural meanings,
+            <br />
+            Hanja characters & pronunciation guide
           </span>
-          <span className="flex flex-col gap-2 md:hidden">
-            <span className="flex items-center justify-center whitespace-nowrap">
-              Start with your name
-            </span>
-            <span className="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-primary"
-              >
-                <path d="M12 5v14"></path>
-                <path d="m19 12-7 7-7-7"></path>
-              </svg>
-            </span>
-            <span className="flex items-center justify-center whitespace-nowrap">
-              Let AI explore its essence
-            </span>
-            <span className="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-primary"
-              >
-                <path d="M12 5v14"></path>
-                <path d="m19 12-7 7-7-7"></path>
-              </svg>
-            </span>
-            <span className="flex items-center justify-center whitespace-nowrap">
-              Welcome your Korean name
+          <span className="flex flex-col gap-2 md:hidden text-center">
+            <span className="text-sm">🎯 Free AI Korean Name Generator</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Cultural meanings • Hanja characters • Pronunciation
             </span>
           </span>
         </p>
@@ -102,7 +65,7 @@ export default function Home() {
             size="lg"
             className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
           >
-            Get Your Korean Name Now
+            🌟 Get My Korean Name FREE
           </Button>
         </div>
       </div>
@@ -243,6 +206,55 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* FAQ Section for Better SEO */}
+      <section className="w-full max-w-4xl mx-auto mt-12">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Frequently Asked Questions
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow">
+            <h3 className="font-semibold mb-2">
+              How does the Korean name generator work?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Our AI analyzes your name&apos;s meaning and cultural
+              significance, then creates a Korean name that reflects your
+              identity with proper Hanja characters and pronunciations.
+            </p>
+          </div>
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow">
+            <h3 className="font-semibold mb-2">
+              Is the Korean name generator really free?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Yes! Our basic Korean name generator is completely free. We also
+              offer premium features for more detailed cultural analysis and
+              additional options.
+            </p>
+          </div>
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow">
+            <h3 className="font-semibold mb-2">
+              What makes Korean names special?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Korean names often carry deep cultural meanings through Hanja
+              characters, reflecting virtues, nature, and family values that
+              have been cherished for generations.
+            </p>
+          </div>
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow">
+            <h3 className="font-semibold mb-2">
+              Can I use my Korean name officially?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              While our generated names are culturally appropriate, please
+              consult local regulations for official name changes. Many people
+              use Korean names for cultural appreciation and learning.
+            </p>
+          </div>
         </div>
       </section>
     </div>
