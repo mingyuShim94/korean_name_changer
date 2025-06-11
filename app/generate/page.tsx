@@ -277,98 +277,279 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4 sm:space-y-8 max-w-4xl mx-auto px-2 sm:px-4">
-      <div className="text-center space-y-3 sm:space-y-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl w-full">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-gray-900 dark:text-white whitespace-normal">
-          <span className="inline-block">Generate Your</span>{" "}
-          <span className="inline-block">Korean Name</span>
+    <div className="flex flex-col items-center space-y-8 max-w-5xl mx-auto px-4 pb-16">
+      {/* 서비스 헤더 - 간결하고 기능 중심 */}
+      <div className="text-center space-y-4 w-full">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span className="text-sm font-medium text-primary">
+            Service Ready
+          </span>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+          Generate Your Korean Name
         </h1>
-        <p className="text-gray-700 dark:text-gray-200 max-w-[600px] mx-auto font-medium text-sm sm:text-base md:text-lg whitespace-normal break-keep">
-          Enter your name and select options to create a personalized Korean
-          name that reflects your identity
+        <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">
+          Follow the steps below to create your personalized Korean name
         </p>
       </div>
 
-      <Card className="w-full max-w-lg sm:max-w-md shadow-xl rounded-2xl border-t-4 border-primary">
-        <CardContent className="p-4 sm:p-8 space-y-4 sm:space-y-6">
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="free">Free</TabsTrigger>
-              <TabsTrigger value="premium">
-                ✨ Premium
-                {hasPremiumCredit &&
-                  premiumCredits > 0 &&
-                  ` (${premiumCredits} times)`}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="free" className="pt-6">
-              <NameInputForm
-                onSubmit={(name) =>
-                  handleFreeNameSubmit(name, selectedGender, selectedNameStyle)
-                }
-                isLoading={isLoading}
-                selectedGender={selectedGender}
-                onGenderChange={(gender) => setSelectedGender(gender)}
-                selectedNameStyle={selectedNameStyle}
-                onNameStyleChange={(style) => setSelectedNameStyle(style)}
-                isPremium={false}
-                inputName={inputName}
-                onNameChange={setInputName}
-              />
-            </TabsContent>
-            <TabsContent value="premium" className="pt-6 space-y-4">
-              <div className="p-4 border rounded-md bg-gradient-to-r from-yellow-100 via-amber-50 to-yellow-100 dark:from-yellow-800/30 dark:via-amber-900/20 dark:to-yellow-800/30">
-                <h4 className="font-semibold text-lg mb-2 text-amber-700 dark:text-amber-400">
-                  🌟 The Special Features of Premium Name Generation!
-                </h4>
-                <p className="text-sm text-amber-800 dark:text-amber-300">
-                  The premium service offers a more diverse and in-depth
-                  interpretation of the generated names. Discover the cultural
-                  meanings, pronunciation characteristics, and deep meanings of
-                  the hanja contained in the names.
-                </p>
+      {/* 메인 서비스 영역 */}
+      <div className="grid lg:grid-cols-3 gap-8 w-full">
+        {/* 왼쪽: 프로세스 안내 */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white/95 dark:bg-gray-900/95 rounded-2xl p-6 shadow-lg border border-gray-200/50">
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">
+              📋 How it works
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  1
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Enter your name
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Type your first and last name
+                  </p>
+                </div>
               </div>
-              {!hasPremiumCredit && (
-                <Button
-                  onClick={handlePurchaseClick}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                >
-                  ✨ Purchase Premium Access
-                </Button>
-              )}
-              <NameInputForm
-                onSubmit={(name) =>
-                  handlePremiumNameSubmit(
-                    name,
-                    selectedGender,
-                    selectedNameStyle
-                  )
-                }
-                isLoading={isLoading}
-                selectedGender={selectedGender}
-                onGenderChange={(gender) => setSelectedGender(gender)}
-                selectedNameStyle={selectedNameStyle}
-                onNameStyleChange={(style) => setSelectedNameStyle(style)}
-                isPremium={true}
-                inputName={inputName}
-                onNameChange={setInputName}
-                hasPremiumCredit={hasPremiumCredit}
-              />
-            </TabsContent>
-          </Tabs>
-
-          {error && (
-            <div className="mt-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-500/50 rounded-md p-4 text-sm">
-              <h3 className="font-semibold mb-1">Error:</h3>
-              <p>{error}</p>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  2
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Choose options
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Select gender feel & name style
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  3
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Get your result
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Receive your Korean name instantly
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+
+          {/* 프리미엄 혜택 카드 */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-amber-200/50">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">✨</span>
+              <h3 className="font-bold text-lg text-amber-800 dark:text-amber-200">
+                Premium Benefits
+              </h3>
+            </div>
+            <ul className="space-y-2 text-sm text-amber-700 dark:text-amber-300">
+              <li className="flex items-center gap-2">
+                <span className="text-amber-600">✓</span>
+                <span>Deep cultural analysis</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-amber-600">✓</span>
+                <span>Audio pronunciation guide</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-amber-600">✓</span>
+                <span>Life values interpretation</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-amber-600">✓</span>
+                <span>Cultural impression analysis</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-amber-600">✓</span>
+                <span>Enhanced shareable content</span>
+              </li>
+            </ul>
+            <div className="mt-4 pt-3 border-t border-amber-200/50">
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                💰 Only $1.90 for 5 credits
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 오른쪽: 메인 폼 영역 */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-2xl rounded-3xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+            <CardContent className="p-8 space-y-8">
+              {/* 개선된 탭 디자인 */}
+              <Tabs
+                value={activeTab}
+                onValueChange={handleTabChange}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl p-2">
+                  <TabsTrigger
+                    value="free"
+                    className="rounded-xl font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>Free</span>
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="premium"
+                    className="rounded-xl font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span>Premium</span>
+                      {hasPremiumCredit && premiumCredits > 0 && (
+                        <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                          {premiumCredits}
+                        </span>
+                      )}
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="free" className="pt-8 space-y-6">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-200/50">
+                    <h4 className="font-bold text-lg mb-2 text-blue-800 dark:text-blue-200">
+                      🆓 Free Korean Name Generation
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                      Get your Korean name with basic cultural meanings, Hanja
+                      characters, and pronunciation guide.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600">✓</span>
+                        <span>Korean name generation</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600">✓</span>
+                        <span>Basic cultural meanings</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600">✓</span>
+                        <span>Hanja characters</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600">✓</span>
+                        <span>Pronunciation guide</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <NameInputForm
+                    onSubmit={(name) =>
+                      handleFreeNameSubmit(
+                        name,
+                        selectedGender,
+                        selectedNameStyle
+                      )
+                    }
+                    isLoading={isLoading}
+                    selectedGender={selectedGender}
+                    onGenderChange={(gender) => setSelectedGender(gender)}
+                    selectedNameStyle={selectedNameStyle}
+                    onNameStyleChange={(style) => setSelectedNameStyle(style)}
+                    isPremium={false}
+                    inputName={inputName}
+                    onNameChange={setInputName}
+                  />
+                </TabsContent>
+
+                <TabsContent value="premium" className="pt-8 space-y-6">
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-amber-200/50">
+                    <h4 className="font-bold text-xl mb-3 text-amber-800 dark:text-amber-200">
+                      ✨ Premium Korean Name Generation
+                    </h4>
+                    <p className="text-amber-700 dark:text-amber-300 mb-4 leading-relaxed">
+                      Unlock the full potential with deep cultural analysis,
+                      audio pronunciation, life values interpretation, and much
+                      more detailed insights.
+                    </p>
+
+                    {!hasPremiumCredit ? (
+                      <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl p-4 mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            Premium Access Required
+                          </span>
+                          <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            $1.90
+                          </span>
+                        </div>
+                        <Button
+                          onClick={handlePurchaseClick}
+                          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                        >
+                          🚀 Get Premium Access (5 Credits)
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-4 border border-green-200/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="font-semibold text-green-800 dark:text-green-200">
+                            Premium Active
+                          </span>
+                        </div>
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          You have {premiumCredits} premium credits remaining
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <NameInputForm
+                    onSubmit={(name) =>
+                      handlePremiumNameSubmit(
+                        name,
+                        selectedGender,
+                        selectedNameStyle
+                      )
+                    }
+                    isLoading={isLoading}
+                    selectedGender={selectedGender}
+                    onGenderChange={(gender) => setSelectedGender(gender)}
+                    selectedNameStyle={selectedNameStyle}
+                    onNameStyleChange={(style) => setSelectedNameStyle(style)}
+                    isPremium={true}
+                    inputName={inputName}
+                    onNameChange={setInputName}
+                    hasPremiumCredit={hasPremiumCredit}
+                  />
+                </TabsContent>
+              </Tabs>
+
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-red-500 text-xl">⚠️</span>
+                    <div>
+                      <h3 className="font-semibold text-red-800 dark:text-red-200 mb-1">
+                        Something went wrong
+                      </h3>
+                      <p className="text-red-700 dark:text-red-300 text-sm">
+                        {error}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {showPaymentDialog && (
         <PaymentPendingDialog

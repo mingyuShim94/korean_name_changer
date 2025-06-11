@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Image from "next/image";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Database } from "@/types/supabase";
 
 export default function AuthForm() {
@@ -92,106 +95,161 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
-      <div className="w-full max-w-sm">
-        <form
-          onSubmit={handleAuth}
-          className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
-        >
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            {isSignUp ? "Sign Up" : "Login"}
-          </h2>
-
-          {/* Google Login Button */}
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
-            >
-              <Image
-                src="/google-logo.svg"
-                alt="Google Logo"
-                width={20}
-                height={20}
-              />
-              {loading ? "Processing..." : "Continue with Google"}
-            </button>
+    <Card className="w-full max-w-md shadow-2xl rounded-3xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+      <CardHeader className="text-center pb-6 pt-8">
+        <div className="space-y-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+            <span className="text-white text-2xl">🔐</span>
           </div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {isSignUp
+              ? "Join us to discover your perfect Korean name"
+              : "Sign in to continue your Korean name journey"}
+          </p>
+        </div>
+      </CardHeader>
 
-          <div className="relative mb-6">
+      <CardContent className="space-y-6 p-8">
+        <form onSubmit={handleAuth} className="space-y-6">
+          {/* Google Login Button */}
+          <Button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            variant="outline"
+            className="w-full py-6 text-lg font-semibold border-2 border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
+          >
+            <Image
+              src="/google-logo.svg"
+              alt="Google Logo"
+              width={24}
+              height={24}
+              className="mr-3"
+            />
+            {loading ? "Processing..." : "Continue with Google"}
+          </Button>
+
+          {/* Divider */}
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
+              <span className="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-medium">
+                or continue with email
+              </span>
             </div>
           </div>
 
-          <div className="mb-4">
+          {/* Email Input */}
+          <div className="space-y-2">
             <label
-              className="block text-gray-700 text-sm font-bold mb-2"
               htmlFor="email"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
             >
-              Email
+              Email Address
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter your email"
+              className="py-6 text-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               required
             />
           </div>
-          <div className="mb-6">
+
+          {/* Password Input */}
+          <div className="space-y-2">
             <label
-              className="block text-gray-700 text-sm font-bold mb-2"
               htmlFor="password"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
             >
               Password
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter your password"
+              className="py-6 text-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               required
             />
+            {isSignUp && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Password must be at least 6 characters long
+              </p>
+            )}
           </div>
+
+          {/* Message Display */}
           {message && (
             <div
-              className={`mb-4 p-2 rounded ${
+              className={`rounded-xl p-4 border ${
                 message.type === "error"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
+                  ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                  : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
               }`}
             >
-              {message.text}
+              <div className="flex items-start gap-3">
+                <span className="text-lg">
+                  {message.type === "error" ? "⚠️" : "✅"}
+                </span>
+                <p className="text-sm font-medium">{message.text}</p>
+              </div>
             </div>
           )}
-          <div className="flex flex-col gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50"
-            >
-              {loading ? "Processing..." : isSignUp ? "Sign Up" : "Login"}
-            </button>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full py-6 text-lg font-bold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Processing...
+              </div>
+            ) : isSignUp ? (
+              "Create Account"
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+
+          {/* Toggle Sign Up/Login */}
+          <div className="text-center pt-4">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-500 hover:text-blue-800 text-sm text-center"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setMessage(null);
+              }}
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
             >
               {isSignUp
-                ? "Already have an account? Login"
-                : "Don't have an account? Sign Up"}
+                ? "Already have an account? Sign in"
+                : "Don't have an account? Create one"}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+
+        {/* Security Notice */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200/50">
+          <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+            <span>🔒</span>
+            <span className="font-medium">
+              Your data is secure and encrypted
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
