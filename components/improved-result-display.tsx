@@ -9,6 +9,11 @@ import {
   ChevronUp,
   Search,
   ExternalLink,
+  Sparkles,
+  Music,
+  Eye,
+  Brain,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick } from "@/lib/analytics";
@@ -30,8 +35,12 @@ function AudioPlayer({
 }: AudioPlayerProps) {
   if (loading) {
     return (
-      <Button variant="outline" disabled className="mt-3 text-sm">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      <Button
+        variant="outline"
+        disabled
+        className="mt-3 text-sm bg-blue-50 border-blue-200"
+      >
+        <Loader2 className="mr-2 h-4 w-4 animate-spin text-blue-500" />
         Generating Audio...
       </Button>
     );
@@ -39,8 +48,12 @@ function AudioPlayer({
 
   if (!audioUrl) {
     return (
-      <Button variant="outline" disabled className="mt-3 text-sm">
-        <Volume2 className="mr-2 h-4 w-4" />
+      <Button
+        variant="outline"
+        disabled
+        className="mt-3 text-sm bg-gray-50 border-gray-200"
+      >
+        <Volume2 className="mr-2 h-4 w-4 text-gray-400" />
         Audio Unavailable
       </Button>
     );
@@ -51,14 +64,19 @@ function AudioPlayer({
       variant="outline"
       onClick={onPlay}
       disabled={isPlaying}
-      className="mt-3 text-sm"
+      className="mt-3 text-sm bg-green-50 border-green-200 hover:bg-green-100 text-green-700 transition-all duration-200"
     >
       {isPlaying ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Playing...
+        </>
       ) : (
-        <Play className="mr-2 h-4 w-4" />
+        <>
+          <Play className="mr-2 h-4 w-4" />
+          🔊 Play Pronunciation
+        </>
       )}
-      {isPlaying ? "Playing..." : "🔊"}
     </Button>
   );
 }
@@ -352,11 +370,22 @@ export function ImprovedResultDisplay({
   // 로딩 중 UI
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-3 py-6 md:py-8">
-        <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-primary" />
-        <p className="text-xs md:text-sm text-muted-foreground">
-          Generating your Korean name...
-        </p>
+      <div className="flex flex-col items-center justify-center space-y-6 py-16">
+        <div className="relative">
+          <div className="w-20 h-20 border-4 border-blue-200 rounded-full animate-spin border-t-blue-500"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Sparkles className="h-8 w-8 text-blue-500 animate-pulse" />
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="text-lg font-semibold text-gray-800">
+            Creating Your Korean Name
+          </h3>
+          <p className="text-sm text-gray-600 max-w-md">
+            Our AI is carefully crafting a name that reflects your personality
+            and cultural heritage...
+          </p>
+        </div>
       </div>
     );
   }
@@ -369,32 +398,74 @@ export function ImprovedResultDisplay({
   const koreanInfo = getKoreanNameInfo();
   if (!koreanInfo) {
     return (
-      <div className="text-center text-red-600">
-        <p>데이터를 불러올 수 없습니다.</p>
+      <div className="text-center text-red-600 bg-red-50 rounded-2xl p-8">
+        <p className="text-lg font-semibold">
+          Unable to load your Korean name data
+        </p>
+        <p className="text-sm mt-2">Please try generating a new name.</p>
       </div>
     );
   }
 
-  // 아코디언 토글 버튼 컴포넌트
-  const AccordionToggle = ({
+  // 향상된 아코디언 토글 버튼 컴포넌트
+  const EnhancedAccordionToggle = ({
     isOpen,
     onClick,
     title,
+    icon,
+    description,
+    isPremium: sectionIsPremium = false,
   }: {
     isOpen: boolean;
     onClick: () => void;
     title: string;
+    icon: React.ReactNode;
+    description: string;
+    isPremium?: boolean;
   }) => (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors rounded-xl shadow border-l-4 border-indigo-400"
+      className={`w-full flex items-center justify-between p-6 rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl transform hover:scale-[1.02] ${
+        sectionIsPremium
+          ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100"
+          : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+      }`}
     >
-      <h3 className="text-lg font-semibold text-indigo-600">{title}</h3>
-      {isOpen ? (
-        <ChevronUp className="h-5 w-5 text-gray-500" />
-      ) : (
-        <ChevronDown className="h-5 w-5 text-gray-500" />
-      )}
+      <div className="flex items-center space-x-4">
+        <div
+          className={`p-3 rounded-full ${
+            sectionIsPremium ? "bg-amber-100" : "bg-blue-100"
+          }`}
+        >
+          {icon}
+        </div>
+        <div className="text-left">
+          <h3
+            className={`text-lg font-semibold ${
+              sectionIsPremium ? "text-amber-800" : "text-blue-800"
+            }`}
+          >
+            {title}
+            {sectionIsPremium && (
+              <span className="ml-2 text-xs bg-amber-200 text-amber-700 px-2 py-1 rounded-full">
+                PREMIUM
+              </span>
+            )}
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">{description}</p>
+        </div>
+      </div>
+      <div
+        className={`transition-transform duration-300 ${
+          isOpen ? "rotate-180" : ""
+        }`}
+      >
+        <ChevronDown
+          className={`h-6 w-6 ${
+            sectionIsPremium ? "text-amber-600" : "text-blue-600"
+          }`}
+        />
+      </div>
     </button>
   );
 
@@ -405,8 +476,6 @@ export function ImprovedResultDisplay({
    */
   function extractGivenName(koreanName: string): string {
     if (!koreanName || koreanName.length < 2) return koreanName;
-
-    // 한국어 이름에서 첫 번째 글자는 성(family name), 나머지는 이름(given name)
     return koreanName.slice(1);
   }
 
@@ -436,51 +505,56 @@ export function ImprovedResultDisplay({
     };
 
     return (
-      <div className="bg-white/80 rounded-xl p-4 border border-blue-200 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h4 className="text-sm font-semibold text-blue-700 mb-1">
-              📷 See Cultural Impression
-            </h4>
-            <p className="text-xs text-gray-600">
-              Discover the vibe of &apos;{givenName}&apos; by seeing real people
-              who have this name
-            </p>
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Eye className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-purple-800">
+                Cultural Impression
+              </h4>
+              <p className="text-sm text-gray-600">
+                See the vibe of people named &apos;{givenName}&apos;
+              </p>
+            </div>
           </div>
-          <Search className="h-5 w-5 text-blue-500" />
         </div>
 
         <Button
           variant="outline"
-          size="sm"
           onClick={handleSearchClick}
-          className="w-full text-sm border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700"
+          className="w-full border-purple-200 hover:border-purple-300 hover:bg-purple-50 text-purple-700 transition-all duration-200"
         >
-          <ExternalLink className="mr-2 h-4 w-4" />
+          <Search className="mr-2 h-4 w-4" />
           See people named &apos;{givenName}&apos;
+          <ExternalLink className="ml-2 h-4 w-4" />
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-4 sm:space-y-6">
-      {/* 상단 배지 */}
-      <div className="flex justify-center gap-2 mb-4">
+    <div className="w-full space-y-8">
+      {/* 상단 배지들 - 개선된 디자인 */}
+      <div className="flex flex-wrap justify-center gap-3 mb-6">
         {isPremium && (
-          <span className="inline-flex items-center rounded-md bg-amber-100/80 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-500/30">
-            ✨ Premium Analysis ✨
+          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 text-sm font-semibold text-amber-800 ring-2 ring-amber-200 shadow-md">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Premium Analysis
           </span>
         )}
         <span
-          className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+          className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ring-2 shadow-md ${
             gender === "masculine"
-              ? "bg-blue-100/80 text-blue-800 ring-blue-500/30"
+              ? "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 ring-blue-200"
               : gender === "feminine"
-              ? "bg-pink-100/80 text-pink-800 ring-pink-500/30"
-              : "bg-green-100/80 text-green-800 ring-green-500/30"
+              ? "bg-gradient-to-r from-pink-100 to-rose-100 text-pink-800 ring-pink-200"
+              : "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 ring-green-200"
           }`}
         >
+          {gender === "masculine" ? "♂" : gender === "feminine" ? "♀" : "⚪"}{" "}
           {gender === "masculine"
             ? "Masculine"
             : gender === "feminine"
@@ -488,111 +562,169 @@ export function ImprovedResultDisplay({
             : "Neutral"}{" "}
           Name
         </span>
-        <span className="inline-flex items-center rounded-md bg-purple-100/80 px-2 py-1 text-xs font-medium text-purple-800 ring-1 ring-inset ring-purple-500/30">
-          {nameStyle === "pureKorean" ? "Pure Korean" : "Hanja"} Style
+        <span className="inline-flex items-center rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-2 text-sm font-semibold text-purple-800 ring-2 ring-purple-200 shadow-md">
+          {nameStyle === "pureKorean" ? "🌸 Pure Korean" : "📜 Hanja"} Style
         </span>
       </div>
 
-      {/* 요약 카드: 한국식 이름 제안 */}
-      <section className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-4 sm:p-6 border border-indigo-100">
-        <div className="text-center">
-          <h2 className="text-sm font-medium text-indigo-600 mb-2">
-            Korean Name Suggestion
-          </h2>
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">
-              👤 {koreanInfo.full} ({koreanInfo.romanized})
-            </h3>
-            {isPremium && (
-              <AudioPlayer
-                audioUrl={audioUrl}
-                loading={audioLoading}
-                isPlaying={isPlaying}
-                onPlay={handlePlay}
-              />
-            )}
-          </div>
-
-          {/* 음절 구성 요약 */}
-          <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-4">
-            {koreanInfo.syllables.map((syllable, index) => (
-              <div
-                key={index}
-                className="bg-white/70 rounded-lg p-2 sm:p-3 text-center border border-indigo-200"
-              >
-                <div className="text-base sm:text-lg font-semibold text-indigo-800">
-                  [{syllable.syllable}] {syllable.romanized}
-                </div>
-                {nameStyle === "hanja" && syllable.hanja && (
-                  <div className="text-xs sm:text-sm font-medium text-indigo-600 mt-1">
-                    {syllable.hanja}
+      {/* 메인 이름 카드 - 완전히 새로운 디자인 */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-3xl shadow-2xl p-1">
+        <div className="bg-white rounded-3xl p-8 h-full">
+          <div className="text-center">
+            <div className="mb-6">
+              <span className="inline-block text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-4">
+                Your Korean Name
+              </span>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <h3 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  {koreanInfo.full}
+                </h3>
+                {isPremium && (
+                  <div className="flex items-center">
+                    <AudioPlayer
+                      audioUrl={audioUrl}
+                      loading={audioLoading}
+                      isPlaying={isPlaying}
+                      onPlay={handlePlay}
+                    />
                   </div>
                 )}
-                <div className="text-xs text-gray-600 mt-1">
-                  → {syllable.keywords.join(", ")}
-                </div>
               </div>
-            ))}
+              <p className="text-xl text-gray-600 font-medium mb-2">
+                ({koreanInfo.romanized})
+              </p>
+            </div>
+
+            {/* 음절 구성 카드들 */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+              {koreanInfo.syllables.map((syllable, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-2 sm:p-4 border-2 border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  <div className="text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-indigo-700 mb-1 sm:mb-2">
+                      {syllable.syllable}
+                    </div>
+                    <div className="text-xs sm:text-sm text-purple-600 font-medium mb-1">
+                      {syllable.romanized}
+                    </div>
+                    {nameStyle === "hanja" && syllable.hanja && (
+                      <div className="text-sm sm:text-lg text-gray-700 mb-1 sm:mb-2 font-semibold">
+                        {syllable.hanja}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-600 leading-tight">
+                      {syllable.keywords.join(" • ")}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 의미 설명 */}
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+              <h4 className="text-lg font-semibold text-indigo-800 mb-3">
+                Name Meaning
+              </h4>
+              <p className="text-gray-700 italic leading-relaxed">
+                &quot;{koreanInfo.meaning}&quot;
+              </p>
+            </div>
+
+            {isPremium && (
+              <button
+                onClick={() => setShowDetailedStructure(!showDetailedStructure)}
+                className="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                {showDetailedStructure ? (
+                  <>
+                    <ChevronUp className="mr-2 h-4 w-4" />
+                    Hide Details
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    View Detailed Analysis
+                  </>
+                )}
+              </button>
+            )}
           </div>
-
-          <p className="text-sm text-gray-600 italic">
-            &quot;{koreanInfo.meaning}&quot;
-          </p>
-
-          {isPremium && (
-            <button
-              onClick={() => setShowDetailedStructure(!showDetailedStructure)}
-              className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 flex items-center justify-center w-full"
-            >
-              {showDetailedStructure ? "▲ View Details" : "▼ View Details"}
-            </button>
-          )}
         </div>
       </section>
 
       {/* Google 이미지 검색 섹션 */}
       <GoogleImageSearch koreanName={koreanInfo.full} />
 
-      {/* 상세 구성 패널 (아코디언) */}
-      {showDetailedStructure && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800 text-center mb-4">
-            Detailed Analysis Panel
-          </h2>
+      {/* 상세 분석 패널들 (프리미엄만) */}
+      {isPremium && showDetailedStructure && (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              Detailed Cultural Analysis
+            </h2>
+            <p className="text-gray-600">
+              Unlock the deeper meanings and cultural significance
+            </p>
+          </div>
 
-          {/* 원본 이름 분석 (프리미엄만) */}
+          {/* 원본 이름 분석 */}
           {isNewPremiumKoreanNameData(data) && (
             <>
-              <AccordionToggle
+              <EnhancedAccordionToggle
                 isOpen={showOriginalAnalysis}
                 onClick={() => setShowOriginalAnalysis(!showOriginalAnalysis)}
-                title="▾ Original Name Analysis"
+                title="Original Name Analysis"
+                icon={<Search className="h-5 w-5 text-amber-600" />}
+                description="Deep dive into your original name's etymology and meaning"
+                isPremium={true}
               />
               {showOriginalAnalysis && (
-                <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-400">
-                  <div className="text-center mb-4">
-                    <h4 className="text-2xl font-bold text-gray-800 mb-2">
-                      🔹 **Original Name:** {data.original_name.full}
+                <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-amber-200 space-y-6">
+                  <div className="text-center">
+                    <h4 className="text-2xl font-bold text-amber-800 mb-4">
+                      📖 Your Original Name: {data.original_name.full}
                     </h4>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {data.original_name.components.map((component, index) => (
-                      <div key={index} className="bg-indigo-50 rounded-lg p-4">
-                        <div className="font-semibold text-indigo-800 mb-2">
-                          - **{component.name}:**{" "}
-                          {component.meanings.join(", ")}
+                      <div
+                        key={index}
+                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border-2 border-amber-200"
+                      >
+                        <div className="font-semibold text-amber-800 text-lg mb-3">
+                          {component.name}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          → **Symbols:** {component.symbols.join(", ")}
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">
+                              Meanings:
+                            </span>
+                            <p className="text-amber-700">
+                              {component.meanings.join(", ")}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">
+                              Symbols:
+                            </span>
+                            <p className="text-gray-600">
+                              {component.symbols.join(", ")}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h5 className="font-semibold text-gray-700 mb-2">
-                      📘 **Overall Name Meaning:**
+
+                  <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-6 border-2 border-amber-300">
+                    <h5 className="font-semibold text-amber-800 text-lg mb-3 flex items-center">
+                      <Brain className="mr-2 h-5 w-5" />
+                      Overall Significance
                     </h5>
-                    <p className="text-gray-600">
+                    <p className="text-gray-700 leading-relaxed">
                       {data.original_name.summary}
                     </p>
                   </div>
@@ -601,74 +733,65 @@ export function ImprovedResultDisplay({
             </>
           )}
 
-          {/* 이름 구성 의미 (프리미엄만) */}
-          {isNewPremiumKoreanNameData(data) && (
-            <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-400">
-              <h4 className="text-lg font-semibold text-indigo-600 mb-4">
-                ▾ Name Structure Meaning
-              </h4>
-              <div className="space-y-4">
-                {data.korean_name.syllables.map((syllable, index) => (
-                  <div
-                    key={index}
-                    className="border-l-2 border-indigo-200 pl-4"
-                  >
-                    <h5 className="font-semibold text-indigo-800 mb-2">
-                      【{syllable.syllable}】{syllable.romanized} (
-                      {syllable.hanja})
-                    </h5>
-                    <p className="text-gray-600 mb-2">{syllable.explanation}</p>
-                    <div className="text-sm text-indigo-600">
-                      Keywords: {syllable.keywords.join(" · ")}
-                    </div>
-                  </div>
-                ))}
-                <div className="bg-indigo-50 rounded-lg p-4 mt-4">
-                  <p className="text-gray-700">
-                    → Overall, &apos;{data.korean_name.full}&apos; symbolizes{" "}
-                    <strong>
-                      &quot;{data.korean_name.integrated_meaning}&quot;
-                    </strong>
-                    .
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Life Values (프리미엄만) */}
+          {/* Life Values */}
           {isNewPremiumKoreanNameData(data) && (
             <>
-              <AccordionToggle
+              <EnhancedAccordionToggle
                 isOpen={showLifeValues}
                 onClick={() => setShowLifeValues(!showLifeValues)}
-                title="▾ Life Values"
+                title="Life Values & Destiny"
+                icon={<Sparkles className="h-5 w-5 text-blue-600" />}
+                description="Discover your personality traits and life path insights"
+                isPremium={true}
               />
               {showLifeValues && (
-                <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-400">
-                  <p className="text-gray-600 whitespace-pre-wrap">
-                    {data.life_values.text}
-                  </p>
+                <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-blue-200">
+                  <div className="flex items-center mb-6">
+                    <div className="p-3 bg-blue-100 rounded-full mr-4">
+                      <Sparkles className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-blue-800">
+                      Your Life Values
+                    </h4>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                      {data.life_values.text}
+                    </p>
+                  </div>
                 </div>
               )}
             </>
           )}
 
-          {/* Cultural Impression (프리미엄만) */}
+          {/* Cultural Impression */}
           {isNewPremiumKoreanNameData(data) && (
             <>
-              <AccordionToggle
+              <EnhancedAccordionToggle
                 isOpen={showCulturalImpression}
                 onClick={() =>
                   setShowCulturalImpression(!showCulturalImpression)
                 }
-                title="▾ Cultural Impression"
+                title="Cultural Impression"
+                icon={<Users className="h-5 w-5 text-pink-600" />}
+                description="How Korean society perceives your name"
+                isPremium={true}
               />
               {showCulturalImpression && (
-                <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-400">
-                  <p className="text-gray-600 whitespace-pre-wrap leading-relaxed">
-                    {data.cultural_impression.text}
-                  </p>
+                <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-pink-200">
+                  <div className="flex items-center mb-6">
+                    <div className="p-3 bg-pink-100 rounded-full mr-4">
+                      <Users className="h-6 w-6 text-pink-600" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-pink-800">
+                      Cultural Perception
+                    </h4>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                      {data.cultural_impression.text}
+                    </p>
+                  </div>
                 </div>
               )}
             </>
@@ -677,11 +800,18 @@ export function ImprovedResultDisplay({
       )}
 
       {/* 문화적 참고 설명 */}
-      <div className="mt-6 pt-4 pb-5 border-t text-sm text-gray-500">
-        <p className="text-center">
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 border-2 border-gray-200 text-center">
+        <div className="flex items-center justify-center mb-3">
+          <Music className="h-5 w-5 text-gray-600 mr-2" />
+          <span className="text-sm font-medium text-gray-700">
+            Cultural Note
+          </span>
+        </div>
+        <p className="text-gray-600 leading-relaxed">
           Korean names carry deep cultural meaning. Every syllable is carefully
           chosen to reflect values, aspirations, and harmony with nature and
-          tradition.
+          tradition. Your name connects you to thousands of years of Korean
+          heritage and wisdom.
         </p>
       </div>
     </div>
