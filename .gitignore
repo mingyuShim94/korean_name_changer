@@ -30,8 +30,22 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Environment variables - CRITICAL: Never commit these files
 .env*
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# API Keys and Secrets - Additional protection
+*.key
+*.pem
+*.p12
+*.pfx
+config/secrets.json
+secrets/
 
 # vercel
 .vercel
@@ -40,24 +54,72 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Added by Claude Task Master
-# Logs
-logs
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+prisma/migrations/
+
+# Logs and debugging
+logs/
 *.log
-dev-debug.log
-# Dependency directories
-node_modules/
-# Environment variables
-.env
-# Editor directories and files
-.idea
-.vscode
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+debug.log
+error.log
+
+# IDE and Editor files
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-# OS specific
-# Task files
-# tasks.json
-# tasks/ 
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Package manager files
+package-lock.json.backup
+yarn.lock.backup
+
+# Security and sensitive files
+.htaccess
+.htpasswd
+*.crt
+*.csr
+*.key
+*.keystore 
