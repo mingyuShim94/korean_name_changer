@@ -1,7 +1,9 @@
 # 한국어 이름 생성기 (Korean Name Generator)
 
 > AI 기반으로 외국 이름을 의미 있는 한국어 이름으로 변환해주는 웹 서비스
+> 👉 [직접 사용해보세요](https://nametokorean.com/)
 
+> 
 ## 🎯 프로젝트 소개
 
 **한국어 이름 생성기**는 외국 이름을 단순히 발음으로 변환하는 것이 아니라, 원래 이름의 어원과 의미를 분석하여 한국의 전통과 문화적 감성을 담은 아름다운 한국어 이름을 생성하는 AI 기반 웹 서비스입니다.
@@ -181,8 +183,8 @@ Vercel CLI를 사용하거나 GitHub 연동을 통해 자동 배포 가능
 
 ## 📞 지원 및 문의
 
-- 이슈 제보: [GitHub Issues](https://github.com/yourusername/korean_name_changer/issues)
-- 이메일: your-email@example.com
+- 이슈 제보: [GitHub Issues](https://github.com/mingyuShim94/korean_name_changer/issues)
+- 이메일: gguggulab@gmail.com
 
 ## 🙏 감사의 말
 
